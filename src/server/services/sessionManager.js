@@ -9,18 +9,36 @@ class Session {
     }
 }
 
+class UserIsAlreadyHostError extends Error {
+    constructor (message) {
+        super(message)
+        this.name = 'UserIsAlreadyHostError'
+    }
+}
+
 class SessionManager extends Service {
     constructor (dbPool) {
         super(dbPool)
 
+        this.privateSessionHosts = new Map() // Map<hostId, sessionId>
         this.activeSessions = new Map()
     }
 
-    createPrivateSession (hostId) {
+    createPrivateSession (hostUsername) {
+        if (this.privateSessionHosts.has(hostUsername)) {
+            throw new UserIsAlreadyHostError('User already has a private session')
+        }
+
         const id = uuidv4()
-        const session = new Session(id, hostId, true)
+        const session = new Session(id, hostUsername, true)
 
         this.activeSessions.set(id, session)
+        this.privateSessionHosts.set(hostUsername, id)
+    }
+
+    clearSessions () {
+        this.privateSessionHosts.clear()
+        this.activeSessions.clear()
     }
 }
 

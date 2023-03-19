@@ -44,6 +44,15 @@ class Authentication extends Service {
             subject: username
         })
     }
+
+    getJwtClaims (token) {
+        const secret = process.env.JWT_SIGNING_SECRET
+        return jwt.verify(token, secret, {
+            algorithms: ['HS256'],
+            issuer: 'rockpaperscissorsbrawl2d.com',
+            audience: 'rockpaperscissorsbrawl2d.com'
+        })
+    }
 }
 
 module.exports = Authentication

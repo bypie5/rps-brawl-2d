@@ -4,7 +4,7 @@
   "description": "A multiplayer game based on Rock, Paper, Scissors.",
   "main": "src/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "mocha --exit --timeout 10000",
     "dev": "nodemon src/index.js"
   },
   "author": "Brandon Yi",
@@ -23,6 +23,10 @@
     "uuid": "^9.0.0"
   },
   "devDependencies": {
-    "nodemon": "^2.0.21"
+    "chai": "^4.3.7",
+    "chai-http": "^4.3.0",
+    "mocha": "^10.2.0",
+    "nodemon": "^2.0.21",
+    "sinon": "^15.0.2"
   }
 }
