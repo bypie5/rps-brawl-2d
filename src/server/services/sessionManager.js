@@ -45,6 +45,13 @@ class SessionNotFoundError extends Error {
     }
 }
 
+class SessionNotOpenError extends Error {
+    constructor (message) {
+        super(message)
+        this.name = 'SessionNotOpenError'
+    }
+}
+
 class Session {
     constructor (id, hostId, isPrivate, config) {
         this.id = id
@@ -63,11 +70,23 @@ class Session {
     }
 
     playerConnected (username) {
+        if (this.currState !== sessionStates.WAITING_FOR_PLAYERS) {
+            throw new SessionNotOpenError('Session is not waiting for players')
+        }
+
         if (this.connectedPlayers.size >= this.config.maxPlayers) {
             throw new SessionIsFullError('Session is full')
         }
 
         this.connectedPlayers.add(username)
+    }
+
+    openSession () {
+        this.currState = sessionStates.WAITING_FOR_PLAYERS
+    }
+
+    beginGameSession () {
+        this.currState = sessionStates.IN_PROGRESS
     }
 
     getSessionInfo () {
@@ -119,6 +138,8 @@ class SessionManager extends Service {
         const friendlyName = this._generateFriendlyName()
         this.sessionIdToFriendlyName.set(friendlyName, id)
 
+        session.openSession()
+
         return friendlyName
     }
 
@@ -147,11 +168,19 @@ class SessionManager extends Service {
     }
 
     _generateFriendlyName () {
-        // format AAAAAA where A is a random uppercase letter.
+        // format CCCAAA where A is a random uppercase letter and C is a constant.
+        // C is used to make the friendly name more readable and to prevent swears from being generated
         // friendly names need to be unique
+        const randomConsonant = () => {
+            const consonants = 'BCDFGHJKLMNPQRSTVWXYZ'
+            return consonants[Math.floor(Math.random() * consonants.length)]
+        }
         const randomLetter = () => String.fromCharCode(Math.floor(Math.random() * 26) + 65)
         let friendlyName = ''
-        for (let i = 0; i < 6; i++) {
+        for (let i = 0; i < 3; i++) {
+            friendlyName += randomConsonant()
+        }
+        for (let i = 3; i < 6; i++) {
             friendlyName += randomLetter()
         }
 

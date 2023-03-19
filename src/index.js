@@ -9,9 +9,12 @@ require('dotenv').config()
 
 const services = require('./server/services/services')
 const registerRoutes = require('./server/routes/routes')
+const WebSocketServer = require('./server/net/webSocketServer')
 
 const app = express()
 const port = 8080
+
+const wsPort = 8081
 
 app.use(require('cors')())
 app.use(require('express-session')({
@@ -72,6 +75,14 @@ registerRoutes(app)
 
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`)
+
+    const wss = new WebSocketServer(wsPort, () => {
+        console.log(`WebSocket server is running on port ${wsPort}`)
+    }, () => {
+        console.log('WebSocket server closed')
+    })
+
+    wss.start()
 })
 
 module.exports = {

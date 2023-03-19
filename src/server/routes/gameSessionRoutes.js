@@ -51,6 +51,8 @@ router.post('/join-private-session', (req, res) => {
             res.status(400).send('Session is full')
         } else if (err.name === 'InvalidFriendlyNameError') {
             res.status(400).send('Invalid friendly name')
+        } else if (err.name === 'SessionNotOpenError') {
+            res.status(400).send('Session is not open')
         } else {
             res.status(500).send('Internal server error')
         }
