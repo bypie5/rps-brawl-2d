@@ -27,6 +27,7 @@ The game server will have a WebSocket server that will be used to ingest and tra
 Objects, aka entities, in the game world will be described using the Entity Component System (ECS) design. An entity is a collection of Components which are collections of data that describe certain properties about the entity. For example, the Transform component will contain information about an entity’s position and velocity. When the game server transmits game state to players, it is essentially just transmitting a JSON string that lists all entities and their components in the game scene for a given tick.
 
 ## Client-Side
+
 There will be two main parts of the client-side software: the gameview itself and the website in which the gameview is embedded.
 
 ### Gameview
