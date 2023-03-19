@@ -1,3 +1,4 @@
+const passport = require('passport')
 const express = require('express')
 const router = express.Router()
 
@@ -20,6 +21,10 @@ router.post('/register', async (req, res) => {
             res.status(500).send('Internal server error')
         }
     }
+})
+
+router.post('/login', passport.authenticate('local'), (req, res) => {
+    res.status(200).send('Logged in')
 })
 
 module.exports = router

@@ -9,11 +9,13 @@ const pool = mysql.createPool({
 
 const SessionManager = require('./sessionManager')
 const UserManager = require('./userManager')
+const Authentication = require('./authentication')
 
 function initServices (dbPool) {
     return {
         sessionManager: new SessionManager(dbPool),
-        userManager: new UserManager(dbPool)
+        userManager: new UserManager(dbPool),
+        authentication: new Authentication(dbPool)
     }
 }
 const services = initServices(pool)
