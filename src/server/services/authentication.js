@@ -22,7 +22,27 @@ class Authentication extends Service {
         return await bcrypt.compare(password, user.password_hash)
     }
 
-    async generateToken (username) {
+    async doesUserExist (username) {
+        const [rows, fields] = await this.dbPool.execute(
+            `SELECT * FROM users WHERE user_name = ?`,
+            [username]
+        )
+
+        return rows.length > 0
+    }
+
+    generateToken (username) {
+        const secret = process.env.JWT_SIGNING_SECRET
+        const payload = {
+            username
+        }
+        return jwt.sign(payload, secret, {
+            algorithm: 'HS256',
+            expiresIn: '2h',
+            issuer: 'rockpaperscissorsbrawl2d.com',
+            audience: 'rockpaperscissorsbrawl2d.com',
+            subject: username
+        })
     }
 }
 

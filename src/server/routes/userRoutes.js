@@ -24,7 +24,12 @@ router.post('/register', async (req, res) => {
 })
 
 router.post('/login', passport.authenticate('local'), (req, res) => {
-    res.status(200).send('Logged in')
+    const { username } = req.user
+    console.log(`User ${username} logged in`)
+    const jwtToken = services.authentication.generateToken(username)
+    res.status(200).send({
+        authToken: jwtToken
+    })
 })
 
 module.exports = router

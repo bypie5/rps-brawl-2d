@@ -1,6 +1,8 @@
 const express = require('express')
 const passport = require('passport')
 const LocalStrategy = require('passport-local').Strategy
+const JwtStrategy = require("passport-jwt").Strategy
+const ExtractJwt = require("passport-jwt").ExtractJwt
 const path = require('path')
 
 require('dotenv').config()
@@ -35,9 +37,28 @@ passport.use(new LocalStrategy(
     async (username, password, done) => {
         try {
             const isValid = await services.authentication.validUserCredentials(username, password)
-            console.log(isValid)
             if (isValid) {
                 done(null, {username})
+            } else {
+                done(null, false)
+            }
+        } catch (err) {
+            done(err)
+        }
+    }
+))
+
+const jwtOps = {}
+jwtOps.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken()
+jwtOps.secretOrKey = process.env.JWT_SIGNING_SECRET
+jwtOps.issuer = 'rockpaperscissorsbrawl2d.com'
+jwtOps.audience = 'rockpaperscissorsbrawl2d.com'
+passport.use(new JwtStrategy(jwtOps,
+    async (jwtPayload, done) => {
+        try {
+            const userExists = await services.authentication.doesUserExist(jwtPayload.username)
+            if (userExists) {
+                done(null, {username: jwtPayload.username})
             } else {
                 done(null, false)
             }
