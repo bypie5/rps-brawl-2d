@@ -38,6 +38,17 @@ const msgTypes = {
                     config: { $ref: '/SessionConfig' },
                 }
             }
+        },
+        ERROR: {
+            type: 'ERROR',
+            schema: {
+                id: '/Error',
+                type: 'object',
+                properties: {
+                    type: { type: 'string' },
+                    message: { type: 'string' },
+                }
+            }
         }
     }
 }

@@ -66,6 +66,8 @@ class Session {
 
         this.currState = sessionStates.INITIALIZING
         this.connectedPlayers = new Set() // Set<username>
+
+        this.wsConnections = new Map() // Map<username, ws>
     }
 
     playerConnected (username) {
@@ -78,6 +80,20 @@ class Session {
         }
 
         this.connectedPlayers.add(username)
+    }
+
+    isPlayerConnected (username) {
+        return this.connectedPlayers.has(username)
+    }
+
+    onWsConnection (ws) {
+        this.wsConnections.set(ws.id, ws)
+        console.log(`Player ${ws.id} connected to session: ${this.id}`)
+    }
+
+    onWsDisconnection (id) {
+        this.wsConnections.delete(id)
+        console.log(`Player ${id} disconnected from session: ${this.id}`)
     }
 
     openSession () {

@@ -143,7 +143,7 @@ describe('Testing Game Session Routes', () => {
         chai.expect(res3.text).to.contain('"host":"test"')
     })
 
-    it('Player can join session with /join-private-session and WebSocket client', async () => {
+    it('Player can WebSocket client after calling /join-private-session', async () => {
         const authToken = await login('test', 'test')
         const res = await chai.request(server)
             .post('/api/game-session/create-private-session')
@@ -189,11 +189,24 @@ describe('Testing Game Session Routes', () => {
         })
 
         const p = new Promise((resolve, reject) => {
-            setTimeout(() => {
-                resolve()
-            }, 1000)
+            ws.on('message', (data) => {
+                // does player receive WELCOME message?
+                const msg = JSON.parse(data)
+                if (msgTypes.serverToClient.WELCOME.type === msg.type) {
+                    resolve()
+                }
+            })
         })
 
+        const session = services.sessionManager.findSessionById(sessionId)
+        sinon.spy(session, 'onWsDisconnection')
+
         await p
+        ws.close()
+
+        ws.on('close', () => {
+            chai.expect(session.onWsDisconnection.calledOnce).to.be.true
+            session.onWsDisconnection.restore()
+        })
     })
 })
