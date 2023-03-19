@@ -2,6 +2,8 @@ const Service = require('./service')
 const { v4: uuidv4 } = require('uuid')
 const { v, sessionConfigSchema } = require('../schemas')
 
+const msgTypes = require('../../common/rps2dProtocol')
+
 const sessionStates = {
     INITIALIZING: 'INITIALIZING',
     WAITING_FOR_PLAYERS: 'WAITING_FOR_PLAYERS',
@@ -96,12 +98,31 @@ class Session {
         console.log(`Player ${id} disconnected from session: ${this.id}`)
     }
 
+    broadcast (msg) {
+        for (const ws of this.wsConnections.values()) {
+            ws.send(JSON.stringify(msg))
+        }
+    }
+
     openSession () {
         this.currState = sessionStates.WAITING_FOR_PLAYERS
     }
 
     beginGameSession () {
         this.currState = sessionStates.IN_PROGRESS
+
+        this.broadcast({
+            type: msgTypes.serverToClient.MATCH_STARTED.type,
+            sessionState: this.currState
+        })
+    }
+
+    isInProgress () {
+        return this.currState === sessionStates.IN_PROGRESS
+    }
+
+    getSessionState () {
+        return this.currState
     }
 
     getSessionInfo () {
@@ -167,6 +188,7 @@ class SessionManager extends Service {
     clearSessions () {
         this.privateSessionHosts.clear()
         this.activeSessions.clear()
+        this.sessionIdToFriendlyName.clear()
     }
 
     _generateFriendlyName () {

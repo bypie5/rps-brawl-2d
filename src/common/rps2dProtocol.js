@@ -36,6 +36,18 @@ const msgTypes = {
                     host: { type: 'string' },
                     isPrivate: { type: 'boolean' },
                     config: { $ref: '/SessionConfig' },
+                    sessionState: { type: 'string' },
+                }
+            }
+        },
+        MATCH_STARTED: {
+            type: 'MATCH_STARTED',
+            schema: {
+                id: '/MatchStarted',
+                type: 'object',
+                properties: {
+                    type: { type: 'string' },
+                    sessionState: { type: 'string' },
                 }
             }
         },

@@ -7,7 +7,7 @@ const sessionConfigSchema = {
     properties: {
         maxPlayers: {
             type: 'integer',
-            minimum: 2,
+            minimum: 1,
             maximum: 15,
             required: true
         }

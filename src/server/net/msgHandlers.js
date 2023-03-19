@@ -27,7 +27,8 @@ function onConnectToSession(ws, msg) {
         id: session.id,
         host: session.host,
         isPrivate: session.isPrivate,
-        config: session.config
+        config: session.config,
+        sessionSate: session.getSessionState()
     }))
 
     session.onWsConnection(ws)

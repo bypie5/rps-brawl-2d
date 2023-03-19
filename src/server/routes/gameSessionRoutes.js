@@ -46,7 +46,7 @@ router.post('/join-private-session', (req, res) => {
         })
     } catch (err) {
         if (err.name === 'SessionNotFoundError') {
-            res.status(400).send('Session does not exist')
+            res.status(404).send('Session does not exist')
         } else if (err.name === 'SessionIsFullError') {
             res.status(400).send('Session is full')
         } else if (err.name === 'InvalidFriendlyNameError') {
@@ -57,6 +57,34 @@ router.post('/join-private-session', (req, res) => {
             res.status(500).send('Internal server error')
         }
     }
+})
+
+router.post('/start-session', (req, res) => {
+    const { username } = req.session.passport.user
+    const { sessionId } = req.query
+
+    if (!sessionId) {
+        res.status(400).send('Missing session id')
+        return
+    }
+
+    const session = sessionManager.findSessionById(sessionId)
+    if (!session) {
+        res.status(404).send('Session does not exist')
+        return
+    }
+
+    if (session.host !== username) {
+        res.status(403).send('User is not the host')
+        return
+    }
+
+    if (session.isInProgress()) {
+        res.status(400).send('Session has already started')
+        return
+    }
+
+    session.beginGameSession()
 })
 
 router.get('/session-info', (req, res) => {
