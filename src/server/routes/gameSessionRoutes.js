@@ -2,6 +2,7 @@ const express = require('express')
 const router = express.Router()
 
 const services = require('../services/services')
+const { sessionManager } = services
 
 router.post('/create-private-session', (req, res) => {
     const { username } = req.session.passport.user
@@ -13,8 +14,10 @@ router.post('/create-private-session', (req, res) => {
             return
         }
 
-        services.sessionManager.createPrivateSession(username, config)
-        res.status(200).send('Private session created')
+        const fname = sessionManager.createPrivateSession(username, config)
+        res.status(200).send({
+            friendlyName: fname
+        })
     } catch (err) {
         if (err.name === 'UserIsAlreadyHostError') {
             res.status(400).send('User already has a private session')
@@ -24,6 +27,50 @@ router.post('/create-private-session', (req, res) => {
             res.status(500).send('Internal server error')
         }
     }
+})
+
+router.post('/join-private-session', (req, res) => {
+    const { username } = req.session.passport.user
+
+    const { friendlyName } = req.body
+    console.log(`User ${username} is trying to join session ${friendlyName}`)
+
+    if (!friendlyName) {
+        res.status(400).send('Missing friendly name')
+    }
+
+    try {
+        const id = sessionManager.joinPrivateSession(username, friendlyName)
+        res.status(200).send({
+            sessionId: id
+        })
+    } catch (err) {
+        if (err.name === 'SessionNotFoundError') {
+            res.status(400).send('Session does not exist')
+        } else if (err.name === 'SessionIsFullError') {
+            res.status(400).send('Session is full')
+        } else if (err.name === 'InvalidFriendlyNameError') {
+            res.status(400).send('Invalid friendly name')
+        } else {
+            res.status(500).send('Internal server error')
+        }
+    }
+})
+
+router.get('/session-info', (req, res) => {
+    const { sessionId } = req.query
+    if (!sessionId) {
+        res.status(400).send('Missing session id')
+        return
+    }
+
+    const session = sessionManager.findSessionById(sessionId)
+    if (!session) {
+        res.status(404).send('Session does not exist')
+        return
+    }
+
+    res.status(200).send(JSON.stringify(session))
 })
 
 module.exports = router
