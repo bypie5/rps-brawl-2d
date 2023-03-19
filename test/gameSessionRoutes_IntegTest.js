@@ -25,6 +25,33 @@ describe('Testing Game Session Routes', () => {
     beforeEach(async () => {
         services.sessionManager.clearSessions()
     })
+
+    it('host must provide valid config object', async () => {
+        const authToken = await login('test', 'test')
+        const res = await chai.request(server)
+            .post('/api/game-session/create-private-session')
+            .set('Authorization', `Bearer ${authToken}`)
+            .set('content-type', 'application/json')
+            .send({})
+
+        chai.expect(res).to.have.status(400)
+        chai.expect(res.text).to.be.a('string')
+        chai.expect(res.text).to.equal('Missing session config')
+
+        const res2 = await chai.request(server)
+            .post('/api/game-session/create-private-session')
+            .set('Authorization', `Bearer ${authToken}`)
+            .set('content-type', 'application/json')
+            .send({
+                config: {
+                    dne: 'dne'
+                }
+            })
+
+        chai.expect(res2).to.have.status(400)
+        chai.expect(res2.text).to.be.a('string')
+        chai.expect(res2.text).to.equal('Invalid session config')
+    })
     
     it('should create a private game session', async () => {
         const authToken = await login('test', 'test')
@@ -32,7 +59,11 @@ describe('Testing Game Session Routes', () => {
             .post('/api/game-session/create-private-session')
             .set('Authorization', `Bearer ${authToken}`)
             .set('content-type', 'application/json')
-            .send({})
+            .send({
+                config: {
+                    maxPlayers: 2,
+                }
+            })
 
         chai.expect(res).to.have.status(200)
         chai.expect(res.text).to.be.a('string')
@@ -45,7 +76,11 @@ describe('Testing Game Session Routes', () => {
             .post('/api/game-session/create-private-session')
             .set('Authorization', `Bearer ${authToken}`)
             .set('content-type', 'application/json')
-            .send({})
+            .send({
+                config: {
+                    maxPlayers: 2,
+                }
+            })
 
         chai.expect(res).to.have.status(200)
 
@@ -53,7 +88,11 @@ describe('Testing Game Session Routes', () => {
             .post('/api/game-session/create-private-session')
             .set('Authorization', `Bearer ${authToken}`)
             .set('content-type', 'application/json')
-            .send({})
+            .send({
+                config: {
+                    maxPlayers: 2,
+                }
+            })
 
         chai.expect(res2).to.have.status(400)
         chai.expect(res2.text).to.be.a('string')
