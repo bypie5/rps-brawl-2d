@@ -1,7 +1,6 @@
 const Service = require('./service')
 const { v4: uuidv4 } = require('uuid')
-const Validator = require('jsonschema').Validator
-const v = new Validator()
+const { v, sessionConfigSchema } = require('../schemas')
 
 const sessionStates = {
     INITIALIZING: 'INITIALIZING',
@@ -99,20 +98,7 @@ class Session {
     }
 
     _validateConfig (config) {
-        const schema = {
-            id: '/SessionConfig',
-            type: 'object',
-            properties: {
-                maxPlayers: {
-                    type: 'integer',
-                    minimum: 2,
-                    maximum: 15,
-                    required: true
-                }
-            },
-        }
-
-        return v.validate(config, schema)
+        return v.validate(config, sessionConfigSchema)
     }
 }
 

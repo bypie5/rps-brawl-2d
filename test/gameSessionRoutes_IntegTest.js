@@ -1,8 +1,10 @@
 const chai = require('chai')
 const chaiHttp = require('chai-http')
 const sinon = require('sinon')
+const WebSocket = require('ws')
 
 const { server, services } = require('../src/index')
+const msgTypes = require('../src/common/rps2dProtocol')
 
 chai.use(chaiHttp)
 
@@ -139,5 +141,59 @@ describe('Testing Game Session Routes', () => {
         chai.expect(res3.text).to.be.a('string')
         chai.expect(res3.text).to.contain('id')
         chai.expect(res3.text).to.contain('"host":"test"')
+    })
+
+    it('Player can join session with /join-private-session and WebSocket client', async () => {
+        const authToken = await login('test', 'test')
+        const res = await chai.request(server)
+            .post('/api/game-session/create-private-session')
+            .set('Authorization', `Bearer ${authToken}`)
+            .set('content-type', 'application/json')
+            .send({
+                config: {
+                    maxPlayers: 2,
+                }
+            })
+
+        chai.expect(res).to.have.status(200)
+        chai.expect(res.text).to.be.a('string')
+
+        const friendlyName = JSON.parse(res.text).friendlyName
+
+        const res2 = await chai.request(server)
+            .post('/api/game-session/join-private-session')
+            .set('Authorization', `Bearer ${authToken}`)
+            .set('content-type', 'application/json')
+            .send({
+                friendlyName
+            })
+
+        chai.expect(res2).to.have.status(200)
+        chai.expect(res2.text).to.be.a('string')
+        chai.expect(res2.text).to.contain('sessionId')
+
+        const sessionId = JSON.parse(res2.text).sessionId
+
+        const ws = new WebSocket("ws://localhost:8081", {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        })
+
+        ws.on('open', () => {
+            ws.send(JSON.stringify({
+                type: msgTypes.clientToServer.CONNECT_TO_SESSION.type,
+                sessionId,
+                friendlyName
+            }))
+        })
+
+        const p = new Promise((resolve, reject) => {
+            setTimeout(() => {
+                resolve()
+            }, 1000)
+        })
+
+        await p
     })
 })
