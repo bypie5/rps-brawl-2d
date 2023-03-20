@@ -3,6 +3,7 @@ const { v4: uuidv4 } = require('uuid')
 const { v, sessionConfigSchema } = require('../schemas')
 
 const msgTypes = require('../../common/rps2dProtocol')
+const { buildPlayerEntity } = require('../ecs/entities')
 
 const sessionStates = {
     INITIALIZING: 'INITIALIZING',
@@ -137,6 +138,12 @@ class Session {
             isPrivate: this.isPrivate,
             config: this.config
         }
+    }
+
+    instantiateEntity (components) {
+    }
+
+    generateStartingConditions () {
     }
 
     _validateConfig (config) {
