@@ -22,6 +22,27 @@ const msgTypes = {
                     },
                 }
             }
+        },
+        GAMEPLAY_COMMAND: {
+            type: 'GAMEPLAY_COMMAND',
+            schema: {
+                id: '/GameplayCommand',
+                type: 'object',
+                properties: {
+                    type: {
+                        type: 'string',
+                        required: true
+                    },
+                    gameplayCommandType: {
+                        type: 'string',
+                        required: true
+                    },
+                    payload: {
+                        type: 'object',
+                        required: true
+                    }
+                }
+            }
         }
     },
     serverToClient: {

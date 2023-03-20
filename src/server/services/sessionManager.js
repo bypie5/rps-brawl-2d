@@ -70,6 +70,11 @@ class Session {
         this.connectedPlayers = new Set() // Set<username>
 
         this.wsConnections = new Map() // Map<username, ws>
+
+        this.gameContext = {
+            currentTick: 0,
+            entities: {}
+        }
     }
 
     playerConnected (username) {

@@ -4,6 +4,8 @@ const { v } = require('../../server/schemas')
 const services = require('../services/services')
 const { sessionManager } = services
 
+const handleGameplayCommmand = require('../ecs/commands')
+
 function onConnectToSession(ws, msg) {
     const session = sessionManager.findSessionById(msg.sessionId)
     if (!session) {
@@ -38,6 +40,10 @@ function onConnectToSession(ws, msg) {
     })
 }
 
+function onGameplayCommand(ws, msg) {
+    handleGameplayCommmand(ws, msg.payload, msg.gameplayCommandType)
+}
+
 function handleMessage (ws, message) {
     const msg = JSON.parse(message)
     const msgType = msgTypes.clientToServer[msg.type]
@@ -56,6 +62,9 @@ function handleMessage (ws, message) {
     switch (msg.type) {
         case msgTypes.clientToServer.CONNECT_TO_SESSION.type:            
             onConnectToSession(ws, msg)
+            break
+        case msgTypes.clientToServer.GAMEPLAY_COMMAND.type:
+            onGameplayCommand(ws, msg)
             break
         default:
             console.log('Unknown message type: ' + msg.type)
