@@ -4,6 +4,7 @@ const { v, sessionConfigSchema } = require('../schemas')
 
 const msgTypes = require('../../common/rps2dProtocol')
 const { buildPlayerEntity } = require('../ecs/entities')
+const { levelZero } = require('../levels/level')
 
 const sessionStates = {
     INITIALIZING: 'INITIALIZING',
@@ -117,6 +118,8 @@ class Session {
     beginGameSession () {
         this.currState = sessionStates.IN_PROGRESS
 
+        this.generateStartingConditions()
+
         this.broadcast({
             type: msgTypes.serverToClient.MATCH_STARTED.type,
             sessionState: this.currState
@@ -144,6 +147,14 @@ class Session {
     }
 
     generateStartingConditions () {
+        const mapId = this.config.map
+
+        switch (mapId) {
+            case 'map0':
+                return levelZero()
+            default:
+                throw new Error(`Invalid map id: ${mapId}`)
+        }
     }
 
     _validateConfig (config) {

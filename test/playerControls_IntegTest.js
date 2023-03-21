@@ -41,6 +41,7 @@ describe('Testing situations around gameplay commands', () => {
             .send({
                 config: {
                     maxPlayers: 1,
+                    map: "map0"
                 }
             })
 

@@ -10,6 +10,11 @@ const sessionConfigSchema = {
             minimum: 1,
             maximum: 15,
             required: true
+        },
+        map: {
+            type: 'string',
+            required: true,
+            enum: ['map0', 'map1', 'map2', 'map3']
         }
     }
 }

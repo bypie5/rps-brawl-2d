@@ -1,16 +1,21 @@
 const fs = require('fs')
 
 class LevelDescription {
-    constructor (height, width, tileMap, spawnPointId) {
-        this.height = height
-        this.width = width
+    constructor (tileMap, spawnPointId) {
         this.tileMap = tileMap
         this.spawnPointId = spawnPointId
 
         const data = fs.readFileSync(tileMap)
         this.tileMapData = JSON.parse(data)
 
+        this.width = this.tileMapData.width
+        this.height = this.tileMapData.height
+
         this.spawnPoints = this._defineSpawnPoints()
+    }
+
+    getDimensions () {
+        return { width: this.width, height: this.height }
     }
 
     getSpawnPoints () {
@@ -39,6 +44,9 @@ class LevelDescription {
     }
 }
 
-const simplePlane = new LevelDescription(15, 15, './src/resources/plane.json', 26)
 
-//module.exports = LevelDescription
+module.exports = {
+    levelZero: () => {
+        return new LevelDescription('./src/resources/plane.json', 26)
+    }
+}
