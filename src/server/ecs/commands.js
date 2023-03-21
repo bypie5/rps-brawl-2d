@@ -41,7 +41,28 @@ const handlers = {
         const sender = ws.id
         const session = services.sessionManager.findSessionByUser(sender)
         if (session) {
-            console.log(`applying move command to session ${session.id} for user ${sender}`)
+            const { entityId, direction } = payload
+            const { Transform } = session.getEntity(entityId)
+            if (!Transform) {
+                return
+            }
+
+            switch (direction) {
+                case 'up':
+                    Transform.yVel = 1
+                    break
+                case 'down':
+                    Transform.yVel = -1
+                    break
+                case 'left':
+                    Transform.yVel = -1
+                    break
+                case 'right':
+                    Transform.yVel = 1
+                    break
+                default:
+                    break
+            }
         }
     }
 }

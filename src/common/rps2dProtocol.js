@@ -72,6 +72,17 @@ const msgTypes = {
                 }
             }
         },
+        GAMESTATE_UPDATE: {
+            type: 'GAMESTATE_UPDATE',
+            schema: {
+                id: '/GameStateUpdate',
+                type: 'object',
+                properties: {
+                    type: { type: 'string' },
+                    gameContext: { type: 'object' },
+                }
+            }
+        },
         ERROR: {
             type: 'ERROR',
             schema: {

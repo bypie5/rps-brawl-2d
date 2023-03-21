@@ -84,6 +84,8 @@ class Session {
             currentTick: 0,
             entities: {}
         }
+
+        let gameLoopInterval = null
     }
 
     playerConnected (username) {
@@ -126,6 +128,10 @@ class Session {
         this.currState = sessionStates.IN_PROGRESS
 
         this.generateStartingConditions()
+
+        this.gameLoopInterval = setInterval(() => {
+            this._coreGameLoop()
+        }, 1000 / 30)
 
         this.broadcast({
             type: msgTypes.serverToClient.MATCH_STARTED.type,
@@ -198,6 +204,12 @@ class Session {
 
         // increment tick
         this.gameContext.currentTick += 1
+
+        // broadcast game state
+        this.broadcast({
+            type: msgTypes.serverToClient.GAMESTATE_UPDATE.type,
+            gameContext: this.gameContext
+        })
     }
 
     _validateConfig (config) {

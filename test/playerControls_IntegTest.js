@@ -91,18 +91,31 @@ describe('Testing situations around gameplay commands', () => {
                     chai.expect(res4).to.have.status(200)
                 }
 
-                // does player receive MATCH_STARTED message?
-                if (msgTypes.serverToClient.MATCH_STARTED.type === msg.type) {
-                    ws.send(JSON.stringify({
-                        type: msgTypes.clientToServer.GAMEPLAY_COMMAND.type,
-                        gameplayCommandType: commandTypes.MOVE,
-                        payload: {
-                            entityId: '0',
-                            direction: 'up'
-                        }
-                    }))
+                if (msgTypes.serverToClient.GAMESTATE_UPDATE.type === msg.type) {
+                    const gameContext = msg.gameContext
+                    const { entities } = gameContext
 
-                    // resolve()
+                    for (const [id, entity] of Object.entries(entities)) {
+                        if (entity.Avatar
+                            && entity.Avatar.playerId === 'test'
+                            && entity.Transform.yVel === 0) {
+                            ws.send(JSON.stringify({
+                                type: msgTypes.clientToServer.GAMEPLAY_COMMAND.type,
+                                gameplayCommandType: commandTypes.MOVE,
+                                payload: {
+                                    entityId: id,
+                                    direction: 'up'
+                                }
+                            }))
+                        }
+
+                        if (entity.Avatar
+                            && entity.Avatar.playerId === 'test'
+                            && entity.Transform.yVel !== 0
+                        ) {
+                            resolve()
+                        }
+                    }
                 }
             })
         })
