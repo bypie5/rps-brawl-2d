@@ -38,6 +38,15 @@ const components = {
                 }
             }
         }
+    },
+    SpawnPoint: {
+        name: 'SpawnPoint',
+        schema: {
+            id: '/SpawnPoint',
+            type: 'object',
+            properties: {
+            }
+        }
     }
 }
 

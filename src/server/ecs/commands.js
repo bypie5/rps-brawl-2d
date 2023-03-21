@@ -30,7 +30,7 @@ for (const msgType in gameplayCommands) {
 }
 
 const handlers = {
-    [gameplayCommands.move.type]: (payload) => {
+    [gameplayCommands.move.type]: (ws, payload) => {
         // check that payload matches schema
         const validationResult = v.validate(payload, gameplayCommands.move.schema)
         if (!validationResult.valid) {
@@ -38,14 +38,18 @@ const handlers = {
             return
         }
 
-        console.log('move command received')
+        const sender = ws.id
+        const session = services.sessionManager.findSessionByUser(sender)
+        if (session) {
+            console.log(`applying move command to session ${session.id} for user ${sender}`)
+        }
     }
 }
 
 function handleGameplayCommand(ws, msg, type) {
     const handler = handlers[type]
     if (handler) {
-        handler(msg.payload)
+        handler(ws, msg)
     }
 }
 

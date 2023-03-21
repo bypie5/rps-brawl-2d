@@ -3,7 +3,14 @@ const { v4: uuidv4 } = require('uuid')
 const { v, sessionConfigSchema } = require('../schemas')
 
 const msgTypes = require('../../common/rps2dProtocol')
-const { buildPlayerEntity } = require('../ecs/entities')
+const {
+    buildPlayerEntity,
+    buildSpawnPointEntity
+} = require('../ecs/entities')
+const {
+    physics,
+    spawn
+} = require('../ecs/systems')
 const { levelZero } = require('../levels/level')
 
 const sessionStates = {
@@ -144,17 +151,53 @@ class Session {
     }
 
     instantiateEntity (components) {
+        const id = uuidv4()
+        this.gameContext.entities[id] = components
+        return id
+    }
+
+    getEntity (id) {
+        return this.gameContext.entities[id]
     }
 
     generateStartingConditions () {
         const mapId = this.config.map
 
+        let map
         switch (mapId) {
             case 'map0':
-                return levelZero()
+                map = levelZero()
+                break
             default:
                 throw new Error(`Invalid map id: ${mapId}`)
         }
+
+        console.log(`Generating starting conditions for map: ${mapId}`)
+
+        const spawnPoints = map.getSpawnPoints()
+        for (const spawnPoint of spawnPoints) {
+            const { x, y } = spawnPoint
+            const spawnPointEntity = buildSpawnPointEntity(x, y)
+            this.instantiateEntity(spawnPointEntity)
+        }
+
+        const playerEntities = []
+
+        for (const username of this.connectedPlayers) {
+            const playerEntity = buildPlayerEntity(username, 0, 0)
+            playerEntities.push(playerEntity)
+
+            this.instantiateEntity(playerEntity)
+        }
+    }
+
+    _coreGameLoop () {
+        // invoke systems
+        physics(this.gameContext)
+        spawn(this.gameContext)
+
+        // increment tick
+        this.gameContext.currentTick += 1
     }
 
     _validateConfig (config) {
@@ -169,6 +212,7 @@ class SessionManager extends Service {
         this.privateSessionHosts = new Map() // Map<hostId, sessionId>
         this.sessionIdToFriendlyName = new Map() // Map<sessionId, friendlyName>
         this.activeSessions = new Map()
+        this.playerToSession = new Map() // Map<username, sessionId>
     }
 
     createPrivateSession (hostUsername, config) {
@@ -200,7 +244,8 @@ class SessionManager extends Service {
             throw new SessionNotFoundError('Session does not exist')
         }
 
-        session.playerConnected(username)
+        this._connectPlayerToSession(username, sessionId)
+
         return sessionId
     }
 
@@ -208,10 +253,29 @@ class SessionManager extends Service {
         return this.activeSessions.get(sessionId)
     }
 
+    findSessionByUser (username) {
+        const sessionId = this.playerToSession.get(username)
+        if (!sessionId) {
+            return null
+        }
+
+        return this.activeSessions.get(sessionId)
+    }
+
     clearSessions () {
         this.privateSessionHosts.clear()
         this.activeSessions.clear()
         this.sessionIdToFriendlyName.clear()
+    }
+
+    _connectPlayerToSession (username, sessionId) {
+        const session = this.activeSessions.get(sessionId)
+        if (!session) {
+            throw new SessionNotFoundError('Session does not exist')
+        }
+
+        session.playerConnected(username)
+        this.playerToSession.set(username, sessionId)
     }
 
     _generateFriendlyName () {
