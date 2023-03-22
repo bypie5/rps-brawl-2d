@@ -18,11 +18,37 @@ function buildPlayerEntity (playerId, x, y) {
             playerId: playerId,
             state: 'respawning',
             speed: 1,
+            hitBoxSize: 3,
             stateData: {
                 lives: 3,
                 rockPaperScissors: randomRockPaperScissors(),
                 ticksSinceStartedRespawning: -1
             }
+        }
+    }
+
+    for (const component in components) {
+        const validationResult = v.validate(entity[components[component].name], components[component].schema)
+        if (!validationResult.valid) {
+            console.log('Invalid component: ' + validationResult.errors)
+            return
+        }
+    }
+
+    return entity
+}
+
+function buildBarrierEntity (gridWidth, x, y) {
+    const entity = {
+        [components.Transform.name]: {
+            xPos: x,
+            yPos: y,
+            xVel: 0,
+            yVel: 0
+        },
+        [components.Barrier.name]: {},
+        [components.HitBox.name]: {
+            size: gridWidth
         }
     }
 
@@ -61,5 +87,6 @@ function buildSpawnPointEntity (x, y) {
 
 module.exports = {
     buildPlayerEntity,
+    buildBarrierEntity,
     buildSpawnPointEntity
 }

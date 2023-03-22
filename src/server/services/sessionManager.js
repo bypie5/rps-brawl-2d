@@ -84,6 +84,7 @@ class Session {
             currentTick: 0,
             deltaTime: 0,
             lastTickTime: 0,
+            gridWidth: 0,
             entities: {}
         }
 
@@ -147,6 +148,11 @@ class Session {
         })
     }
 
+    endGameSession () {
+        clearInterval(this.gameLoopInterval)
+        this.gameLoopInterval = null
+    }
+
     isInProgress () {
         return this.currState === sessionStates.IN_PROGRESS
     }
@@ -203,6 +209,8 @@ class Session {
 
             this.instantiateEntity(playerEntity)
         }
+
+        this.gameContext.gridWidth = map.getGridWidth()
     }
 
     _coreGameLoop () {
@@ -285,6 +293,10 @@ class SessionManager extends Service {
     }
 
     clearSessions () {
+        for (const session of this.activeSessions.values()) {
+            session.endGameSession()
+        }
+
         this.privateSessionHosts.clear()
         this.activeSessions.clear()
         this.sessionIdToFriendlyName.clear()

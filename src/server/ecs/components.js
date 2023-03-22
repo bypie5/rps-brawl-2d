@@ -42,6 +42,11 @@ const components = {
                     minimum: 0,
                     maximum: 2
                 },
+                hitBoxSize: {
+                    type: 'number',
+                    required: true,
+                    value: 3
+                },
                 state: {
                     type: 'string',
                     required: true,
@@ -51,6 +56,28 @@ const components = {
                     type: 'object',
                     required: true,
                 }
+            }
+        }
+    },
+    HitBox: {
+        name: 'HitBox',
+        schema: {
+            id: '/HitBox',
+            type: 'object',
+            properties: {
+                size: {
+                    type: 'number',
+                    required: true,
+                }
+            }
+        }
+    },
+    Barrier: {
+        name: 'Barrier',
+        schema: {
+            id: '/Barrier',
+            type: 'object',
+            properties: {
             }
         }
     },

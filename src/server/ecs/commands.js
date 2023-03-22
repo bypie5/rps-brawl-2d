@@ -55,13 +55,20 @@ const handlers = {
                     Transform.yVel = -1
                     break
                 case 'left':
-                    Transform.yVel = -1
+                    Transform.xVel = -1
                     break
                 case 'right':
-                    Transform.yVel = 1
+                    Transform.xVel = 1
                     break
                 default:
                     break
+            }
+
+            // ensure magnitude of velocity is 1
+            const magnitude = Math.sqrt(Math.pow(Transform.xVel, 2) + Math.pow(Transform.yVel, 2))
+            if (magnitude > 1) {
+                Transform.xVel /= magnitude
+                Transform.yVel /= magnitude
             }
         }
     }

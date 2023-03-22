@@ -107,6 +107,14 @@ describe('Testing situations around gameplay commands', () => {
                                     direction: 'up'
                                 }
                             }))
+                            ws.send(JSON.stringify({
+                                type: msgTypes.clientToServer.GAMEPLAY_COMMAND.type,
+                                gameplayCommandType: commandTypes.MOVE,
+                                payload: {
+                                    entityId: id,
+                                    direction: 'right'
+                                }
+                            }))
                         }
 
                         if (entity.Avatar
