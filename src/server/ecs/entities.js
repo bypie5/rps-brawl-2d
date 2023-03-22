@@ -18,12 +18,14 @@ function buildPlayerEntity (playerId, x, y) {
             playerId: playerId,
             state: 'respawning',
             speed: 1,
-            hitBoxSize: 3,
             stateData: {
                 lives: 3,
                 rockPaperScissors: randomRockPaperScissors(),
                 ticksSinceStartedRespawning: -1
             }
+        },
+        [components.HitBox.name]: {
+            size: 3
         }
     }
 

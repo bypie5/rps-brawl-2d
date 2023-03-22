@@ -1,10 +1,11 @@
 const fs = require('fs')
 
 class LevelDescription {
-    constructor (tileMap, gridWidth, spawnPointId) {
+    constructor (tileMap, gridWidth, spawnPointId, barrierTileIds) {
         this.tileMap = tileMap
         this.gridWidth = gridWidth
         this.spawnPointId = spawnPointId
+        this.barrierTileIds = barrierTileIds
 
         const data = fs.readFileSync(tileMap)
         this.tileMapData = JSON.parse(data)
@@ -27,6 +28,23 @@ class LevelDescription {
         return this.gridWidth
     }
 
+    findBarrierTiles (onTileFound) {
+        const layer1 = this.tileMapData.layers[0]
+        const tileData = layer1.data
+
+        for (let y = 0; y > -this.height; y--) {
+            for (let x = 0; x < this.width; x++) {
+                const tileIndex = (Math.abs(y) * this.width) + x
+                const tileId = tileData[tileIndex]
+                if (this.barrierTileIds.includes(tileId)) {
+                    const xPos = x * this.gridWidth
+                    const yPos = y * this.gridWidth
+                    onTileFound(xPos, yPos)
+                }
+            }
+        }
+    }
+
     _defineSpawnPoints () {
         // by convention. layer 1 contains spawn point locations
         const layer2 = this.tileMapData.layers[1]
@@ -40,7 +58,9 @@ class LevelDescription {
                 const tileIndex = (Math.abs(y) * this.width) + x
                 const tileId = tileData[tileIndex]
                 if (tileId === this.spawnPointId) {
-                    spawnPoints.push({ x: x, y: y })
+                    const xPos = x * this.gridWidth
+                    const yPos = y * this.gridWidth                
+                    spawnPoints.push({ x: xPos, y: yPos })
                 }
             }
         }
@@ -52,6 +72,6 @@ class LevelDescription {
 
 module.exports = {
     levelZero: () => {
-        return new LevelDescription('./src/resources/plane.json', 5, 26)
+        return new LevelDescription('./src/resources/plane.json', 5, 26, [2])
     }
 }

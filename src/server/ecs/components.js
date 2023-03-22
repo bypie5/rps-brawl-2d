@@ -42,11 +42,6 @@ const components = {
                     minimum: 0,
                     maximum: 2
                 },
-                hitBoxSize: {
-                    type: 'number',
-                    required: true,
-                    value: 3
-                },
                 state: {
                     type: 'string',
                     required: true,

@@ -5,6 +5,7 @@ const { v, sessionConfigSchema } = require('../schemas')
 const msgTypes = require('../../common/rps2dProtocol')
 const {
     buildPlayerEntity,
+    buildBarrierEntity,
     buildSpawnPointEntity
 } = require('../ecs/entities')
 const {
@@ -193,6 +194,12 @@ class Session {
         }
 
         console.log(`Generating starting conditions for map: ${mapId}`)
+
+        const mapGridWith = map.getGridWidth()
+        map.findBarrierTiles((x, y) => {
+            const barrierEntity = buildBarrierEntity(mapGridWith, x, y)
+            this.instantiateEntity(barrierEntity)
+        })
 
         const spawnPoints = map.getSpawnPoints()
         for (const spawnPoint of spawnPoints) {
