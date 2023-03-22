@@ -35,6 +35,21 @@ const components = {
                 playerId: {
                     type: 'string',
                     required: true,
+                },
+                speed: {
+                    type: 'number',
+                    required: true,
+                    minimum: 0,
+                    maximum: 2
+                },
+                state: {
+                    type: 'string',
+                    required: true,
+                    enum: ['dead', 'alive', 'respawning', 'spectating']
+                },
+                stateData: {
+                    type: 'object',
+                    required: true,
                 }
             }
         }

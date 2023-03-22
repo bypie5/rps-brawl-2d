@@ -82,10 +82,12 @@ class Session {
 
         this.gameContext = {
             currentTick: 0,
+            deltaTime: 0,
+            lastTickTime: 0,
             entities: {}
         }
 
-        let gameLoopInterval = null
+        this.gameLoopInterval = null
     }
 
     playerConnected (username) {
@@ -128,6 +130,12 @@ class Session {
         this.currState = sessionStates.IN_PROGRESS
 
         this.generateStartingConditions()
+
+        this.gameContext.lastTickTime = Date.now()
+
+        if (this.gameLoopInterval) {
+            clearInterval(this.gameLoopInterval)
+        }
 
         this.gameLoopInterval = setInterval(() => {
             this._coreGameLoop()
@@ -198,12 +206,14 @@ class Session {
     }
 
     _coreGameLoop () {
+        this.gameContext.deltaTime = Date.now() - this.gameContext.lastTickTime
         // invoke systems
         physics(this.gameContext)
         spawn(this.gameContext)
 
         // increment tick
         this.gameContext.currentTick += 1
+        this.gameContext.lastTickTime = Date.now()
 
         // broadcast game state
         this.broadcast({

@@ -1,6 +1,11 @@
 const components = require('./components')
 const { v } = require('../schemas')
 
+function randomRockPaperScissors () {
+    const rps = ['rock', 'paper', 'scissors']
+    return rps[Math.floor(Math.random() * rps.length)]
+}
+
 function buildPlayerEntity (playerId, x, y) {
     const entity = {
         [components.Transform.name]: {
@@ -10,7 +15,14 @@ function buildPlayerEntity (playerId, x, y) {
             yVel: 0
         },
         [components.Avatar.name]: {
-            playerId: playerId
+            playerId: playerId,
+            state: 'respawning',
+            speed: 1,
+            stateData: {
+                lives: 3,
+                rockPaperScissors: randomRockPaperScissors(),
+                ticksSinceStartedRespawning: -1
+            }
         }
     }
 
