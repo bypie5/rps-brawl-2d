@@ -1,14 +1,81 @@
 const sessionContext = {
-    authToken: null
+    authToken: null,
+    username: null
 }
 
 const baseUrl = 'http://localhost:8080/'
 
+const pages = {
+    login: 'loginPage.html',
+    findMatch: 'findMatch.html',
+}
+
+function _compileTemplates (doc, pageName, html) {
+    function findAndReplaceTemplates (doc, templates) {
+        for (const id in templates) {
+            const content = doc.getElementById(id).innerHTML
+            const result = new RegExp(/{{.*}}/).exec(content)
+            if (result) {
+                for (const match of result) {
+                    const tag = match
+                    const replacement = templates[id](tag)
+                    doc.getElementById(id).innerHTML = content.replace(tag, replacement)
+                }   
+            }
+        }
+    }
+
+    switch (pageName) {
+        case pages.login:
+            break
+        case pages.findMatch:
+            findAndReplaceTemplates(
+                doc, {
+                    'find-match-welcome-msg': (tag) => {
+                        if (tag === '{{username}}') {
+                            return getSessionContext().username
+                        }
+                        return tag
+                    }
+                }
+            )
+            break
+        default:
+            throw new Error(`Invalid page name: ${pageName}`)
+    }
+
+    return doc
+}
+
 async function _loadHtmlContent (pageName) {
     const res = await fetch(baseUrl + pageName)
     const html = await res.text()
-    return html
+    const parser = new DOMParser()
+    const doc = parser.parseFromString(html, 'text/html')
+    _replacePage(_compileTemplates(doc, pageName, html))
 }
+
+function _replaceHead (html) {
+    document.head.innerHTML = html
+}
+
+function _replaceBody (newBody) {
+    document.body.innerHTML = newBody.innerHTML
+}
+
+function _replacePage (doc) {
+    const body = doc.body
+    const head = doc.head
+
+    _replaceHead(head.innerHTML)
+    _replaceBody(body)
+}
+
+function getSessionContext () {
+    return sessionContext
+}
+
+window.getSessionContext = getSessionContext
 
 function onRouteLoad () {
     checkIsAuthenticated()
@@ -16,9 +83,12 @@ function onRouteLoad () {
 
 window.onRouteLoad = onRouteLoad
 
+/*
+* redirects user to login page if not authenticated
+*/
 async function checkIsAuthenticated () {
     if (!sessionContext.authToken) {
-        document.body.innerHTML = await _loadHtmlContent('loginPage.html')
+        await _loadHtmlContent(pages.login)
     }
 }
 
@@ -45,9 +115,8 @@ async function login (e) {
         if (res.status === 200) {
             const { authToken } = await res.json()
             sessionContext.authToken = authToken
-            
-            // update dom content to index.html
-            document.body.innerHTML = await _loadHtmlContent('index.html')
+            sessionContext.username = username
+            await _loadHtmlContent(pages.findMatch)
         } else {
             alert('Login failed - invalid credentials')
         }
