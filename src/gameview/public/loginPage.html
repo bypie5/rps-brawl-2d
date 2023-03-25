@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Rock, Paper, Scissors: Brawl 2D - Login</title>
+        <style>
+            body { margin: 0 }
+        </style>
+        <link rel="stylesheet" href="./styles/style.css">
+    </head>
+    <body onload="onRouteLoad()">
+        <script type="text/javascript" src="main.js"></script>
+        <div id="login-header">
+            <h1>Rock, Paper, Scissors: Brawl 2D - Login</h1>
+            <h2>Please sign into your account.</h2>
+        </div>
+        <div id="login-container">
+            <form id="login-form" action="#" onsubmit="login(event)">
+                <div>
+                    <label for="username">Username:</label>
+                    <input type="text" id="username" name="username">
+                </div>
+                <div>
+                    <label for="password">Password:</label>
+                    <input type="password" id="password" name="password">
+                </div>
+                <input type="submit" value="Login">
+            </form>
+        </div>
+    </body>
+</html>

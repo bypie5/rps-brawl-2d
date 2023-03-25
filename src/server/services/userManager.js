@@ -19,6 +19,15 @@ class UserManager extends Service {
 
         return rows
     }
+
+    async getUser (username) {
+        const [rows, fields] = await this.dbPool.execute(
+            `SELECT * FROM users WHERE user_name = ?`,
+            [username]
+        )
+
+        return rows
+    }
 }
 
 module.exports = UserManager

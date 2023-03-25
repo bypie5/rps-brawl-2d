@@ -208,4 +208,144 @@ describe('Testing situations around gameplay commands', () => {
 
         await p
     })
+
+    it('Player remains contained by barrier while moving', async () => {
+        const authToken = await login('test', 'test')
+        const res = await chai.request(server)
+            .post('/api/game-session/create-private-session')
+            .set('Authorization', `Bearer ${authToken}`)
+            .set('content-type', 'application/json')
+            .send({
+                config: {
+                    maxPlayers: 1,
+                    map: "map0"
+                }
+            })
+
+        chai.expect(res).to.have.status(200)
+        chai.expect(res.text).to.be.a('string')
+
+        const friendlyName = JSON.parse(res.text).friendlyName
+
+        const res2 = await chai.request(server)
+            .post('/api/game-session/join-private-session')
+            .set('Authorization', `Bearer ${authToken}`)
+            .set('content-type', 'application/json')
+            .send({
+                friendlyName
+            })
+
+        chai.expect(res2).to.have.status(200)
+        chai.expect(res2.text).to.be.a('string')
+        chai.expect(res2.text).to.contain('sessionId')
+
+        const sessionId = JSON.parse(res2.text).sessionId
+
+        const ws = new WebSocket("ws://localhost:8081", {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        })
+
+        ws.on('open', () => {
+            ws.send(JSON.stringify({
+                type: msgTypes.clientToServer.CONNECT_TO_SESSION.type,
+                sessionId,
+                friendlyName
+            }))
+        })
+
+        const p = new Promise((resolve, reject) => {
+            ws.on('message', async (data) => {
+                const msg = JSON.parse(data)
+                if (msgTypes.serverToClient.WELCOME.type === msg.type) {
+                    const res4 = await chai.request(server)
+                        .post('/api/game-session/start-session?sessionId=' + sessionId)
+                        .set('Authorization', `Bearer ${authToken}`)
+                        .set('content-type', 'application/json')
+                        .send({})
+
+                    chai.expect(res4).to.have.status(200)
+                }
+
+                //console.log(msg)
+
+                if (msgTypes.serverToClient.GAMESTATE_UPDATE.type === msg.type) {
+                    const gameContext = msg.gameContext
+                    const { entities } = gameContext
+
+                    let playerId = null
+                    for (const [id, entity] of Object.entries(entities)) {
+                        if (entity.Avatar) {
+                            playerId = id
+                        }
+                    }
+                    let player = entities[playerId]
+
+                    console.log(player.Transform.xPos, player.Transform.yPos)
+
+                    // find closest barrier
+                    let closestBarrier = null
+                    let closestBarrierDistance = Infinity
+                    for (const [id, entity] of Object.entries(entities)) {
+                        if (entity.Barrier) {
+                            const distance = Math.sqrt(
+                                Math.pow(entity.Transform.xPos - player.Transform.xPos, 2)
+                                + Math.pow(entity.Transform.yPos - player.Transform.yPos, 2)
+                            )
+
+                            if (distance < closestBarrierDistance) {
+                                closestBarrier = entity
+                                closestBarrierDistance = distance
+                            }
+                        }
+                    }
+
+                    console.log(`closest barrier: ${closestBarrier.Transform.xPos}, ${closestBarrier.Transform.yPos}`)
+
+                    // move player towards barrier
+                    const xVel = closestBarrier.Transform.xPos - player.Transform.xPos
+                    const yVel = closestBarrier.Transform.yPos - player.Transform.yPos
+
+                    let direction = null
+                    if (Math.abs(xVel) > Math.abs(yVel)) {
+                        direction = xVel > 0 ? 'right' : 'left'
+                    } else {
+                        direction = yVel > 0 ? 'up' : 'down'
+                    }
+
+                    ws.send(JSON.stringify({
+                        type: msgTypes.clientToServer.GAMEPLAY_COMMAND.type,
+                        gameplayCommandType: commandTypes.MOVE,
+                        payload: {
+                            entityId: playerId,
+                            direction
+                        }
+                    }))
+
+                    console.log(`moving ${direction}`)
+
+                    // wait for player to move
+                    /*await new Promise((resolve, reject) => {
+                        setTimeout(resolve, 3500)
+                    })*/
+
+                    player = entities[playerId]
+
+                    console.log(player.Transform.xPos, player.Transform.yPos)
+
+                    // check if player is still within barrier
+                    const distance = Math.sqrt(
+                        Math.pow(closestBarrier.Transform.xPos - player.Transform.xPos, 2)
+                        + Math.pow(closestBarrier.Transform.yPos - player.Transform.yPos, 2)
+                    )
+
+                    console.log(`distance: ${distance}`)
+                    console.log(`closestBarrierDistance: ${closestBarrierDistance}`)
+                }
+            })
+        })
+
+        await p
+    })
 })
