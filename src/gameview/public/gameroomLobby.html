@@ -11,19 +11,11 @@
         <script type="text/javascript" src="main.js"></script>
     </head>
     <body onload="onRouteLoad()">
-        <script type="importmap">
-            {
-              "imports": {
-                "three": "https://unpkg.com/three@0.142.0/build/three.module.js"
-              }
-            }
-        </script>
-        <div>
-            <h1>Rock, Paper, Scissors: Brawl 2D - Prototype</h1>
-        </div>
-        <div id="game-container">
-            <canvas id="game-canvas"></canvas>
-            <div id="game-ui"></div>
+        <div id="find-match-header">
+            <h1>Lobby</h1>
+            <p id="find-match-welcome-msg">
+                Waiting for match to start
+            </p>
         </div>
     </body>
 </html>

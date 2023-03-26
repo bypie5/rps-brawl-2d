@@ -1,3 +1,8 @@
+.subtitle {
+    margin-bottom: 0;
+    padding: 0;
+}
+
 #container {
     position: relative;
     width: 100%;
@@ -46,10 +51,75 @@
     align-items: center;
 }
 
+#private-match-controls {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+}
+
 #login-input-field {
     margin: 10px;
     display: flex;
     flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+#find-match-header {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+#find-match-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+#join-match-inputs {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+#join-match-button {
+    margin-top: 10px;
+}
+
+#create-match-button {
+    margin-top: 10px;
+}
+
+#create-private-match-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+#create-private-match {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+#join-private-match {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
     justify-content: center;
     align-items: center;
 }

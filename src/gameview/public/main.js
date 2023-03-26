@@ -1,6 +1,8 @@
 const sessionContext = {
     authToken: null,
-    username: null
+    username: null,
+    sessionId: null,
+    sessionJoinCode: null,
 }
 
 const baseUrl = 'http://localhost:8080/'
@@ -8,9 +10,10 @@ const baseUrl = 'http://localhost:8080/'
 const pages = {
     login: 'loginPage.html',
     findMatch: 'findMatch.html',
+    gameroomLobby: 'gameroomLobby.html',
 }
 
-function _compileTemplates (doc, pageName, html) {
+function _compileTemplates (doc, pageName) {
     function findAndReplaceTemplates (doc, templates) {
         for (const id in templates) {
             const content = doc.getElementById(id).innerHTML
@@ -20,7 +23,7 @@ function _compileTemplates (doc, pageName, html) {
                     const tag = match
                     const replacement = templates[id](tag)
                     doc.getElementById(id).innerHTML = content.replace(tag, replacement)
-                }   
+                }
             }
         }
     }
@@ -39,6 +42,8 @@ function _compileTemplates (doc, pageName, html) {
                     }
                 }
             )
+            break
+        case pages.gameroomLobby:
             break
         default:
             throw new Error(`Invalid page name: ${pageName}`)
@@ -99,9 +104,8 @@ async function login (e) {
 
     const username = document.getElementById('username').value
     const password = document.getElementById('password').value
-
     try {
-        const res = await fetch('http://localhost:8080/api/user/login', {
+        const res = await fetch(`${baseUrl}api/user/login`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -127,3 +131,69 @@ async function login (e) {
 }
 
 window.login = login
+
+async function createPrivateMatch (event) {
+    event.preventDefault()
+
+    try {
+        const res = await fetch(`${baseUrl}api/game-session/create-private-session`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${sessionContext.authToken}`,
+            },
+            body: JSON.stringify({
+                config: {
+                    maxPlayers: 10,
+                    map: "map0"
+                }
+            })
+        })
+
+        if (res.status !== 200) {
+            alert(`Failed to create match - ${res.statusText}`)
+            return
+        }
+
+        const { friendlyName } = await res.json()
+        sessionContext.sessionJoinCode = friendlyName
+
+        await _loadHtmlContent(pages.gameroomLobby)
+    } catch (err) {
+        console.error(err)
+        alert('Failed to create match')
+    }
+}
+
+async function joinPrivateMatch (event) {
+    event.preventDefault()
+
+    const matchId = document.getElementById('private-match-id-input').value
+    try {
+        const res = await fetch(`${baseUrl}join-private-session`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${sessionContext.authToken}`,
+            },
+            body: JSON.stringify({
+                friendlyName: matchId
+            })
+        })
+
+        if (res.status !== 200) {
+            alert(`Failed to join match - ${res.statusText}`)
+            return
+        }
+
+        const { sessionId } = await res.json()
+        sessionContext.sessionId = sessionId
+
+        await _loadHtmlContent(pages.gameroomLobby)
+    } catch (err) {
+        console.error(err)
+        alert('Failed to join match')
+    }
+}
+
+window.joinPrivateMatch = joinPrivateMatch

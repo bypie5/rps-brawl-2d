@@ -2,6 +2,7 @@
 <html>
     <head>
         <meta charset="utf-8">
+        <link rel="icon" type="image/png" href="./favicon.png" />
         <title>Rock, Paper, Scissors: Brawl 2D</title>
         <style>
             body { margin: 0 }
@@ -14,12 +15,43 @@
             <h1>Rock, Paper, Scissors: Brawl 2D - Prototype</h1>
             <p id="find-match-welcome-msg">Welcome, {{username}}.</p>
         </div>
-        <div id="find-match-container">
-            <div id="join-private-match">
-                <h2>Join a Private Match</h2>
-                <div>
-                    <label for="private-match-id">Match ID:</label>
-                    <input type="text" id="private-match-id" name="private-match-id" maxlength="6">
+        <hr/>
+        <div id="private-match-controls">
+            <div id="create-private-match-container">
+                <div id="create-private-match">
+                    <h2 class="subtitle">Create Private Match</h2>
+                    <p>
+                        You will receive a code that can be used to allow other to join.
+                    </p>
+                    <button
+                        id="create-match-button"
+                        onclick="createPrivateMatch(event)"
+                    >
+                        Host a Match
+                    </button>
+                </div>
+            </div>
+            <div id="find-match-container">
+                <div id="join-private-match">
+                    <h2 class="subtitle">Join a Private Match</h2>
+                    <p>Please enter a match code to join the match.</p>
+                    <div id="join-match-inputs">
+                        <label for="private-match-id">Match ID:</label>
+                        <input
+                            type="text"
+                            id="private-match-id-input"
+                            name="private-match-id"
+                            maxlength="6"
+                            size="8"
+                            onkeydown="return /[A-Z]/i.test(event.key)"
+                        >
+                        <button
+                            id="join-match-button"
+                            onclick="joinPrivateMatch(event)"
+                        >
+                            Join
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
