@@ -76,11 +76,11 @@ function _compileTemplates (doc, pageName) {
                         }
 
                         if (tag === '{{connectedplayers}}') {
-                            return 0
+                            return getSessionContext().sessionInfo.connectedPlayers.length
                         }
 
                         if (tag === '{{maxplayers}}') {
-                            return 0
+                            return getSessionContext().sessionInfo.config.maxPlayers
                         }
 
                         return tag.replace('{{', '').replace('}}', '')
