@@ -3,6 +3,12 @@ const sessionContext = {
     username: null,
     sessionId: null,
     sessionJoinCode: null,
+    host: null,
+    sessionInfo: {
+        host: null,
+        config: null,
+        connectedPlayers: null,
+    }
 }
 
 const baseUrl = 'http://localhost:8080/'
@@ -16,15 +22,23 @@ const pages = {
 function _compileTemplates (doc, pageName) {
     function findAndReplaceTemplates (doc, templates) {
         for (const id in templates) {
-            const content = doc.getElementById(id).innerHTML
-            const result = new RegExp(/{{.*}}/).exec(content)
-            if (result) {
-                for (const match of result) {
-                    const tag = match
-                    const replacement = templates[id](tag)
-                    doc.getElementById(id).innerHTML = content.replace(tag, replacement)
+            let content = doc.getElementById(id).innerHTML
+            const re = new RegExp(/{{[a-z]*}}/)
+            let result
+            do {
+                result = re.exec(content)
+                if (result) {
+                    for (const match of result) {
+                        let tag = match
+                        tag = tag.split('}}')[0]
+                        tag += '}}'
+                        const replacement = templates[id](tag)
+                        content = content.replace(tag, replacement)
+                        doc.getElementById(id).innerHTML = content
+
+                    }
                 }
-            }
+            } while (result)
         }
     }
 
@@ -44,6 +58,35 @@ function _compileTemplates (doc, pageName) {
             )
             break
         case pages.gameroomLobby:
+            findAndReplaceTemplates(
+                doc, {
+                    'gameroom-lobby-matchcode': (tag) => {
+                        if (tag === '{{matchcode}}') {
+                            return getSessionContext().sessionJoinCode
+                        }
+                        return tag
+                    },
+                    'gameroom-subtext': (tag) => {
+                        if (tag === '{{mapname}}') {
+                            return getSessionContext().sessionInfo.config.map
+                        }
+
+                        if (tag === '{{sessionhost}}') {
+                            return getSessionContext().sessionInfo.host
+                        }
+
+                        if (tag === '{{connectedplayers}}') {
+                            return 0
+                        }
+
+                        if (tag === '{{maxplayers}}') {
+                            return 0
+                        }
+
+                        return tag.replace('{{', '').replace('}}', '')
+                    }
+                }
+            )
             break
         default:
             throw new Error(`Invalid page name: ${pageName}`)
@@ -60,8 +103,8 @@ async function _loadHtmlContent (pageName) {
     _replacePage(_compileTemplates(doc, pageName, html))
 }
 
-function _replaceHead (html) {
-    document.head.innerHTML = html
+function _replaceHead (head) {
+    document.head.innerHTML = head.innerHTML
 }
 
 function _replaceBody (newBody) {
@@ -72,7 +115,7 @@ function _replacePage (doc) {
     const body = doc.body
     const head = doc.head
 
-    _replaceHead(head.innerHTML)
+    _replaceHead(head)
     _replaceBody(body)
 }
 
@@ -156,9 +199,7 @@ async function createPrivateMatch (event) {
         }
 
         const { friendlyName } = await res.json()
-        sessionContext.sessionJoinCode = friendlyName
-
-        await _loadHtmlContent(pages.gameroomLobby)
+        _joinPrivateSession(friendlyName)
     } catch (err) {
         console.error(err)
         alert('Failed to create match')
@@ -170,26 +211,7 @@ async function joinPrivateMatch (event) {
 
     const matchId = document.getElementById('private-match-id-input').value
     try {
-        const res = await fetch(`${baseUrl}join-private-session`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${sessionContext.authToken}`,
-            },
-            body: JSON.stringify({
-                friendlyName: matchId
-            })
-        })
-
-        if (res.status !== 200) {
-            alert(`Failed to join match - ${res.statusText}`)
-            return
-        }
-
-        const { sessionId } = await res.json()
-        sessionContext.sessionId = sessionId
-
-        await _loadHtmlContent(pages.gameroomLobby)
+        _joinPrivateSession(matchId)
     } catch (err) {
         console.error(err)
         alert('Failed to join match')
@@ -197,3 +219,44 @@ async function joinPrivateMatch (event) {
 }
 
 window.joinPrivateMatch = joinPrivateMatch
+
+async function _joinPrivateSession (friendlyName) {
+    const res = await fetch(`${baseUrl}api/game-session/join-private-session`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${sessionContext.authToken}`,
+        },
+        body: JSON.stringify({
+            friendlyName: friendlyName
+        })
+    })
+
+    if (res.status !== 200) {
+        alert(`Failed to join match - ${res.statusText}`)
+        return
+    }
+
+    const { sessionId } = await res.json()
+    sessionContext.sessionJoinCode = friendlyName
+    _getSessionInfo(sessionId)
+}
+
+async function _getSessionInfo (sessionId) {
+    sessionContext.sessionId = sessionId
+
+    const res = await fetch(`${baseUrl}api/game-session/session-info?sessionId=${sessionId}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${sessionContext.authToken}`,
+        }
+    })
+
+    const { host, config, connectedPlayers } = await res.json()
+    sessionContext.sessionInfo.host = host
+    sessionContext.sessionInfo.config = config
+    sessionContext.sessionInfo.connectedPlayers = connectedPlayers
+
+    await _loadHtmlContent(pages.gameroomLobby)
+}

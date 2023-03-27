@@ -37,6 +37,7 @@ router.post('/join-private-session', (req, res) => {
 
     if (!friendlyName) {
         res.status(400).send('Missing friendly name')
+        return
     }
 
     try {
@@ -100,7 +101,13 @@ router.get('/session-info', (req, res) => {
         return
     }
 
-    res.status(200).send(JSON.stringify(session))
+    res.status(200).send({
+        id: session.id,
+        host: session.host,
+        friendlyName: session.friendlyName,
+        config: session.config,
+        connectedPlayers: session.getConnectedPlayers(),
+    })
 })
 
 module.exports = router

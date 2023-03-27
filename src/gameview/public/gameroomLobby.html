@@ -11,11 +11,21 @@
         <script type="text/javascript" src="main.js"></script>
     </head>
     <body onload="onRouteLoad()">
-        <div id="find-match-header">
-            <h1>Lobby</h1>
+        <div id="gameroom-lobby-header">
+            <h1>Private Lobby</h1>
             <p id="find-match-welcome-msg">
                 Waiting for match to start
             </p>
+        </div>
+        <hr/>
+        <div id="gameroom-lobby-container">
+            <h2 class="subtitle" id="gameroom-lobby-matchcode">
+                Match Code: {{matchcode}}
+            </h2>
+            <p id="gameroom-subtext">
+                Host: {{sessionhost}}. Map: {{mapname}}. Players connected - {{connectedplayers}}/{{maxplayers}}
+            </p>
+            {{connectedplayernames}}
         </div>
     </body>
 </html>

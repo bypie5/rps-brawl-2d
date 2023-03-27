@@ -108,6 +108,10 @@ class Session {
         return this.connectedPlayers.has(username)
     }
 
+    getConnectedPlayers () {
+        return Array.from(this.connectedPlayers)
+    }
+
     onWsConnection (ws) {
         this.wsConnections.set(ws.id, ws)
         console.log(`Player ${ws.id} connected to session: ${this.id}`)
