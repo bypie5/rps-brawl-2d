@@ -25,7 +25,12 @@
             <p id="gameroom-subtext">
                 Host: {{sessionhost}}. Map: {{mapname}}. Players connected - {{connectedplayers}}/{{maxplayers}}
             </p>
-            {{connectedplayernames}}
+            <div id="gameroom-connectplayers">
+                <table>
+                    {{connectedplayernames}}
+                </table>
+            </div>
+            <button onclick="startMatch(event)">Start Match</button>
         </div>
     </body>
 </html>

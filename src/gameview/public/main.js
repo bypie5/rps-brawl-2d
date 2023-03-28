@@ -3,7 +3,6 @@ const sessionContext = {
     username: null,
     sessionId: null,
     sessionJoinCode: null,
-    host: null,
     sessionInfo: {
         host: null,
         config: null,
@@ -17,6 +16,46 @@ const pages = {
     login: 'loginPage.html',
     findMatch: 'findMatch.html',
     gameroomLobby: 'gameroomLobby.html',
+}
+
+function _onLoginLoaded () {
+}
+
+function _onFindMatchLoaded () {
+}
+
+function _onGameroomLobbyLoaded () {
+    setInterval(async () => {
+        // poll for session info
+        const sessionId = sessionContext.sessionId
+        const res = await fetch(`/api/game-session/session-info?sessionId=${sessionId}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${sessionContext.authToken}`,
+            }
+        })
+    
+        const { host, config, connectedPlayers } = await res.json()
+        sessionContext.sessionInfo.host = host
+        sessionContext.sessionInfo.config = config
+        sessionContext.sessionInfo.connectedPlayers = connectedPlayers
+        _redrawPage(pages.gameroomLobby)
+    }, 2500)
+}
+
+function _onPageLoaded (pageName) {
+    switch (pageName) {
+        case pages.login:
+            _onLoginLoaded()
+            break
+        case pages.findMatch:
+            _onFindMatchLoaded()
+            break
+        case pages.gameroomLobby:
+            _onGameroomLobbyLoaded()
+            break
+    }
 }
 
 function _compileTemplates (doc, pageName) {
@@ -35,7 +74,6 @@ function _compileTemplates (doc, pageName) {
                         const replacement = templates[id](tag)
                         content = content.replace(tag, replacement)
                         doc.getElementById(id).innerHTML = content
-
                     }
                 }
             } while (result)
@@ -84,6 +122,13 @@ function _compileTemplates (doc, pageName) {
                         }
 
                         return tag.replace('{{', '').replace('}}', '')
+                    },
+                    'gameroom-connectplayers': (tag) => {
+                        if (tag === '{{connectedplayernames}}') {
+                            return getSessionContext().sessionInfo.connectedPlayers.join(', ')
+                        }
+
+                        return tag.replace('{{', '').replace('}}', '')
                     }
                 }
             )
@@ -96,26 +141,34 @@ function _compileTemplates (doc, pageName) {
 }
 
 async function _loadHtmlContent (pageName) {
-    const res = await fetch(baseUrl + pageName)
+    const res = await fetch("/" + pageName)
+    const html = await res.text()
+    const parser = new DOMParser()
+    const doc = parser.parseFromString(html, 'text/html')
+    _replacePage(_compileTemplates(doc, pageName, html))
+    _onPageLoaded(pageName)
+}
+
+async function _redrawPage (pageName) {
+    const res = await fetch(pageName)
     const html = await res.text()
     const parser = new DOMParser()
     const doc = parser.parseFromString(html, 'text/html')
     _replacePage(_compileTemplates(doc, pageName, html))
 }
 
-function _replaceHead (head) {
-    document.head.innerHTML = head.innerHTML
-}
-
 function _replaceBody (newBody) {
-    document.body.innerHTML = newBody.innerHTML
+    const fragment = document.createDocumentFragment()
+    while (newBody.firstChild) {
+        fragment.appendChild(newBody.firstChild)
+    }
+    
+    document.body.replaceChildren(fragment)
 }
 
 function _replacePage (doc) {
     const body = doc.body
-    const head = doc.head
 
-    _replaceHead(head)
     _replaceBody(body)
 }
 
@@ -148,7 +201,7 @@ async function login (e) {
     const username = document.getElementById('username').value
     const password = document.getElementById('password').value
     try {
-        const res = await fetch(`${baseUrl}api/user/login`, {
+        const res = await fetch(`/api/user/login`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -179,7 +232,7 @@ async function createPrivateMatch (event) {
     event.preventDefault()
 
     try {
-        const res = await fetch(`${baseUrl}api/game-session/create-private-session`, {
+        const res = await fetch(`/api/game-session/create-private-session`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -220,8 +273,14 @@ async function joinPrivateMatch (event) {
 
 window.joinPrivateMatch = joinPrivateMatch
 
+async function startMatch (event) {
+    event.preventDefault()
+}
+
+window.startMatch = startMatch
+
 async function _joinPrivateSession (friendlyName) {
-    const res = await fetch(`${baseUrl}api/game-session/join-private-session`, {
+    const res = await fetch(`/api/game-session/join-private-session`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -245,7 +304,7 @@ async function _joinPrivateSession (friendlyName) {
 async function _getSessionInfo (sessionId) {
     sessionContext.sessionId = sessionId
 
-    const res = await fetch(`${baseUrl}api/game-session/session-info?sessionId=${sessionId}`, {
+    const res = await fetch(`/api/game-session/session-info?sessionId=${sessionId}`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
