@@ -107,6 +107,7 @@ router.get('/session-info', (req, res) => {
         friendlyName: session.friendlyName,
         config: session.config,
         connectedPlayers: session.getConnectedPlayers(),
+        state: session.getSessionState()
     })
 })
 

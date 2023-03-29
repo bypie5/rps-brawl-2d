@@ -7,6 +7,8 @@ const sessionContext = {
         host: null,
         config: null,
         connectedPlayers: null,
+        hasMatchStarted: false,
+        state: null
     },
     ws: null,
     isWsConnectionAnonymous: true,
@@ -20,6 +22,7 @@ const pages = {
     login: 'loginPage.html',
     findMatch: 'findMatch.html',
     gameroomLobby: 'gameroomLobby.html',
+    gameroom: 'gameroom.html',
 }
 
 async function _upgradeWsConnection (retriesLeft = 3) {
@@ -94,6 +97,9 @@ function _onMessage (event) {
 
             sessionContext.isWsConnectedToSession = true
             break
+        case "MATCH_STARTED":
+            sessionContext.sessionInfo.hasMatchStarted = true
+            break
         case "ERROR":
             console.log('Received error message: ' + msg.message)
             break
@@ -119,7 +125,7 @@ function _onFindMatchLoaded () {
 
 function _onGameroomLobbyLoaded () {
     _connectWsToSession(sessionContext.sessionId)
-    setInterval(async () => {
+    const poll = setInterval(async () => {
         // poll for session info
         const sessionId = sessionContext.sessionId
         const res = await fetch(`/api/game-session/session-info?sessionId=${sessionId}`, {
@@ -130,12 +136,21 @@ function _onGameroomLobbyLoaded () {
             }
         })
     
-        const { host, config, connectedPlayers } = await res.json()
+        const { host, config, connectedPlayers, state } = await res.json()
         sessionContext.sessionInfo.host = host
         sessionContext.sessionInfo.config = config
         sessionContext.sessionInfo.connectedPlayers = connectedPlayers
+        sessionContext.sessionInfo.state = state
         _redrawPage(pages.gameroomLobby)
+
+        if (sessionContext.sessionInfo.state === 'IN_PROGRESS') {
+            clearInterval(poll)
+            await _loadHtmlContent(pages.gameroom)
+        }
     }, 2500)
+}
+
+function _onGameroomLoaded () {
 }
 
 function _onPageLoaded (pageName) {
@@ -148,6 +163,12 @@ function _onPageLoaded (pageName) {
             break
         case pages.gameroomLobby:
             _onGameroomLobbyLoaded()
+            break
+        case pages.gameroom:
+            _onGameroomLoaded()
+            break
+        default:
+            console.log('Unknown page: ' + pageName)
             break
     }
 }
@@ -226,6 +247,8 @@ function _compileTemplates (doc, pageName) {
                     }
                 }
             )
+            break
+        case pages.gameroom:
             break
         default:
             throw new Error(`Invalid page name: ${pageName}`)
@@ -370,6 +393,26 @@ window.joinPrivateMatch = joinPrivateMatch
 
 async function startMatch (event) {
     event.preventDefault()
+    
+    try {
+        const res = await fetch(`/api/game-session/start-session?sessionId=${sessionContext.sessionId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${sessionContext.authToken}`,
+            }
+        })
+
+        if (res.status !== 200) {
+            alert(`Failed to start match - ${res.statusText}`)
+            return
+        }
+
+        console.log('Match started')
+    } catch (err) {
+        console.error(err)
+        alert('Failed to start match - ' + err)
+    }
 }
 
 window.startMatch = startMatch
