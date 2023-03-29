@@ -7,15 +7,108 @@ const sessionContext = {
         host: null,
         config: null,
         connectedPlayers: null,
-    }
+    },
+    ws: null,
+    isWsConnectionAnonymous: true,
+    isWsConnectedToSession: false,
 }
 
 const baseUrl = 'http://localhost:8080/'
+const wsUrl = 'ws://localhost:8081'
 
 const pages = {
     login: 'loginPage.html',
     findMatch: 'findMatch.html',
     gameroomLobby: 'gameroomLobby.html',
+}
+
+async function _upgradeWsConnection (retriesLeft = 3) {
+    if (sessionContext.isWsConnectionAnonymous === false) {
+        return true
+    }
+
+    if (retriesLeft === 0) {
+        console.error('Failed to upgrade websocket connection')
+        return false
+    }
+
+    if (!sessionContext.ws || sessionContext.ws.readyState !== WebSocket.OPEN) {
+        console.warn('Websocket connection not open, skipping upgrade')
+        return false
+    }
+
+    sessionContext.ws.send(JSON.stringify({
+        type: "UPGRADE_ANONYMOUS_WS",
+        authToken: sessionContext.authToken
+    }))
+
+    if (sessionContext.isWsConnectionAnonymous === false) {
+        return true
+    }
+
+    let waitTimeout = new Promise((resolve, reject) => {
+        setTimeout(() => {
+            resolve()
+        }, 2500)
+    })
+    await waitTimeout
+
+    return _upgradeWsConnection(retriesLeft - 1)
+}
+
+async function _onWsOpen (event) {
+    console.log('Websocket connection opened')
+    if (!sessionContext.authToken) {
+        console.warn('No auth token found, skipping upgrade')
+        return
+    }
+
+    const upgraded = await _upgradeWsConnection()
+    if (!upgraded) {
+        console.warn('Failed to upgrade websocket connection')
+        return
+    }
+}
+
+function _connectWsToSession (sessionId) {
+    sessionContext.ws.send(JSON.stringify({
+        type: "CONNECT_TO_SESSION",
+        sessionId: sessionId,
+        friendlyName: sessionContext.sessionJoinCode
+    }))
+}
+
+function _onMessage (event) {
+    const msg = JSON.parse(event.data)
+
+    switch (msg.type) {
+        case "UPGRADED_WS_CONNECTION":
+            sessionContext.isWsConnectionAnonymous = false
+            break
+        case "WELCOME":
+            const { id } = msg
+            if (id !== sessionContext.sessionId) {
+                console.log('Received WELCOME message for wrong session')
+                return
+            }
+
+            sessionContext.isWsConnectedToSession = true
+            break
+        case "ERROR":
+            console.log('Received error message: ' + msg.message)
+            break
+        default:
+            console.log('Unknown message type: ' + msg.type)
+            break
+    }
+}
+
+function _openWebSocket () {
+    sessionContext.ws = new WebSocket(wsUrl)
+
+    // upgrade anonymous websocket connection sending message with auth token
+    sessionContext.ws.addEventListener('open', _onWsOpen)
+    sessionContext.ws.addEventListener('message', _onMessage)
 }
 
 function _onLoginLoaded () {
@@ -25,6 +118,7 @@ function _onFindMatchLoaded () {
 }
 
 function _onGameroomLobbyLoaded () {
+    _connectWsToSession(sessionContext.sessionId)
     setInterval(async () => {
         // poll for session info
         const sessionId = sessionContext.sessionId
@@ -216,6 +310,7 @@ async function login (e) {
             const { authToken } = await res.json()
             sessionContext.authToken = authToken
             sessionContext.username = username
+            _openWebSocket()
             await _loadHtmlContent(pages.findMatch)
         } else {
             alert('Login failed - invalid credentials')
@@ -223,7 +318,7 @@ async function login (e) {
     } catch (err) {
         console.error(err)
         alert('Login failed - server error')
-    }
+    }    
 }
 
 window.login = login

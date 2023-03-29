@@ -23,6 +23,23 @@ const msgTypes = {
                 }
             }
         },
+        UPGRADE_ANONYMOUS_WS: {
+            type: 'UPGRADE_ANONYMOUS_WS',
+            schema: {
+                id: '/UpgradeAnonymousWs',
+                type: 'object',
+                properties: {
+                    type: {
+                        type: 'string',
+                        required: true
+                    },
+                    authToken: {
+                        type: 'string',
+                        required: true
+                    }
+                }
+            }
+        },
         GAMEPLAY_COMMAND: {
             type: 'GAMEPLAY_COMMAND',
             schema: {
@@ -80,6 +97,16 @@ const msgTypes = {
                 properties: {
                     type: { type: 'string' },
                     gameContext: { type: 'object' },
+                }
+            }
+        },
+        UPGRADED_WS_CONNECTION: {
+            type: 'UPGRADED_WS_CONNECTION',
+            schema: {
+                id: '/UpgradedWsConnection',
+                type: 'object',
+                properties: {
+                    type: { type: 'string' },
                 }
             }
         },

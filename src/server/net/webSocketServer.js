@@ -28,11 +28,15 @@ class WebSocketServer {
     }
 
     onConnection (ws, req) {
-        const authToken = req.headers['authorization'].split(' ')[1]
-        const claims = authentication.getJwtClaims(authToken)
-        const username = claims.username
+        if (!req.headers['authorization']) {
+            console.log('Anonymous connection opened')
+        } else {
+            const authToken = req.headers['authorization'].split(' ')[1]
+            const claims = authentication.getJwtClaims(authToken)
+            const username = claims.username
 
-        ws.id = username
+            ws.id = username
+        }
         ws.on('message', (message) => this.onMessage(ws, message))
     }
 
