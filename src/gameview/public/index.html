@@ -8,7 +8,15 @@
             body { margin: 0 }
         </style>
         <link rel="stylesheet" href="./styles/style.css">
+        <script type="importmap">
+            {
+              "imports": {
+                "three": "https://unpkg.com/three@0.142.0/build/three.module.js"
+              }
+            }
+        </script>
         <script type="text/javascript" src="main.js"></script>
+        <script type="module" src="gameRender.js"></script>
     </head>
     <body onload="onRouteLoad()">
     </body>

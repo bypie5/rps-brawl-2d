@@ -8,14 +8,17 @@ const sessionContext = {
         config: null,
         connectedPlayers: null,
         hasMatchStarted: false,
-        state: null
+        state: null,
+        latestReceivedGameState: null,
+        latestReceivedGameStateTick: -1,
+        entitiesInScene: new Map(), // Map<entityId, entity>
+        threeJsIdToEntityId: new Map(), // Map<threeJsId, entityId>
     },
     ws: null,
     isWsConnectionAnonymous: true,
     isWsConnectedToSession: false,
 }
 
-const baseUrl = 'http://localhost:8080/'
 const wsUrl = 'ws://localhost:8081'
 
 const pages = {
@@ -103,6 +106,20 @@ function _onMessage (event) {
         case "ERROR":
             console.log('Received error message: ' + msg.message)
             break
+        case "GAMESTATE_UPDATE":
+            const { gameContext } = msg
+            if (!gameContext) {
+                console.log('Received GAMESTATE_UPDATE message with no gameContext')
+                return
+            }
+
+            if (gameContext.currentTick >= sessionContext.sessionInfo.latestReceivedGameStateTick) {
+                sessionContext.sessionInfo.latestReceivedGameState = gameContext
+                sessionContext.sessionInfo.latestReceivedGameStateTick = gameContext.currentTick
+
+                _pruneEntitiesInScene()
+            }
+            break
         default:
             console.log('Unknown message type: ' + msg.type)
             break
@@ -151,6 +168,13 @@ function _onGameroomLobbyLoaded () {
 }
 
 function _onGameroomLoaded () {
+}
+
+function _pruneEntitiesInScene () {
+    const { entities } = sessionContext.sessionInfo.latestReceivedGameState
+    for (const entity of Object.entries(entities)) {
+        console.log(entity)
+    }
 }
 
 function _onPageLoaded (pageName) {
