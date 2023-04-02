@@ -11,8 +11,9 @@ const sessionContext = {
         state: null,
         latestReceivedGameState: null,
         latestReceivedGameStateTick: -1,
-        entitiesInScene: new Map(), // Map<entityId, entity>
+        entitiesInScene: new Map(), // Map<entityId, components>
         threeJsIdToEntityId: new Map(), // Map<threeJsId, entityId>
+        renderer: null // GameRenderer
     },
     ws: null,
     isWsConnectionAnonymous: true,
@@ -168,12 +169,43 @@ function _onGameroomLobbyLoaded () {
 }
 
 function _onGameroomLoaded () {
+    try {
+        const renderer = startRenderer(sessionContext.sessionInfo.config)
+        sessionContext.sessionInfo.renderer = renderer
+    } catch (e) {
+        console.log(e)
+        alert('Failed to start renderer :(')
+    }
 }
 
 function _pruneEntitiesInScene () {
     const { entities } = sessionContext.sessionInfo.latestReceivedGameState
     for (const entity of Object.entries(entities)) {
-        console.log(entity)
+        const [entityId, entityComponents] = entity
+        if (!sessionContext.sessionInfo.entitiesInScene.has(entityId)) {
+            // new entity, add to scene
+            sessionContext.sessionInfo.entitiesInScene.set(entityId, entityComponents)
+
+            // add to renderer
+            if (sessionContext.sessionInfo.renderer) {
+                sessionContext.sessionInfo.renderer.onEntityAdded(entityId, entityComponents)
+            }
+        }
+
+        // update components
+        sessionContext.sessionInfo.entitiesInScene.set(entityId, entityComponents)
+    }
+
+    // entity no longer exists, remove from scene
+    for (const [entityId, entityComponents] of sessionContext.sessionInfo.entitiesInScene) {
+        if (!entities[entityId]) {
+            sessionContext.sessionInfo.entitiesInScene.delete(entityId)
+
+            // remove from renderer
+            if (sessionContext.sessionInfo.renderer) {
+                sessionContext.sessionInfo.renderer.onEntityRemoved(entityId)
+            }
+        }
     }
 }
 
