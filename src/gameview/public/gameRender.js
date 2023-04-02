@@ -64,9 +64,41 @@ async function _loadTileSheet (scene, url, tileWidth) {
     return spriteMaterials
 }
 
-function _buildBarrierEntity (spriteTile, components) {
+function _buildSpriteEntity (spriteTile, components) {
+    const { HitBox, Transform } = components
     const sprite = new THREE.Sprite(spriteTile)
-    sprite.scale.set(1, 1, 1)
+    sprite.scale.set(HitBox.size, HitBox.size, 1)
+
+    sprite.position.x = Transform.xPos
+    sprite.position.y = Transform.yPos
+
+    return sprite
+}
+
+function _buildPlayerEntity (components) {
+    const { Avatar, HitBox, Transform } = components
+    let spriteAvatarUri = null
+    switch (Avatar.stateData.rockPaperScissors) {
+        case 'rock':
+            spriteAvatarUri = 'assets/rock_avatar.png'
+            break
+        case 'paper':
+            spriteAvatarUri = 'assets/paper_avatar.png'
+            break
+        case 'scissors':
+            spriteAvatarUri = 'assets/scissors_avatar.png'
+            break
+        default:
+            throw new Error('Invalid rock paper scissors state')
+    }
+
+    const spriteTile = new THREE.TextureLoader().load(spriteAvatarUri)
+    const spriteMaterial = new THREE.SpriteMaterial({ map: spriteTile })
+    const sprite = new THREE.Sprite(spriteMaterial)
+    sprite.scale.set(HitBox.size, HitBox.size, 1)
+
+    sprite.position.x = Transform.xPos
+    sprite.position.y = Transform.yPos
 
     return sprite
 }
@@ -98,22 +130,37 @@ class GameRender {
 
         this.isRendering = false
 
+        this.entityIdThreeJsIdMap = new Map()
+
         // index of sprites in the tilesheet corresponds to the sprite' id - 1 (i.e. sprite id 1 is at index 0)
-        this.spriteMaterials = _loadTileSheet(this.scene, 'assets/haunted_house.png', 64)
+        _loadTileSheet(this.scene, 'assets/haunted_house.png', 64).then((spriteMaterials) => {
+            this.spriteMaterials = spriteMaterials
+        })
     }
 
     render () {
         this.renderer.render(this.scene, this.camera)
         if (this.isRendering) {
             let self = this
+
+            // update the camera position to follow the player
+
             requestAnimationFrame(() => {
                 self.render()
             })
         }
     }
 
+    isEntityInScene (entityId) {
+        return this.entityIdThreeJsIdMap.has(entityId)
+    }
+
     onEntityAdded (entityId, entityComponents) {
-        this._addEntityToScene(entityId, entityComponents)
+        try {
+            return this._addEntityToScene(entityId, entityComponents)
+        } catch (err) {
+            console.log(err)
+        }
     }
 
     onEntityRemoved (entityId) {
@@ -121,7 +168,6 @@ class GameRender {
     }
 
     start () {
-        this._loadLevel()
         this.isRendering = true
         this.render()
     }
@@ -130,34 +176,39 @@ class GameRender {
         this.isRendering = false
     }
 
-    async _loadLevel () {
-        const { map } = this.sessionConfig
-
-        let levelMapUri = null
-        switch (map) {
-            case 'map0':
-                levelMapUri = 'assets/plane.json'
-                break
-            default:
-                alert('Unknown map')
-                console.log('Unknown map' + map)
-                return
-        }
-
-        const levelData = await fetch(levelMapUri)
-
-        if (!levelData) {
-            throw new Error('Could not load level')
-        }
-
-        const levelMap = await levelData.json()
-        const { layers } = levelMap
-        const levelTiles = layers[0].data
-        const spawnPoints = layers[1].data
-    }
-
     _addEntityToScene (entityId, entityComponents) {
-    }
+        if (this.isEntityInScene(entityId)) {
+            return
+        }
+
+        if (!this.spriteMaterials) {
+            return
+        }
+
+        let threeJsId = null
+        if (entityComponents.Barrier && entityComponents.Transform && entityComponents.HitBox) {
+            const spriteId = Number(entityComponents.Barrier.spriteId)
+            const spriteTile = this.spriteMaterials[spriteId - 1]
+            const barrier = _buildSpriteEntity(spriteTile, entityComponents)
+            this.scene.add(barrier)
+            this.entityIdThreeJsIdMap.set(entityId, barrier.id)
+            threeJsId = barrier.id
+        } else if (entityComponents.Terrain && entityComponents.Transform && entityComponents.HitBox) {
+            const spriteId = Number(entityComponents.Terrain.spriteId)
+            const spriteTile = this.spriteMaterials[spriteId - 1]
+            const terrain = _buildSpriteEntity(spriteTile, entityComponents)
+            this.scene.add(terrain)
+            this.entityIdThreeJsIdMap.set(entityId, terrain.id)
+            threeJsId = terrain.id
+        } else if (entityComponents.Avatar && entityComponents.Transform && entityComponents.HitBox) {
+            const avatar = _buildPlayerEntity(entityComponents)
+            this.scene.add(avatar)
+            this.entityIdThreeJsIdMap.set(entityId, avatar.id)
+            threeJsId = avatar.id
+        }
+
+        return threeJsId
+    } 
 
     _removeEntityFromScene (entityId) {
     }

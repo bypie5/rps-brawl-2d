@@ -168,9 +168,9 @@ function _onGameroomLobbyLoaded () {
     }, 2500)
 }
 
-function _onGameroomLoaded () {
+async function _onGameroomLoaded () {
     try {
-        const renderer = startRenderer(sessionContext.sessionInfo.config)
+        const renderer = await startRenderer(sessionContext.sessionInfo.config)
         sessionContext.sessionInfo.renderer = renderer
     } catch (e) {
         console.log(e)
@@ -185,15 +185,16 @@ function _pruneEntitiesInScene () {
         if (!sessionContext.sessionInfo.entitiesInScene.has(entityId)) {
             // new entity, add to scene
             sessionContext.sessionInfo.entitiesInScene.set(entityId, entityComponents)
-
-            // add to renderer
-            if (sessionContext.sessionInfo.renderer) {
-                sessionContext.sessionInfo.renderer.onEntityAdded(entityId, entityComponents)
-            }
         }
 
         // update components
         sessionContext.sessionInfo.entitiesInScene.set(entityId, entityComponents)
+
+        // add to renderer
+        if (sessionContext.sessionInfo.renderer && !sessionContext.sessionInfo.renderer.isEntityInScene(entityId)) {
+            const threeJsId = sessionContext.sessionInfo.renderer.onEntityAdded(entityId, entityComponents)
+            sessionContext.sessionInfo.threeJsIdToEntityId.set(threeJsId, entityId)
+        }
     }
 
     // entity no longer exists, remove from scene

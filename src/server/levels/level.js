@@ -39,7 +39,24 @@ class LevelDescription {
                 if (this.barrierTileIds.includes(tileId)) {
                     const xPos = x * this.gridWidth
                     const yPos = y * this.gridWidth
-                    onTileFound(xPos, yPos)
+                    onTileFound(xPos, yPos, tileId)
+                }
+            }
+        }
+    }
+
+    findTerrainTiles (onTileFound) {
+        const layer1 = this.tileMapData.layers[0]
+        const tileData = layer1.data
+
+        for (let y = 0; y > -this.height; y--) {
+            for (let x = 0; x < this.width; x++) {
+                const tileIndex = (Math.abs(y) * this.width) + x
+                const tileId = tileData[tileIndex]
+                if (!this.barrierTileIds.includes(tileId)) {
+                    const xPos = x * this.gridWidth
+                    const yPos = y * this.gridWidth
+                    onTileFound(xPos, yPos, tileId)
                 }
             }
         }

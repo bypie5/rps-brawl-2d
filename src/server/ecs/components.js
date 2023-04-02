@@ -73,6 +73,23 @@ const components = {
             id: '/Barrier',
             type: 'object',
             properties: {
+                spriteId: {
+                    type: 'number',
+                    required: true,
+                }
+            }
+        }
+    },
+    Terrain: {
+        name: 'Terrain',
+        schema: {
+            id: '/Terrain',
+            type: 'object',
+            properties: {
+                spriteId: {
+                    type: 'number',
+                    required: true,
+                }
             }
         }
     },

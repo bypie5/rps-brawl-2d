@@ -6,6 +6,7 @@ const msgTypes = require('../../common/rps2dProtocol')
 const {
     buildPlayerEntity,
     buildBarrierEntity,
+    buildTerrainEntity,
     buildSpawnPointEntity
 } = require('../ecs/entities')
 const {
@@ -200,9 +201,14 @@ class Session {
         console.log(`Generating starting conditions for map: ${mapId}`)
 
         const mapGridWith = map.getGridWidth()
-        map.findBarrierTiles((x, y) => {
-            const barrierEntity = buildBarrierEntity(mapGridWith, x, y)
+        map.findBarrierTiles((x, y, spriteId) => {
+            const barrierEntity = buildBarrierEntity(mapGridWith, x, y, spriteId)
             this.instantiateEntity(barrierEntity)
+        })
+
+        map.findTerrainTiles((x, y, spriteId) => {
+            const terrainEntity = buildTerrainEntity(mapGridWith, x, y, spriteId)
+            this.instantiateEntity(terrainEntity)
         })
 
         const spawnPoints = map.getSpawnPoints()
