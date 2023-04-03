@@ -13,7 +13,8 @@ const sessionContext = {
         latestReceivedGameStateTick: -1,
         entitiesInScene: new Map(), // Map<entityId, components>
         threeJsIdToEntityId: new Map(), // Map<threeJsId, entityId>
-        renderer: null // GameRenderer
+        renderer: null, // GameRenderer
+        playersAvatarId: null,
     },
     ws: null,
     isWsConnectionAnonymous: true,
@@ -82,6 +83,28 @@ function _connectWsToSession (sessionId) {
         type: "CONNECT_TO_SESSION",
         sessionId: sessionId,
         friendlyName: sessionContext.sessionJoinCode
+    }))
+}
+
+function _sendMoveCommand (entityId, direction) {
+    sessionContext.ws.send(JSON.stringify({
+        type: "GAMEPLAY_COMMAND",
+        gameplayCommandType: "MOVE",
+        payload: {
+            entityId,
+            direction
+        }
+    }))
+}
+
+function _stopMoveCommand (entityId, direction) {
+    sessionContext.ws.send(JSON.stringify({
+        type: "GAMEPLAY_COMMAND",
+        gameplayCommandType: "STOP",
+        payload: {
+            entityId,
+            direction
+        }
     }))
 }
 
@@ -170,8 +193,45 @@ function _onGameroomLobbyLoaded () {
 
 async function _onGameroomLoaded () {
     try {
-        const renderer = await startRenderer(sessionContext.sessionInfo.config)
+        const renderer = await startRenderer(sessionContext.sessionInfo.config, sessionContext.username)
         sessionContext.sessionInfo.renderer = renderer
+
+        // add event listeners for player input
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'w') {
+                _sendMoveCommand(sessionContext.sessionInfo.playersAvatarId, 'up')
+            }
+            
+            if (event.key === 'a') {
+                _sendMoveCommand(sessionContext.sessionInfo.playersAvatarId, 'left')
+            }
+            
+            if (event.key === 's') {
+                _sendMoveCommand(sessionContext.sessionInfo.playersAvatarId, 'down')
+            }
+            
+            if (event.key === 'd') {
+                _sendMoveCommand(sessionContext.sessionInfo.playersAvatarId, 'right')
+            }
+        })
+
+        document.addEventListener('keyup', (event) => {
+            if (event.key === 'w') {
+                _stopMoveCommand(sessionContext.sessionInfo.playersAvatarId, 'up')
+            }
+            
+            if (event.key === 'a') {
+                _stopMoveCommand(sessionContext.sessionInfo.playersAvatarId, 'left')
+            }
+            
+            if (event.key === 's') {
+                _stopMoveCommand(sessionContext.sessionInfo.playersAvatarId, 'down')
+            }
+            
+            if (event.key === 'd') {
+                _stopMoveCommand(sessionContext.sessionInfo.playersAvatarId, 'right')
+            }
+        })
     } catch (e) {
         console.log(e)
         alert('Failed to start renderer :(')
@@ -185,16 +245,23 @@ function _pruneEntitiesInScene () {
         if (!sessionContext.sessionInfo.entitiesInScene.has(entityId)) {
             // new entity, add to scene
             sessionContext.sessionInfo.entitiesInScene.set(entityId, entityComponents)
-        }
 
-        // update components
-        sessionContext.sessionInfo.entitiesInScene.set(entityId, entityComponents)
+            if (entityComponents.Avatar && entityComponents.Avatar.playerId === sessionContext.username) {
+                sessionContext.sessionInfo.playersAvatarId = entityId
+            }
+        }
 
         // add to renderer
         if (sessionContext.sessionInfo.renderer && !sessionContext.sessionInfo.renderer.isEntityInScene(entityId)) {
             const threeJsId = sessionContext.sessionInfo.renderer.onEntityAdded(entityId, entityComponents)
             sessionContext.sessionInfo.threeJsIdToEntityId.set(threeJsId, entityId)
+        } else if (sessionContext.sessionInfo.renderer) {
+            sessionContext.sessionInfo.renderer.onEntityUpdated(entityId, entityComponents)
         }
+
+        // update components
+        sessionContext.sessionInfo.entitiesInScene.set(entityId, entityComponents)
+
     }
 
     // entity no longer exists, remove from scene

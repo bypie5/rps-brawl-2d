@@ -21,6 +21,24 @@ const gameplayCommands = {
                 }
             }
         }
+    },
+    stop: {
+        type: commandTypes.STOP,
+        schema: {
+            id: '/StopGameplayCommand',
+            type: 'object',
+            properties: {
+                entityId: {
+                    type: 'string',
+                    required: true
+                },
+                direction: {
+                    type: 'string',
+                    required: true,
+                    enum: ['up', 'down', 'left', 'right']
+                }
+            }
+        }
     }
 }
 
@@ -42,6 +60,64 @@ const handlers = {
         const session = services.sessionManager.findSessionByUser(sender)
         if (session) {
             const { entityId, direction } = payload
+            const { Transform, Avatar } = session.getEntity(entityId)
+            if (!Transform || !Avatar) {
+                return
+            }
+
+            const speedMultiplier = Avatar.speed
+            let sm = 1
+            switch (speedMultiplier) {
+                case 0:
+                    sm = 0
+                    break
+                case 1:
+                    sm = 20
+                    break
+                case 2:
+                    sm = 30
+                    break
+                default:
+                    sm = 20
+                    break
+            }
+
+            let xVel = 0
+            let yVel = 0
+            switch (direction) {
+                case 'up':
+                    yVel = sm
+                    break
+                case 'down':
+                    yVel = -1 * sm
+                    break
+                case 'left':
+                    xVel = -1 * sm
+                    break
+                case 'right':
+                    xVel = sm
+                    break
+                default:
+                    break
+            }
+
+            Transform.xVel = xVel
+            Transform.yVel = yVel
+
+            console.log(`Velocity: (${Transform.xVel}, ${Transform.yVel})`)
+        }
+    },
+    [gameplayCommands.stop.type]: (ws, payload) => {
+        const validationResult = v.validate(payload, gameplayCommands.move.schema)
+        if (!validationResult.valid) {
+            console.log('Invalid message: ' + validationResult.errors)
+            return
+        }
+
+        const sender = ws.id
+        const session = services.sessionManager.findSessionByUser(sender)
+        if (session) {
+            const { entityId, direction } = payload
             const { Transform } = session.getEntity(entityId)
             if (!Transform) {
                 return
@@ -49,26 +125,19 @@ const handlers = {
 
             switch (direction) {
                 case 'up':
-                    Transform.yVel = 1
+                    Transform.yVel = 0
                     break
                 case 'down':
-                    Transform.yVel = -1
+                    Transform.yVel = 0
                     break
                 case 'left':
-                    Transform.xVel = -1
+                    Transform.xVel = 0
                     break
                 case 'right':
-                    Transform.xVel = 1
+                    Transform.xVel = 0
                     break
                 default:
                     break
-            }
-
-            // ensure magnitude of velocity is 1
-            const magnitude = Math.sqrt(Math.pow(Transform.xVel, 2) + Math.pow(Transform.yVel, 2))
-            if (magnitude > 1) {
-                Transform.xVel /= magnitude
-                Transform.yVel /= magnitude
             }
         }
     }

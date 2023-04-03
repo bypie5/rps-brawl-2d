@@ -1,5 +1,6 @@
 const commandTypes = {
-    MOVE: 'MOVE'
+    MOVE: 'MOVE',
+    STOP: 'STOP'
 }
 
 module.exports = commandTypes

@@ -69,7 +69,6 @@ function detectCollision (gameContext, entitiesByLogicalKey, entity, playerId) {
         for (const id of entitiesByLogicalKey.get(key)) {
             if (id !== playerId && _isColliding(gameContext.entities[id], entity)) {
                 collisions.push(id)
-                console.log(gameContext.entities[id])
             }
         }
     }
@@ -93,26 +92,9 @@ function physics (gameContext) {
     const dt = deltaTimeSeconds(gameContext)
     for (const [id, entity] of Object.entries(gameContext.entities)) {
         if (entity.Transform && entity.Avatar) {
-            const speedMultiplier = entity.Avatar.speed
-            let sm = 1
-            switch (speedMultiplier) {
-                case 0:
-                    sm = 0
-                    break
-                case 1:
-                    sm = 2.5
-                    break
-                case 2:
-                    sm = 4
-                    break
-                default:
-                    sm = 1
-                    break
-            }
-
             const transform = entity.Transform
-            transform.xPos += transform.xVel * dt * sm
-            transform.yPos += transform.yVel * dt * sm
+            transform.xPos += transform.xVel * dt
+            transform.yPos += transform.yVel * dt
 
             const collisions = detectCollision(gameContext, entitiesByLogicalKey, entity, id)
             if (collisions.length > 0) {
@@ -123,10 +105,10 @@ function physics (gameContext) {
                 
                 console.log('collision detected: ' + collisions)
 
-                console.log(-transform.xVel * dt * sm)
-                console.log(-transform.yVel * dt * sm)
-                transform.xPos -= transform.xVel * dt * sm
-                transform.yPos -= transform.yVel * dt * sm
+                console.log(-transform.xVel * dt)
+                console.log(-transform.yVel * dt)
+                // transform.xPos -= transform.xVel * dt * sm
+                // transform.yPos -= transform.yVel * dt * sm
             }
         }
     }

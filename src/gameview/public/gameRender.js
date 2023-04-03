@@ -104,7 +104,7 @@ function _buildPlayerEntity (components) {
 }
 
 class GameRender {
-    constructor (canvas, sessionConfig) {
+    constructor (canvas, sessionConfig, username) {
         if (!canvas) {
             throw new Error('No canvas provided')
         }
@@ -113,7 +113,12 @@ class GameRender {
             throw new Error('No session config provided')
         }
 
+        if (!username) {
+            throw new Error('No username provided')
+        }
+
         this.sessionConfig = sessionConfig
+        this.username = username
 
         const windowWidth = window.innerWidth
         const windowHeight = window.innerHeight
@@ -131,6 +136,7 @@ class GameRender {
         this.isRendering = false
 
         this.entityIdThreeJsIdMap = new Map()
+        this.playersAvatarId = null
 
         // index of sprites in the tilesheet corresponds to the sprite' id - 1 (i.e. sprite id 1 is at index 0)
         _loadTileSheet(this.scene, 'assets/haunted_house.png', 64).then((spriteMaterials) => {
@@ -141,10 +147,17 @@ class GameRender {
     render () {
         this.renderer.render(this.scene, this.camera)
         if (this.isRendering) {
-            let self = this
-
             // update the camera position to follow the player
+            if (this.playersAvatarId) {
+                const playerEntity = this.scene.getObjectById(this.playersAvatarId)
+                if (playerEntity) {
+                    // TODO: jumpiness when the player is moving
+                    this.camera.position.x = playerEntity.position.x
+                    this.camera.position.y = playerEntity.position.y
+                }
+            }
 
+            let self = this
             requestAnimationFrame(() => {
                 self.render()
             })
@@ -158,6 +171,14 @@ class GameRender {
     onEntityAdded (entityId, entityComponents) {
         try {
             return this._addEntityToScene(entityId, entityComponents)
+        } catch (err) {
+            console.log(err)
+        }
+    }
+
+    onEntityUpdated (entityId, entityComponents) {
+        try {
+            this._updateEntityInScene(entityId, entityComponents)
         } catch (err) {
             console.log(err)
         }
@@ -205,18 +226,43 @@ class GameRender {
             this.scene.add(avatar)
             this.entityIdThreeJsIdMap.set(entityId, avatar.id)
             threeJsId = avatar.id
+
+            if (entityComponents.Avatar.playerId === this.username) {
+                this.playersAvatarId = avatar.id
+            }
         }
 
         return threeJsId
-    } 
+    }
+
+    _updateEntityInScene (entityId, entityComponents) {
+        if (!this.isEntityInScene(entityId)) {
+            return
+        }
+
+        const threeJsId = this.entityIdThreeJsIdMap.get(entityId)
+        const entity = this.scene.getObjectById(threeJsId)
+        if (!entity) {
+            return
+        }
+
+        if (entityComponents.Transform) {
+            entity.position.x = entityComponents.Transform.xPos
+            entity.position.y = entityComponents.Transform.yPos
+        }
+
+        if (entityComponents.HitBox) {
+            entity.scale.set(entityComponents.HitBox.size, entityComponents.HitBox.size, 1)
+        }
+    }
 
     _removeEntityFromScene (entityId) {
     }
 }
 
-async function startRenderer (sessionConfig) {
+async function startRenderer (sessionConfig, username) {
     const canvas = document.getElementById('game-canvas')
-    const gameRender = new GameRender(canvas, sessionConfig)
+    const gameRender = new GameRender(canvas, sessionConfig, username)
 
     gameRender.start()
 
