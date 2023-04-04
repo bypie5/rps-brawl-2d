@@ -33,7 +33,7 @@ function detectCollision (gameContext, entitiesByLogicalKey, entity, playerId) {
         const y1 = entity1.Transform.yPos
         const x2 = entity2.Transform.xPos
         const y2 = entity2.Transform.yPos
-        if (!entity1.HitBox || !entity2.HitBox) {
+        if (!entity1.HitBox || !entity2.HitBox || !entity1.HitBox.physicsEnabled || !entity2.HitBox.physicsEnabled) {
             return false
         }
 

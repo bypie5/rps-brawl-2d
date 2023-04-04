@@ -23,6 +23,28 @@ const components = {
                     type: 'number',
                     required: true,
                 },
+                moving: {
+                    type: 'object',
+                    required: false,
+                    properties: {
+                        up: {
+                            type: 'boolean',
+                            required: true
+                        },
+                        down: {
+                            type: 'boolean',
+                            required: true
+                        },
+                        left: {
+                            type: 'boolean',
+                            required: true
+                        },
+                        right: {
+                            type: 'boolean',
+                            required: true
+                        }
+                    }
+                }
             }
         }   
     },
@@ -63,6 +85,10 @@ const components = {
                 size: {
                     type: 'number',
                     required: true,
+                },
+                physicsEnabled: {
+                    type: 'boolean',
+                    required: true
                 }
             }
         }

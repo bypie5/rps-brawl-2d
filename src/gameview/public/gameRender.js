@@ -134,6 +134,8 @@ class GameRender {
         this.renderer.setSize(windowWidth, windowHeight)
 
         this.isRendering = false
+        this.latestTickRendered = -1
+        this.latestTickReceived = -1
 
         this.entityIdThreeJsIdMap = new Map()
         this.playersAvatarId = null
@@ -148,12 +150,26 @@ class GameRender {
         this.renderer.render(this.scene, this.camera)
         if (this.isRendering) {
             // update the camera position to follow the player
+            const camera_eplison = 0.25
+            const camera_speed = 0.5
             if (this.playersAvatarId) {
                 const playerEntity = this.scene.getObjectById(this.playersAvatarId)
                 if (playerEntity) {
-                    // TODO: jumpiness when the player is moving
-                    this.camera.position.x = playerEntity.position.x
-                    this.camera.position.y = playerEntity.position.y
+                    // move towards the players position
+                    const playerPosition = playerEntity.position
+                    const cameraPosition = this.camera.position
+                    const cameraXDiff = Math.abs(cameraPosition.x - playerPosition.x)
+                    const cameraYDiff = Math.abs(cameraPosition.y - playerPosition.y)
+                    const cameraXDiffSign = Math.sign(cameraPosition.x - playerPosition.x)
+                    const cameraYDiffSign = Math.sign(cameraPosition.y - playerPosition.y)
+
+                    if (cameraXDiff > camera_eplison) {
+                        this.camera.position.x -= cameraXDiffSign * camera_speed
+                    }
+
+                    if (cameraYDiff > camera_eplison) {
+                        this.camera.position.y -= cameraYDiffSign * camera_speed
+                    }
                 }
             }
 
@@ -176,9 +192,13 @@ class GameRender {
         }
     }
 
-    onEntityUpdated (entityId, entityComponents) {
+    onEntityUpdated (entityId, entityComponents, latestReceivedGameStateTick) {
         try {
-            this._updateEntityInScene(entityId, entityComponents)
+            if (this.latestTickReceived < latestReceivedGameStateTick) {
+                this.latestTickReceived = latestReceivedGameStateTick
+            }
+
+            this._updateEntityInScene(entityId, entityComponents, latestReceivedGameStateTick)
         } catch (err) {
             console.log(err)
         }
@@ -249,6 +269,11 @@ class GameRender {
         if (entityComponents.Transform) {
             entity.position.x = entityComponents.Transform.xPos
             entity.position.y = entityComponents.Transform.yPos
+
+            if (entityComponents.Transform.xVel != 0 || entityComponents.Transform.yVel != 0) {
+                //console.log('xVel: ' + entityComponents.Transform.xPos + ', yVel: ' + entityComponents.Transform.yPos)
+                console.log('xPos: ' + entity.position.x + ', yPos: ' + entity.position.y)
+            }
         }
 
         if (entityComponents.HitBox) {

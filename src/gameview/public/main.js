@@ -256,7 +256,7 @@ function _pruneEntitiesInScene () {
             const threeJsId = sessionContext.sessionInfo.renderer.onEntityAdded(entityId, entityComponents)
             sessionContext.sessionInfo.threeJsIdToEntityId.set(threeJsId, entityId)
         } else if (sessionContext.sessionInfo.renderer) {
-            sessionContext.sessionInfo.renderer.onEntityUpdated(entityId, entityComponents)
+            sessionContext.sessionInfo.renderer.onEntityUpdated(entityId, entityComponents, sessionContext.sessionInfo.latestReceivedGameStateTick)
         }
 
         // update components

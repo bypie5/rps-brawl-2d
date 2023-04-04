@@ -86,25 +86,20 @@ const handlers = {
             let yVel = 0
             switch (direction) {
                 case 'up':
-                    yVel = sm
+                    Transform.yVel = sm
                     break
                 case 'down':
-                    yVel = -1 * sm
+                    Transform.yVel = -1 * sm
                     break
                 case 'left':
-                    xVel = -1 * sm
+                    Transform.xVel = -1 * sm
                     break
                 case 'right':
-                    xVel = sm
+                    Transform.xVel = sm
                     break
                 default:
                     break
             }
-
-            Transform.xVel = xVel
-            Transform.yVel = yVel
-
-            console.log(`Velocity: (${Transform.xVel}, ${Transform.yVel})`)
         }
     },
     [gameplayCommands.stop.type]: (ws, payload) => {
