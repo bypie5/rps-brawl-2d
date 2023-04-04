@@ -82,24 +82,32 @@ const handlers = {
                     break
             }
 
-            let xVel = 0
-            let yVel = 0
+            let newXVel = Transform.xVel
+            let newYVel = Transform.yVel
             switch (direction) {
                 case 'up':
-                    Transform.yVel = sm
+                    newYVel = sm
                     break
                 case 'down':
-                    Transform.yVel = -1 * sm
+                    newYVel = -1 * sm
                     break
                 case 'left':
-                    Transform.xVel = -1 * sm
+                    newXVel = -1 * sm
                     break
                 case 'right':
-                    Transform.xVel = sm
+                    newXVel = sm
                     break
                 default:
                     break
             }
+
+            if (newXVel != 0 && newYVel != 0) {
+                newXVel = Math.sign(newXVel) * (sm / Math.sqrt(2))
+                newYVel = Math.sign(newYVel) * (sm / Math.sqrt(2))
+            }
+
+            Transform.xVel = newXVel
+            Transform.yVel = newYVel
         }
     },
     [gameplayCommands.stop.type]: (ws, payload) => {

@@ -22,28 +22,6 @@ const components = {
                 yVel: {
                     type: 'number',
                     required: true,
-                },
-                moving: {
-                    type: 'object',
-                    required: false,
-                    properties: {
-                        up: {
-                            type: 'boolean',
-                            required: true
-                        },
-                        down: {
-                            type: 'boolean',
-                            required: true
-                        },
-                        left: {
-                            type: 'boolean',
-                            required: true
-                        },
-                        right: {
-                            type: 'boolean',
-                            required: true
-                        }
-                    }
                 }
             }
         }   
