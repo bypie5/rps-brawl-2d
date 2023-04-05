@@ -162,42 +162,20 @@ class GameRender {
             return
         }
 
-        this.renderer.render(this.scene, this.camera)
+
         if (this.isRendering) {
             // update the camera position to follow the player
-            const camera_eplison = 0.25
-            const camera_speed = 0.5
             if (this.playersAvatarId) {
                 const playerEntity = this.scene.getObjectById(this.playersAvatarId)
                 if (playerEntity) {
-                    // move towards the players position
                     const playerPosition = playerEntity.position
-                    const cameraPosition = this.camera.position
-                    const cameraXDiff = Math.abs(cameraPosition.x - playerPosition.x)
-                    const cameraYDiff = Math.abs(cameraPosition.y - playerPosition.y)
-                    const cameraXDiffSign = Math.sign(cameraPosition.x - playerPosition.x)
-                    const cameraYDiffSign = Math.sign(cameraPosition.y - playerPosition.y)
 
-                    let newCameraXVel = 0
-                    let newCameraYVel = 0
-                    if (cameraXDiff > camera_eplison) {
-                        newCameraXVel = cameraXDiffSign * camera_speed
-                    }
-
-                    if (cameraYDiff > camera_eplison) {
-                        newCameraYVel = cameraYDiffSign * camera_speed
-                    }
-
-                    if (newCameraXVel !== 0 && newCameraYVel !== 0) {
-                        newCameraXVel *= camera_speed / 0.707
-                        newCameraYVel *= camera_speed /  0.707
-                    }
-
-                    this.camera.position.x -= newCameraXVel
-                    this.camera.position.y -= newCameraYVel
+                    this.camera.position.x = playerPosition.x
+                    this.camera.position.y = playerPosition.y
                 }
             }
             this.latestTickRendered = this.latestTickReceived
+            this.renderer.render(this.scene, this.camera)
 
             let self = this
             requestAnimationFrame(() => {
