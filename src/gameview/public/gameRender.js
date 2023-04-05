@@ -104,7 +104,7 @@ function _buildPlayerEntity (components) {
 }
 
 class GameRender {
-    constructor (canvas, sessionConfig, username) {
+    constructor (canvas, sessionConfig, username, sessionInfo) {
         if (!canvas) {
             throw new Error('No canvas provided')
         }
@@ -117,8 +117,13 @@ class GameRender {
             throw new Error('No username provided')
         }
 
+        if (!sessionInfo) {
+            throw new Error('No session info provided')
+        }
+
         this.sessionConfig = sessionConfig
         this.username = username
+        this.sessionInfo = sessionInfo
 
         const windowWidth = window.innerWidth
         const windowHeight = window.innerHeight
@@ -147,6 +152,16 @@ class GameRender {
     }
 
     render () {
+        this.latestTickReceived = this.sessionInfo.latestReceivedGameStateTick
+        if (this.latestTickRendered === this.latestTickReceived && this.latestTickRendered !== -1 && this.latestTickReceived !== -1) {
+            // no new game state to render
+            let self = this
+            requestAnimationFrame(() => {
+                self.render()
+            })
+            return
+        }
+
         this.renderer.render(this.scene, this.camera)
         if (this.isRendering) {
             // update the camera position to follow the player
@@ -163,15 +178,26 @@ class GameRender {
                     const cameraXDiffSign = Math.sign(cameraPosition.x - playerPosition.x)
                     const cameraYDiffSign = Math.sign(cameraPosition.y - playerPosition.y)
 
+                    let newCameraXVel = 0
+                    let newCameraYVel = 0
                     if (cameraXDiff > camera_eplison) {
-                        this.camera.position.x -= cameraXDiffSign * camera_speed
+                        newCameraXVel = cameraXDiffSign * camera_speed
                     }
 
                     if (cameraYDiff > camera_eplison) {
-                        this.camera.position.y -= cameraYDiffSign * camera_speed
+                        newCameraYVel = cameraYDiffSign * camera_speed
                     }
+
+                    if (newCameraXVel !== 0 && newCameraYVel !== 0) {
+                        newCameraXVel *= camera_speed / 0.707
+                        newCameraYVel *= camera_speed /  0.707
+                    }
+
+                    this.camera.position.x -= newCameraXVel
+                    this.camera.position.y -= newCameraYVel
                 }
             }
+            this.latestTickRendered = this.latestTickReceived
 
             let self = this
             requestAnimationFrame(() => {
@@ -267,13 +293,9 @@ class GameRender {
         }
 
         if (entityComponents.Transform) {
+            // translate to the new position
             entity.position.x = entityComponents.Transform.xPos
             entity.position.y = entityComponents.Transform.yPos
-
-            if (entityComponents.Transform.xVel != 0 || entityComponents.Transform.yVel != 0) {
-                //console.log('xVel: ' + entityComponents.Transform.xPos + ', yVel: ' + entityComponents.Transform.yPos)
-                console.log('xPos: ' + entity.position.x + ', yPos: ' + entity.position.y)
-            }
         }
 
         if (entityComponents.HitBox) {
@@ -285,9 +307,9 @@ class GameRender {
     }
 }
 
-async function startRenderer (sessionConfig, username) {
+async function startRenderer (sessionConfig, username, sessionInfo) {
     const canvas = document.getElementById('game-canvas')
-    const gameRender = new GameRender(canvas, sessionConfig, username)
+    const gameRender = new GameRender(canvas, sessionConfig, username, sessionInfo)
 
     gameRender.start()
 

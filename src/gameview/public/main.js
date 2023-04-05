@@ -193,7 +193,7 @@ function _onGameroomLobbyLoaded () {
 
 async function _onGameroomLoaded () {
     try {
-        const renderer = await startRenderer(sessionContext.sessionInfo.config, sessionContext.username)
+        const renderer = await startRenderer(sessionContext.sessionInfo.config, sessionContext.username, sessionContext.sessionInfo)
         sessionContext.sessionInfo.renderer = renderer
 
         // add event listeners for player input
