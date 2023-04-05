@@ -1,0 +1,28 @@
+version: "3.7"
+services:
+  rps-services:
+    image: rps-services:latest
+    build:
+      context: .
+      target: development
+    environment:
+      - DB_USER
+      - DB_PASSWORD
+      - EXPRESS_SESSION_SECRET
+      - JWT_SIGNING_SECRET
+    depends_on:
+      - rps-db
+  rps-db:
+    image: mysql:latest
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD
+      - MYSQL_DATABASE
+      - MYSQL_USER
+      - MYSQL_PASSWORD
+    ports:
+      - "3306:3306"
+    expose:
+      - "3306"
+    volumes:
+      - ./db:/docker-entrypoint-initdb.d

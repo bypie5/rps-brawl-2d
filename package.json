@@ -5,7 +5,7 @@
   "main": "src/index.js",
   "scripts": {
     "test": "mocha --exit --timeout 10000",
-    "dev": "nodemon src/index.js"
+    "dev": "nodemon ./src/index.js"
   },
   "author": "Brandon Yi",
   "license": "ISC",

@@ -1,7 +1,7 @@
 const mysql = require('mysql2/promise')
 const pool = mysql.createPool({
     connectionLimit: 10,
-    host: 'localhost',
+    host: 'rps-db',
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: 'rps'
