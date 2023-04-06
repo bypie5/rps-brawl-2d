@@ -326,9 +326,9 @@ describe('Testing situations around gameplay commands', () => {
                     console.log(`moving ${direction}`)
 
                     // wait for player to move
-                    /*await new Promise((resolve, reject) => {
-                        setTimeout(resolve, 3500)
-                    })*/
+                    await new Promise((resolve, reject) => {
+                        setTimeout(resolve, 4500)
+                    })
 
                     player = entities[playerId]
 
@@ -342,6 +342,28 @@ describe('Testing situations around gameplay commands', () => {
 
                     console.log(`distance: ${distance}`)
                     console.log(`closestBarrierDistance: ${closestBarrierDistance}`)
+
+                    switch (direction) {
+                        case 'up':
+                            chai.expect(player.Transform.yPos).to.be.at.most(closestBarrier.Transform.yPos)
+                            resolve()
+                            break
+                        case 'down':
+                            chai.expect(player.Transform.yPos).to.be.at.least(closestBarrier.Transform.yPos)
+                            resolve()
+                            break
+                        case 'left':
+                            chai.expect(player.Transform.xPos).to.be.at.least(closestBarrier.Transform.xPos)
+                            resolve()
+                            break
+                        case 'right':
+                            chai.expect(player.Transform.xPos).to.be.at.most(closestBarrier.Transform.xPos)
+                            resolve()
+                            break
+                        default:
+                            reject()
+
+                    }
                 }
             })
         })
