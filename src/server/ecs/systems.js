@@ -136,22 +136,13 @@ function physics (gameContext) {
 
             const collisions = detectCollision(gameContext, entitiesByLogicalKey, entity, id)
             if (collisions.length > 0) {
-                // handle collisions by moving player to be just outside of the collision.
-               
                 // player should be moved in the opposite direction of their velocity
                 // by an an amount that places them just outside of the collision
-
-                console.log(Date.now() + ' collision detected: ' + collisions)
                 for (let id of collisions) {
                     const { newXPos, newYPos } = resolveCollision(entity, gameContext.entities[id], dt)
                     transform.xPos = newXPos
                     transform.yPos = newYPos
                 }
-
-                /*console.log(transform.xVel * dt)
-                console.log(transform.yVel * dt)
-                transform.xPos += transform.xVel * dt * -1
-                transform.yPos += transform.yVel * dt * -1*/
             }
         }
     }
