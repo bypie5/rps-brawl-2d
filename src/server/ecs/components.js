@@ -60,7 +60,11 @@ const components = {
             id: '/HitBox',
             type: 'object',
             properties: {
-                size: {
+                width: {
+                    type: 'number',
+                    required: true,
+                },
+                height: {
                     type: 'number',
                     required: true,
                 },

@@ -25,7 +25,8 @@ function buildPlayerEntity (playerId, x, y) {
             }
         },
         [components.HitBox.name]: {
-            size: 3,
+            width: 3,
+            height: 2.2,
             physicsEnabled: true
         }
     }
@@ -53,7 +54,8 @@ function buildBarrierEntity (gridWidth, x, y, spriteId) {
             spriteId: Number(spriteId)
         },
         [components.HitBox.name]: {
-            size: gridWidth,
+            width: gridWidth,
+            height: gridWidth,
             physicsEnabled: true
         }
     }
@@ -81,7 +83,8 @@ function buildTerrainEntity (gridWidth, x, y, spriteId) {
             spriteId: Number(spriteId)
         },
         [components.HitBox.name]: {
-            size: gridWidth,
+            width: gridWidth,
+            height: gridWidth,
             physicsEnabled: false
         }
     }

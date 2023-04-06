@@ -52,13 +52,10 @@ function isColliding (entity1, entity2) {
         return false
     }
 
-    const h1 = entity1.HitBox.size
-    const h2 = entity2.HitBox.size
-
-    const height1 = h1
-    const height2 = h2
-    const width1 = h1
-    const width2 = h2
+    const height1 = entity1.HitBox.height
+    const height2 = entity2.HitBox.height
+    const width1 = entity1.HitBox.width
+    const width2 = entity2.HitBox.width
 
     if (
         /*x1 < x2 + width2 &&
