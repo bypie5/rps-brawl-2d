@@ -20,45 +20,64 @@ function computeNeighborsOfGrid (key) {
     neighbors.push((parseInt(x) + 1) + '_' + (parseInt(y) - 1))
     neighbors.push((parseInt(x) - 1) + '_' + (parseInt(y) + 1))
     neighbors.push((parseInt(x) + 1) + '_' + (parseInt(y) + 1))
+    neighbors.push(x + '_' + y)
 
     return neighbors
+}
+
+function xAxisCausesCollison (player, otherEntity, dt) {
+    const hasCollision = isColliding(player, otherEntity)
+    player.Transform.xPos -= player.Transform.xVel * dt
+    const hasCollisionAfter = isColliding(player, otherEntity)
+    player.Transform.xPos += player.Transform.xVel * dt
+    
+    return hasCollision && !hasCollisionAfter
+}
+
+function yAxisCausesCollison (player, otherEntity, dt) {
+    const hasCollision = isColliding(player, otherEntity)
+    player.Transform.yPos -= player.Transform.yVel * dt
+    const hasCollisionAfter = isColliding(player, otherEntity)
+    player.Transform.yPos += player.Transform.yVel * dt
+
+    return hasCollision && !hasCollisionAfter
+}
+
+function isColliding (entity1, entity2) {
+    const x1 = entity1.Transform.xPos
+    const y1 = entity1.Transform.yPos
+    const x2 = entity2.Transform.xPos
+    const y2 = entity2.Transform.yPos
+    if (!entity1.HitBox || !entity2.HitBox || !entity1.HitBox.physicsEnabled || !entity2.HitBox.physicsEnabled) {
+        return false
+    }
+
+    const h1 = entity1.HitBox.size
+    const h2 = entity2.HitBox.size
+
+    const height1 = h1
+    const height2 = h2
+    const width1 = h1
+    const width2 = h2
+
+    if (
+        /*x1 < x2 + width2 &&
+        x1 + width1 > x2 &&
+        y1 < y2 + height2 &&
+        y1 + height1 > y2*/
+        x1 + width1 / 2 > x2 - width2 / 2 &&
+        x1 - width1 / 2 < x2 + width2 / 2 &&
+        y1 + height1 / 2 > y2 - height2 / 2 &&
+        y1 - height1 / 2 < y2 + height2 / 2
+    ) {
+        return true
+    }
+    return false
 }
 
 function detectCollision (gameContext, entitiesByLogicalKey, entity, playerId) {
     const entityKey = determineLogicalKey(entity.Transform.xPos, entity.Transform.yPos, gameContext.gridWidth)
     const neighborsKeys = computeNeighborsOfGrid(entityKey)
-
-    function _isColliding (entity1, entity2) {
-        const x1 = entity1.Transform.xPos
-        const y1 = entity1.Transform.yPos
-        const x2 = entity2.Transform.xPos
-        const y2 = entity2.Transform.yPos
-        if (!entity1.HitBox || !entity2.HitBox || !entity1.HitBox.physicsEnabled || !entity2.HitBox.physicsEnabled) {
-            return false
-        }
-
-        const h1 = entity1.HitBox.size
-        const h2 = entity2.HitBox.size
-
-        const height1 = h1 / 2
-        const height2 = h2 / 2
-        const width1 = h1 / 2
-        const width2 = h2 / 2
-
-        if (
-            x1 < x2 + width2 &&
-            x1 + width1 > x2 &&
-            y1 < y2 + height2 &&
-            y1 + height1 > y2
-        ) {
-            console.log(`x1 < x2 + width2: ${x1} < ${x2 + width2}`)
-            console.log(`x1 + width1 > x2: ${x1 + width1} > ${x2}`)
-            console.log(`y1 < y2 + height2: ${y1} < ${y2 + height2}`)
-            console.log(`y1 + height1 > y2: ${y1 + height1} > ${y2}`)
-            return true
-        }
-        return false
-    }
 
     const collisions = []
     for (const key of neighborsKeys) {
@@ -67,13 +86,32 @@ function detectCollision (gameContext, entitiesByLogicalKey, entity, playerId) {
         }
 
         for (const id of entitiesByLogicalKey.get(key)) {
-            if (id !== playerId && _isColliding(gameContext.entities[id], entity)) {
+            if (id !== playerId && isColliding(gameContext.entities[id], entity)) {
                 collisions.push(id)
             }
         }
     }
 
     return collisions
+}
+
+function resolveCollision (player, otherEntity, dt) {
+    let playerCopy = JSON.parse(JSON.stringify(player))
+
+    let newXPos = playerCopy.Transform.xPos
+    let newYPos = playerCopy.Transform.yPos
+
+    while (xAxisCausesCollison(playerCopy, otherEntity, dt)) {
+        newXPos += playerCopy.Transform.xVel * dt * -1.1
+        playerCopy.Transform.xPos = newXPos
+    }
+
+    while (yAxisCausesCollison(playerCopy, otherEntity, dt)) {
+        newYPos += playerCopy.Transform.yVel * dt * -1.1
+        playerCopy.Transform.yPos = newYPos
+    }
+
+    return { newXPos, newYPos }
 }
 
 function physics (gameContext) {
@@ -102,13 +140,18 @@ function physics (gameContext) {
                
                 // player should be moved in the opposite direction of their velocity
                 // by an an amount that places them just outside of the collision
-                
-                console.log('collision detected: ' + collisions)
 
-                console.log(-transform.xVel * dt)
-                console.log(-transform.yVel * dt)
-                // transform.xPos -= transform.xVel * dt * sm
-                // transform.yPos -= transform.yVel * dt * sm
+                console.log(Date.now() + ' collision detected: ' + collisions)
+                for (let id of collisions) {
+                    const { newXPos, newYPos } = resolveCollision(entity, gameContext.entities[id], dt)
+                    transform.xPos = newXPos
+                    transform.yPos = newYPos
+                }
+
+                /*console.log(transform.xVel * dt)
+                console.log(transform.yVel * dt)
+                transform.xPos += transform.xVel * dt * -1
+                transform.yPos += transform.yVel * dt * -1*/
             }
         }
     }

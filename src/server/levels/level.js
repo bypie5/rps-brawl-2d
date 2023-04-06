@@ -89,6 +89,6 @@ class LevelDescription {
 
 module.exports = {
     levelZero: () => {
-        return new LevelDescription('./src/resources/plane.json', 5, 26, [2])
+        return new LevelDescription('./src/resources/plane.json', 5, 26, [2, 3])
     }
 }
