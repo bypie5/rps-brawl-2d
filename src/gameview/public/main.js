@@ -108,6 +108,28 @@ function _stopMoveCommand (entityId, direction) {
     }))
 }
 
+function _shiftRpsState (entityId, direction) {
+    if (direction === 'LEFT') {
+        sessionContext.ws.send(JSON.stringify({
+            type: "GAMEPLAY_COMMAND",
+            gameplayCommandType: "STATE_SHIFT_LEFT",
+            payload: {
+                entityId,
+            }
+        }))
+    }
+
+    if (direction === 'RIGHT') {
+        sessionContext.ws.send(JSON.stringify({
+            type: "GAMEPLAY_COMMAND",
+            gameplayCommandType: "STATE_SHIFT_RIGHT",
+            payload: {
+                entityId,
+            }
+        }))
+    }
+}
+
 function _onMessage (event) {
     const msg = JSON.parse(event.data)
 
@@ -230,6 +252,14 @@ async function _onGameroomLoaded () {
             
             if (event.key === 'd') {
                 _stopMoveCommand(sessionContext.sessionInfo.playersAvatarId, 'right')
+            }
+
+            if (event.key === 'q') {
+                _shiftRpsState(sessionContext.sessionInfo.playersAvatarId, 'LEFT')
+            }
+
+            if (event.key === 'e') {
+                _shiftRpsState(sessionContext.sessionInfo.playersAvatarId, 'RIGHT')
             }
         })
     } catch (e) {

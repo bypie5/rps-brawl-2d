@@ -75,10 +75,9 @@ function _buildSpriteEntity (spriteTile, components) {
     return sprite
 }
 
-function _buildPlayerEntity (components) {
-    const { Avatar, HitBox, Transform } = components
+function _getRpsSpriteMaterial (rpsState) {
     let spriteAvatarUri = null
-    switch (Avatar.stateData.rockPaperScissors) {
+    switch (rpsState) {
         case 'rock':
             spriteAvatarUri = 'assets/rock_avatar.png'
             break
@@ -94,6 +93,14 @@ function _buildPlayerEntity (components) {
 
     const spriteTile = new THREE.TextureLoader().load(spriteAvatarUri)
     const spriteMaterial = new THREE.SpriteMaterial({ map: spriteTile })
+    spriteMaterial.name = rpsState
+    return spriteMaterial
+}
+
+function _buildPlayerEntity (components) {
+    const { Avatar, HitBox, Transform } = components
+
+    const spriteMaterial = _getRpsSpriteMaterial(Avatar.stateData.rockPaperScissors)
     const sprite = new THREE.Sprite(spriteMaterial)
     sprite.scale.set(HitBox.width, HitBox.width, 1)
 
@@ -274,6 +281,12 @@ class GameRender {
             // translate to the new position
             entity.position.x = entityComponents.Transform.xPos
             entity.position.y = entityComponents.Transform.yPos
+        }
+
+        if (entityComponents.Avatar
+            && entity.material.name !== entityComponents.Avatar.stateData.rockPaperScissors) {
+            const newMaterial = _getRpsSpriteMaterial(entityComponents.Avatar.stateData.rockPaperScissors)
+            entity.material = newMaterial
         }
     }
 
