@@ -6,6 +6,7 @@ const WebSocket = require('ws')
 const { server, services } = require('../src/index')
 const msgTypes = require('../src/common/rps2dProtocol')
 const commandTypes = require('../src/common/gameplayCommands')
+const { directionEnum, shiftRps } = require('../src/server/ecs/util')
 
 chai.use(chaiHttp)
 
@@ -268,8 +269,6 @@ describe('Testing situations around gameplay commands', () => {
                     chai.expect(res4).to.have.status(200)
                 }
 
-                //console.log(msg)
-
                 if (msgTypes.serverToClient.GAMESTATE_UPDATE.type === msg.type) {
                     const gameContext = msg.gameContext
                     const { entities } = gameContext
@@ -281,8 +280,6 @@ describe('Testing situations around gameplay commands', () => {
                         }
                     }
                     let player = entities[playerId]
-
-                    console.log(player.Transform.xPos, player.Transform.yPos)
 
                     // find closest barrier
                     let closestBarrier = null
@@ -300,8 +297,6 @@ describe('Testing situations around gameplay commands', () => {
                             }
                         }
                     }
-
-                    console.log(`closest barrier: ${closestBarrier.Transform.xPos}, ${closestBarrier.Transform.yPos}`)
 
                     // move player towards barrier
                     const xVel = closestBarrier.Transform.xPos - player.Transform.xPos
@@ -323,25 +318,12 @@ describe('Testing situations around gameplay commands', () => {
                         }
                     }))
 
-                    console.log(`moving ${direction}`)
-
                     // wait for player to move
                     await new Promise((resolve, reject) => {
                         setTimeout(resolve, 4500)
                     })
 
                     player = entities[playerId]
-
-                    console.log(player.Transform.xPos, player.Transform.yPos)
-
-                    // check if player is still within barrier
-                    const distance = Math.sqrt(
-                        Math.pow(closestBarrier.Transform.xPos - player.Transform.xPos, 2)
-                        + Math.pow(closestBarrier.Transform.yPos - player.Transform.yPos, 2)
-                    )
-
-                    console.log(`distance: ${distance}`)
-                    console.log(`closestBarrierDistance: ${closestBarrierDistance}`)
 
                     switch (direction) {
                         case 'up':
@@ -363,6 +345,129 @@ describe('Testing situations around gameplay commands', () => {
                         default:
                             reject()
 
+                    }
+                }
+            })
+        })
+
+        await p
+    })
+
+    it('Cooldown prevents state changes while active', async () => {
+        const authToken = await login('test', 'test')
+        const res = await chai.request(server)
+            .post('/api/game-session/create-private-session')
+            .set('Authorization', `Bearer ${authToken}`)
+            .set('content-type', 'application/json')
+            .send({
+                config: {
+                    maxPlayers: 1,
+                    map: "map0"
+                }
+            })
+
+        chai.expect(res).to.have.status(200)
+        chai.expect(res.text).to.be.a('string')
+
+        const friendlyName = JSON.parse(res.text).friendlyName
+
+        const res2 = await chai.request(server)
+            .post('/api/game-session/join-private-session')
+            .set('Authorization', `Bearer ${authToken}`)
+            .set('content-type', 'application/json')
+            .send({
+                friendlyName
+            })
+
+        chai.expect(res2).to.have.status(200)
+        chai.expect(res2.text).to.be.a('string')
+        chai.expect(res2.text).to.contain('sessionId')
+
+        const sessionId = JSON.parse(res2.text).sessionId
+
+        const ws = new WebSocket("ws://localhost:8081", {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        })
+
+        ws.on('open', () => {
+            ws.send(JSON.stringify({
+                type: msgTypes.clientToServer.CONNECT_TO_SESSION.type,
+                sessionId,
+                friendlyName
+            }))
+        })
+
+        let playerStateBeforeCommandSent = null
+        let tickWhenCommandSent = null
+        let playerStateDuringCommandCooldown = null
+
+        const p = new Promise((resolve, reject) => {
+            ws.on('message', async (data) => {
+                const msg = JSON.parse(data)
+                if (msgTypes.serverToClient.WELCOME.type === msg.type) {
+                    const res4 = await chai.request(server)
+                        .post('/api/game-session/start-session?sessionId=' + sessionId)
+                        .set('Authorization', `Bearer ${authToken}`)
+                        .set('content-type', 'application/json')
+                        .send({})
+
+                    chai.expect(res4).to.have.status(200)
+                }
+
+                if (msgTypes.serverToClient.GAMESTATE_UPDATE.type === msg.type) {
+                    const gameContext = msg.gameContext
+                    const { entities } = gameContext
+
+                    for (const [id, entity] of Object.entries(entities)) {
+                        if (entity.Avatar
+                            && entity.Avatar.playerId === 'test'
+                            && tickWhenCommandSent === null
+                        ) {
+                            playerStateBeforeCommandSent = entity.Avatar.stateData.rockPaperScissors
+
+                            ws.send(JSON.stringify({
+                                type: msgTypes.clientToServer.GAMEPLAY_COMMAND.type,
+                                gameplayCommandType: commandTypes.STATE_SHIFT_LEFT,
+                                payload: {
+                                    entityId: id
+                                }
+                            }))
+
+                            tickWhenCommandSent = gameContext.currentTick
+                        }
+
+                        if (entity.Avatar
+                            && entity.Avatar.playerId === 'test'
+                            && tickWhenCommandSent) {
+                            playerStateDuringCommandCooldown = entity.Avatar.stateData.rockPaperScissors
+                        }
+
+                        if (entity.Avatar
+                            && entity.Avatar.playerId === 'test'
+                            && entity.Avatar.stateData.stateSwitchCooldownTicks > 10
+                            && tickWhenCommandSent
+                            && playerStateBeforeCommandSent
+                        ) {
+                            // expect this command to be ignored
+                            ws.send(JSON.stringify({
+                                type: msgTypes.clientToServer.GAMEPLAY_COMMAND.type,
+                                gameplayCommandType: commandTypes.STATE_SHIFT_LEFT,
+                                payload: {
+                                    entityId: id
+                                }
+                            }))
+                        }
+
+                        if (entity.Avatar
+                            && entity.Avatar.playerId === 'test'
+                            && entity.Avatar.stateData.stateSwitchCooldownTicks === 0
+                            && tickWhenCommandSent
+                            && playerStateDuringCommandCooldown === shiftRps(playerStateBeforeCommandSent, directionEnum.LEFT)
+                        ) {
+                            resolve()
+                        }
                     }
                 }
             })

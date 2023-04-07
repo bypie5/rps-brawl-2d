@@ -21,7 +21,9 @@ function buildPlayerEntity (playerId, x, y) {
             stateData: {
                 lives: 3,
                 rockPaperScissors: randomRockPaperScissors(),
-                ticksSinceStartedRespawning: -1
+                ticksSinceStartedRespawning: -1,
+                stateSwitchCooldownMaxTicks: 30,
+                stateSwitchCooldownTicks: 0
             }
         },
         [components.HitBox.name]: {

@@ -11,6 +11,7 @@ const {
 } = require('../ecs/entities')
 const {
     physics,
+    rps,
     spawn
 } = require('../ecs/systems')
 const { levelZero } = require('../levels/level')
@@ -234,6 +235,7 @@ class Session {
         this.gameContext.deltaTime = Date.now() - this.gameContext.lastTickTime
         // invoke systems
         physics(this.gameContext)
+        rps(this.gameContext)
         spawn(this.gameContext)
 
         // increment tick

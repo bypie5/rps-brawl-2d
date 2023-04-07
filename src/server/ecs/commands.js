@@ -1,5 +1,6 @@
 const commandTypes = require('../../common/gameplayCommands')
 const { v } = require('../schemas')
+const { directionEnum, shiftRps } = require('./util')
 
 const services = require('../services/services')
 
@@ -36,6 +37,32 @@ const gameplayCommands = {
                     type: 'string',
                     required: true,
                     enum: ['up', 'down', 'left', 'right']
+                }
+            }
+        }
+    },
+    stateShiftLeft: {
+        type: commandTypes.STATE_SHIFT_LEFT,
+        schema: {
+            id: '/StateShiftLeftGameplayCommand',
+            type: 'object',
+            properties: {
+                entityId: {
+                    type: 'string',
+                    required: true
+                }
+            }
+        }
+    },
+    stateShiftRight: {
+        type: commandTypes.STATE_SHIFT_RIGHT,
+        schema: {
+            id: '/StateShiftRightGameplayCommand',
+            type: 'object',
+            properties: {
+                entityId: {
+                    type: 'string',
+                    required: true
                 }
             }
         }
@@ -142,6 +169,56 @@ const handlers = {
                 default:
                     break
             }
+        }
+    },
+    [gameplayCommands.stateShiftLeft.type]: (ws, payload) => {
+        const validationResult = v.validate(payload, gameplayCommands.stateShiftLeft.schema)
+        if (!validationResult.valid) {
+            console.log('Invalid message: ' + validationResult.errors)
+            return
+        }
+
+        const sender = ws.id
+        const session = services.sessionManager.findSessionByUser(sender)
+        if (session) {
+            const { entityId } = payload
+            const { Avatar } = session.getEntity(entityId)
+            if (!Avatar) {
+                return
+            }
+
+            if (Avatar.stateData.stateSwitchCooldownTicks > 0) {
+                return
+            }
+            
+            const newState = shiftRps(Avatar.stateData.rockPaperScissors, directionEnum.LEFT)
+            Avatar.stateData.rockPaperScissors = newState
+            Avatar.stateData.stateSwitchCooldownTicks = Avatar.stateData.stateSwitchCooldownMaxTicks
+        }
+    },
+    [gameplayCommands.stateShiftRight.type]: (ws, payload) => {
+        const validationResult = v.validate(payload, gameplayCommands.stateShiftRight.schema)
+        if (!validationResult.valid) {
+            console.log('Invalid message: ' + validationResult.errors)
+            return
+        }
+
+        const sender = ws.id
+        const session = services.sessionManager.findSessionByUser(sender)
+        if (session) {
+            const { entityId } = payload
+            const { Avatar } = session.getEntity(entityId)
+            if (!Avatar) {
+                return
+            }
+
+            if (Avatar.stateData.stateSwitchCooldownTicks > 0) {
+                return
+            }
+
+            const newState = shiftRps(Avatar.stateData.rockPaperScissors, directionEnum.RIGHT)
+            Avatar.stateData.rockPaperScissors = newState
+            Avatar.stateData.stateSwitchCooldownTicks = Avatar.stateData.stateSwitchCooldownMaxTicks
         }
     }
 }

@@ -145,6 +145,15 @@ function physics (gameContext) {
     }
 }
 
+function rps (gameContext) {
+    for (const [id, entity] of Object.entries(gameContext.entities)) {
+        if (entity.Avatar 
+            && entity.Avatar.stateData.stateSwitchCooldownTicks > 0) {
+            entity.Avatar.stateData.stateSwitchCooldownTicks--
+        }
+    }
+}
+
 function spawn (gameContext) {
     // ticks happen about 30 times per second
     const ticksToRespawn = 3 * 30 // 3 seconds
@@ -190,5 +199,6 @@ function spawn (gameContext) {
 
 module.exports = {
     physics,
+    rps,
     spawn
 }
