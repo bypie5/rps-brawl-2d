@@ -179,26 +179,15 @@ function physics (gameContext) {
 }
 
 function rps (gameContext) {
-    const alivePlayerEntitiesByLogicalKey = new Map()
-    for (const [id, entity] of Object.entries(gameContext.entities)) {
-        if (entity.Transform && entity.Avatar && entity.Avatar.state === 'alive') {
-            const key = determineLogicalKey(entity.Transform.xPos, entity.Transform.yPos, gameContext.gridWidth)
-            if (!alivePlayerEntitiesByLogicalKey.has(key)) {
-                alivePlayerEntitiesByLogicalKey.set(key, [])
-            }
-            alivePlayerEntitiesByLogicalKey.get(key).push(id)
-        }
-    }
-
     for (const [id, entity] of Object.entries(gameContext.entities)) {
         if (entity.Avatar
             && entity.Avatar.state === 'alive'
             && entity.Avatar.stateData.collisionsWithOtherPlayers.length > 0) {
-            const membersInCluster = resolveClusterMembers(entity, gameContext, alivePlayerEntitiesByLogicalKey)  
+            const membersInCluster = resolveClusterMembers(entity, id, gameContext)  
             if (membersInCluster.length == 2) {
                 // 2 players in cluster (regular collision)
-                const player1 = membersInCluster[0]
-                const player2 = membersInCluster[1]
+                const player1 = gameContext.entities[membersInCluster[0]]
+                const player2 = gameContext.entities[membersInCluster[1]]
                 doRegularRpsMatch(player1, player2)
             } else {
                 // cluster collision - must resolve ambiguity

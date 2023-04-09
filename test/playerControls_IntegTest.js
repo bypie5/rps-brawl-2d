@@ -423,6 +423,7 @@ describe('Testing situations around gameplay commands', () => {
                     for (const [id, entity] of Object.entries(entities)) {
                         if (entity.Avatar
                             && entity.Avatar.playerId === 'test'
+                            && entity.Avatar.state === 'alive'
                             && tickWhenCommandSent === null
                         ) {
                             playerStateBeforeCommandSent = entity.Avatar.stateData.rockPaperScissors

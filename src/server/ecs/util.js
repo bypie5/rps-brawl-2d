@@ -79,11 +79,28 @@ function replaceCollisionsWithOtherPlayersSet (avatarEntity, newItems) {
 
 // cluster collision is when multiple players are colliding with each other
 // these kinds of collision need to be resolved with tiebreakers
-function resolveClusterMembers(avatarEntity, gameContext, playerEntitiesByLogicalKey) {
-    const ids = avatarEntity.Avatar.stateData.collisionsWithOtherPlayers
-    const players = ids.map(id => gameContext.entities[id])
+function resolveClusterMembers(avatarEntity, avatarEntityId, gameContext, clusterMemberIds = new Set()) {
+    if (clusterMemberIds.has(avatarEntityId)) {
+        return Array.from(clusterMemberIds)
+    }
 
-    return [avatarEntity, ...players]
+    clusterMemberIds.add(avatarEntityId)
+
+    const ids = avatarEntity.Avatar.stateData.collisionsWithOtherPlayers
+    for (const id of ids) {
+        const otherAvatarEntity = gameContext.entities[id]
+        clusterMemberIds.add(id)
+
+        for (const nextCandidateId of otherAvatarEntity.Avatar.stateData.collisionsWithOtherPlayers) {
+            const nextCandidate = gameContext.entities[nextCandidateId]
+            const otherMemberIds = resolveClusterMembers(nextCandidate, nextCandidateId, gameContext, clusterMemberIds)
+            for (const otherMemberId of otherMemberIds) {
+                clusterMemberIds.add(otherMemberId)
+            }
+        }
+    }
+
+    return Array.from(clusterMemberIds)
 }
 
 module.exports = {
