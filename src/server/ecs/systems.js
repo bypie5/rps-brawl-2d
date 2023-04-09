@@ -1,3 +1,9 @@
+const {
+    rpsCompare,
+    replaceCollisionsWithOtherPlayersSet,
+    resolveClusterMembers
+} = require('./util')
+
 function deltaTimeSeconds (gameContext) {
     return gameContext.deltaTime / 1000
 }
@@ -111,6 +117,19 @@ function resolveCollision (player, otherEntity, dt) {
     return { newXPos, newYPos }
 }
 
+function doRegularRpsMatch (player1, player2) {
+    const player1Rps = player1.Avatar.stateData.rockPaperScissors
+    const player2Rps = player2.Avatar.stateData.rockPaperScissors
+
+    const result = rpsCompare(player1Rps, player2Rps)
+
+    if (result === 1) {
+        player2.Avatar.state = 'dead'
+    } else if (result === -1) {
+        player1.Avatar.state = 'dead'
+    }
+}
+
 function physics (gameContext) {
     const entitiesByLogicalKey = new Map()
     for (const [id, entity] of Object.entries(gameContext.entities)) {
@@ -140,13 +159,52 @@ function physics (gameContext) {
                     transform.xPos = newXPos
                     transform.yPos = newYPos
                 }
+
+                const otherPlayersColliding = collisions.map(id => {
+                    return { id, entity: gameContext.entities[id] }
+                }).filter(info => {
+                    return info.entity.Avatar 
+                        && info.entity.Avatar.playerId !== entity.Avatar.playerId
+                })
+
+                if (otherPlayersColliding.length > 0) {
+                    const otherPlayerIds = otherPlayersColliding.map(info => info.id)
+                    replaceCollisionsWithOtherPlayersSet(entity, otherPlayerIds)
+                }
+            } else {
+                replaceCollisionsWithOtherPlayersSet(entity, [])
             }
         }
     }
 }
 
 function rps (gameContext) {
+    const alivePlayerEntitiesByLogicalKey = new Map()
     for (const [id, entity] of Object.entries(gameContext.entities)) {
+        if (entity.Transform && entity.Avatar && entity.Avatar.state === 'alive') {
+            const key = determineLogicalKey(entity.Transform.xPos, entity.Transform.yPos, gameContext.gridWidth)
+            if (!alivePlayerEntitiesByLogicalKey.has(key)) {
+                alivePlayerEntitiesByLogicalKey.set(key, [])
+            }
+            alivePlayerEntitiesByLogicalKey.get(key).push(id)
+        }
+    }
+
+    for (const [id, entity] of Object.entries(gameContext.entities)) {
+        if (entity.Avatar
+            && entity.Avatar.state === 'alive'
+            && entity.Avatar.stateData.collisionsWithOtherPlayers.length > 0) {
+            const membersInCluster = resolveClusterMembers(entity, gameContext, alivePlayerEntitiesByLogicalKey)  
+            if (membersInCluster.length == 2) {
+                // 2 players in cluster (regular collision)
+                const player1 = membersInCluster[0]
+                const player2 = membersInCluster[1]
+                doRegularRpsMatch(player1, player2)
+            } else {
+                // cluster collision - must resolve ambiguity
+            }
+        }
+
         if (entity.Avatar 
             && entity.Avatar.stateData.stateSwitchCooldownTicks > 0) {
             entity.Avatar.stateData.stateSwitchCooldownTicks--
@@ -167,7 +225,8 @@ function spawn (gameContext) {
         }
 
         if (entity.Avatar && (entity.Avatar.state === 'dead' 
-        || (entity.Avatar.state === 'respawning' && entity.Avatar.stateData.ticksSinceStartedRespawning === -1))) {
+        || (entity.Avatar.state === 'respawning'
+            && entity.Avatar.stateData.ticksSinceStartedRespawning === -1))) {
             deadPlayers.push(id)
         }
 
@@ -180,18 +239,23 @@ function spawn (gameContext) {
     for (const deadPlayer of deadPlayers) {
         const avatar = gameContext.entities[deadPlayer].Avatar
         const transform = gameContext.entities[deadPlayer].Transform
+        const hitBox = gameContext.entities[deadPlayer].HitBox
         const spawnPoint = spawnPoints[Math.floor(Math.random() * spawnPoints.length)]
         const spawnTransform = gameContext.entities[spawnPoint].Transform
         transform.xPos = spawnTransform.xPos
         transform.yPos = spawnTransform.yPos
+        hitBox.physicsEnabled = false
         avatar.state = 'respawning'
         avatar.stateData.ticksSinceStartedRespawning = 0
+        avatar.stateData.lives--
     }
 
     for (const respawningPlayer of respawningPlayers) {
         const avatar = gameContext.entities[respawningPlayer].Avatar
+        const hitBox = gameContext.entities[respawningPlayer].HitBox
         if (avatar.stateData.ticksSinceStartedRespawning >= ticksToRespawn) {
             avatar.state = 'alive'
+            hitBox.physicsEnabled = true
         }
         avatar.stateData.ticksSinceStartedRespawning++
     }

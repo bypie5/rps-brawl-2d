@@ -284,6 +284,15 @@ class GameRender {
         }
 
         if (entityComponents.Avatar
+            && entityComponents.Avatar.state === 'alive'
+        ) {
+            entity.visible = true
+        } else if ((entityComponents.Avatar
+            && entityComponents.Avatar.state !== 'alive')) {
+            entity.visible = false
+        }
+
+        if (entityComponents.Avatar
             && entity.material.name !== entityComponents.Avatar.stateData.rockPaperScissors) {
             const newMaterial = _getRpsSpriteMaterial(entityComponents.Avatar.stateData.rockPaperScissors)
             entity.material = newMaterial

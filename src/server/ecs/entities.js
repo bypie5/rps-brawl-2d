@@ -19,11 +19,13 @@ function buildPlayerEntity (playerId, x, y) {
             state: 'respawning',
             speed: 1,
             stateData: {
+                // keep stuff in here serializable (no functions, no classes, no sets, no maps, etc.)
                 lives: 3,
                 rockPaperScissors: randomRockPaperScissors(),
                 ticksSinceStartedRespawning: -1,
                 stateSwitchCooldownMaxTicks: 30,
-                stateSwitchCooldownTicks: 0
+                stateSwitchCooldownTicks: 0,
+                collisionsWithOtherPlayers: [] // enitity ids
             }
         },
         [components.HitBox.name]: {

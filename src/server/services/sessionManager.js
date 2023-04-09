@@ -232,8 +232,9 @@ class Session {
     }
 
     _coreGameLoop () {
+        let tickRenderStart = Date.now()
         this.gameContext.deltaTime = Date.now() - this.gameContext.lastTickTime
-        // invoke systems
+        // invoke systems ( in order of dependency )
         physics(this.gameContext)
         rps(this.gameContext)
         spawn(this.gameContext)
@@ -247,6 +248,11 @@ class Session {
             type: msgTypes.serverToClient.GAMESTATE_UPDATE.type,
             gameContext: this.gameContext
         })
+
+        let deltaTime = Date.now() - tickRenderStart
+        if (deltaTime > 34) {
+            console.warn(`Game loop took ${deltaTime}ms to execute in session: ${this.id}`)
+        }
     }
 
     _validateConfig (config) {

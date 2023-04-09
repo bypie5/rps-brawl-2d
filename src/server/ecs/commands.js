@@ -92,6 +92,10 @@ const handlers = {
                 return
             }
 
+            if (Avatar.state !== 'alive') {
+                return
+            }
+
             const speedMultiplier = Avatar.speed
             let sm = 20
             switch (speedMultiplier) {
@@ -187,6 +191,10 @@ const handlers = {
                 return
             }
 
+            if (Avatar.state !== 'alive') {
+                return
+            }
+
             if (Avatar.stateData.stateSwitchCooldownTicks > 0) {
                 return
             }
@@ -209,6 +217,10 @@ const handlers = {
             const { entityId } = payload
             const { Avatar } = session.getEntity(entityId)
             if (!Avatar) {
+                return
+            }
+
+            if (Avatar.state !== 'alive') {
                 return
             }
 
