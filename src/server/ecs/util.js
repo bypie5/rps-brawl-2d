@@ -103,6 +103,46 @@ function resolveClusterMembers(avatarEntity, avatarEntityId, gameContext, cluste
     return Array.from(clusterMemberIds)
 }
 
+function _minimumSizedBoundingBox (clusterMemberIds, gameContext) {
+    const minX = Math.min(...clusterMemberIds.map(id => gameContext.entities[id].Transform.xPos))
+    const maxX = Math.max(...clusterMemberIds.map(id => gameContext.entities[id].Transform.xPos))
+    const minY = Math.min(...clusterMemberIds.map(id => gameContext.entities[id].Transform.yPos))
+    const maxY = Math.max(...clusterMemberIds.map(id => gameContext.entities[id].Transform.yPos))
+
+    return {
+        x: minX,
+        y: minY,
+        width: maxX - minX,
+        height: maxY - minY,
+        center: {
+            x: (minX + maxX) / 2,
+            y: (minY + maxY) / 2,
+        }
+    }
+}
+
+function findEntityCenterOfCluster (clusterMemberIds, gameContext) {
+    const boundingBox = _minimumSizedBoundingBox(clusterMemberIds, gameContext)
+    const { center } = boundingBox
+
+    // find the entity closest to the center of the cluster
+    let closestEntityId = null
+    let closestDistance = Infinity
+    for (const id of clusterMemberIds) {
+        const entity = gameContext.entities[id]
+        const distance = Math.sqrt(Math.pow(entity.Transform.xPos - center.x, 2) + Math.pow(entity.Transform.yPos - center.y, 2))
+        if (distance < closestDistance) {
+            closestDistance = distance
+            closestEntityId = id
+        }
+    }
+
+    return {
+        closestEntityId,
+        boundingBox
+    }
+}
+
 function _nearestPowerOfTwo (n) {
     if (n % 2 !== 0) {
         return Math.pow(2, Math.floor(Math.log2(n)))
@@ -253,5 +293,6 @@ module.exports = {
     shiftRps,
     replaceCollisionsWithOtherPlayersSet,
     resolveClusterMembers,
+    findEntityCenterOfCluster,
     createTieBreakerBracket
 }

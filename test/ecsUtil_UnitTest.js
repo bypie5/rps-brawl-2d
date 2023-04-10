@@ -2,7 +2,8 @@ const chai = require('chai')
 
 const {
     resolveClusterMembers,
-    createTieBreakerBracket
+    createTieBreakerBracket,
+    findEntityCenterOfCluster
 } = require('../src/server/ecs/util')
 const {
     buildPlayerEntity
@@ -141,5 +142,28 @@ describe('Unit tests for ECS util functions', () => {
                 chai.assert(tournamentWinner !== null)
             }
         }
+    })
+
+    it('findEntityCenterOfCluster returns expected entity for simple cluster', () => {
+        const mockContext = mockGameContext()
+
+        // players aligned on x axis all touching
+        const player1Mock = buildPlayerEntity('player1', 0, 0)
+        const player2Mock = buildPlayerEntity('player2', -3, 0)
+        const player3Mock = buildPlayerEntity('player3', 3, 0)
+
+        const player1Id = mockContext._addEntity(mockContext, player1Mock)
+        const player2Id = mockContext._addEntity(mockContext, player2Mock)
+        const player3Id = mockContext._addEntity(mockContext, player3Mock)
+
+        player1Mock.Avatar.stateData.collisionsWithOtherPlayers = [player2Id, player3Id]
+        player2Mock.Avatar.stateData.collisionsWithOtherPlayers = [player1Id]
+        player3Mock.Avatar.stateData.collisionsWithOtherPlayers = [player1Id]
+
+        const membersInCluster = resolveClusterMembers(player1Mock, player1Id, mockContext)
+
+        const { closestEntityId } = findEntityCenterOfCluster(membersInCluster, mockContext)
+
+        chai.expect(closestEntityId).to.be.equal(player1Id)
     })
 })
