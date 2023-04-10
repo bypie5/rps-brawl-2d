@@ -1,8 +1,13 @@
 const {
     rpsCompare,
     replaceCollisionsWithOtherPlayersSet,
-    resolveClusterMembers
+    resolveClusterMembers,
+    createTieBreakerBracket
 } = require('./util')
+
+const {
+    buildTieBreakerManagerEntity
+} = require('./entities')
 
 function deltaTimeSeconds (gameContext) {
     return gameContext.deltaTime / 1000
@@ -130,7 +135,7 @@ function doRegularRpsMatch (player1, player2) {
     }
 }
 
-function physics (gameContext) {
+function physics (gameContext, session) {
     const entitiesByLogicalKey = new Map()
     for (const [id, entity] of Object.entries(gameContext.entities)) {
         if (entity.Transform) {
@@ -178,7 +183,7 @@ function physics (gameContext) {
     }
 }
 
-function rps (gameContext) {
+function rps (gameContext, session) {
     for (const [id, entity] of Object.entries(gameContext.entities)) {
         if (entity.Avatar
             && entity.Avatar.state === 'alive'
@@ -189,8 +194,18 @@ function rps (gameContext) {
                 const player1 = gameContext.entities[membersInCluster[0]]
                 const player2 = gameContext.entities[membersInCluster[1]]
                 doRegularRpsMatch(player1, player2)
-            } else {
+            } else if (membersInCluster.length > 2) {
                 // cluster collision - must resolve ambiguity
+
+                // 1. disable physics for all players in cluster
+                for (const id of membersInCluster) {
+                    gameContext.entities[id].Avatar.state = 'breakingtie'
+                    gameContext.entities[id].HixBot.physicsEnabled = false
+                }
+
+                // 2. create tie breaker match manager
+                const tieBreakerMatchManager = buildTieBreakerManagerEntity(membersInCluster)
+                session.instantiateEntity(tieBreakerMatchManager)
             }
         }
 
@@ -201,7 +216,17 @@ function rps (gameContext) {
     }
 }
 
-function spawn (gameContext) {
+function tieBreaker (gameContext, session) {
+    for (const [id, entity] of Object.entries(gameContext.entities)) {
+        if (entity.TieBreaker
+            && !entity.TieBreaker.tournamentBracket
+        ) {
+            entity.TieBreaker.tournamentBracket = createTieBreakerBracket(entity.TieBreaker.idsOfCohortMembers)
+        }
+    }
+}
+
+function spawn (gameContext, session) {
     // ticks happen about 30 times per second
     const ticksToRespawn = 3 * 30 // 3 seconds
 
@@ -253,5 +278,6 @@ function spawn (gameContext) {
 module.exports = {
     physics,
     rps,
+    tieBreaker,
     spawn
 }

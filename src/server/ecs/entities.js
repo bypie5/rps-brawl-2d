@@ -6,6 +6,18 @@ function randomRockPaperScissors () {
     return rps[Math.floor(Math.random() * rps.length)]
 }
 
+function validateEntity (entity) {
+    for (const component in components) {
+        const validationResult = v.validate(entity[components[component].name], components[component].schema)
+        if (!validationResult.valid) {
+            console.log('Invalid component: ' + validationResult.errors)
+            return false
+        }
+    }
+
+    return true
+}
+
 function buildPlayerEntity (playerId, x, y) {
     const entity = {
         [components.Transform.name]: {
@@ -35,12 +47,8 @@ function buildPlayerEntity (playerId, x, y) {
         }
     }
 
-    for (const component in components) {
-        const validationResult = v.validate(entity[components[component].name], components[component].schema)
-        if (!validationResult.valid) {
-            console.log('Invalid component: ' + validationResult.errors)
-            return
-        }
+    if (!validateEntity(entity)) {
+        return
     }
 
     return entity
@@ -64,12 +72,8 @@ function buildBarrierEntity (gridWidth, x, y, spriteId) {
         }
     }
 
-    for (const component in components) {
-        const validationResult = v.validate(entity[components[component].name], components[component].schema)
-        if (!validationResult.valid) {
-            console.log('Invalid component: ' + validationResult.errors)
-            return
-        }
+    if (!validateEntity(entity)) {
+        return
     }
 
     return entity
@@ -93,12 +97,8 @@ function buildTerrainEntity (gridWidth, x, y, spriteId) {
         }
     }
 
-    for (const component in components) {
-        const validationResult = v.validate(entity[components[component].name], components[component].schema)
-        if (!validationResult.valid) {
-            console.log('Invalid component: ' + validationResult.errors)
-            return
-        }
+    if (!validateEntity(entity)) {
+        return
     }
 
     return entity
@@ -115,12 +115,23 @@ function buildSpawnPointEntity (x, y) {
         [components.SpawnPoint.name]: {}
     }
 
-    for (const component in components) {
-        const validationResult = v.validate(entity[components[component].name], components[component].schema)
-        if (!validationResult.valid) {
-            console.log('Invalid component: ' + validationResult.errors)
-            return
+    if (!validateEntity(entity)) {
+        return
+    }
+
+    return entity
+}
+
+function buildTieBreakerManagerEntity (playerEntityIds, currTrick) {
+    const entity = {
+        [components.TieBreaker.name]: {
+            idsOfCohortMembers: playerEntityIds,
+            createdAtTick: currTrick
         }
+    }
+
+    if (!validateEntity(entity)) {
+        return
     }
 
     return entity
@@ -130,5 +141,6 @@ module.exports = {
     buildPlayerEntity,
     buildBarrierEntity,
     buildTerrainEntity,
-    buildSpawnPointEntity
+    buildSpawnPointEntity,
+    buildTieBreakerManagerEntity
 }

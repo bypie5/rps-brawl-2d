@@ -12,6 +12,7 @@ const {
 const {
     physics,
     rps,
+    tieBreaker,
     spawn
 } = require('../ecs/systems')
 const { levelZero } = require('../levels/level')
@@ -235,9 +236,10 @@ class Session {
         let tickRenderStart = Date.now()
         this.gameContext.deltaTime = Date.now() - this.gameContext.lastTickTime
         // invoke systems ( in order of dependency )
-        physics(this.gameContext)
-        rps(this.gameContext)
-        spawn(this.gameContext)
+        physics(this.gameContext, this)
+        rps(this.gameContext, this)
+        tieBreaker(this.gameContext, this)
+        spawn(this.gameContext, this)
 
         // increment tick
         this.gameContext.currentTick += 1

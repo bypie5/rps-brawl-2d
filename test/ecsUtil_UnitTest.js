@@ -1,7 +1,8 @@
 const chai = require('chai')
 
 const {
-    resolveClusterMembers
+    resolveClusterMembers,
+    createTieBreakerBracket
 } = require('../src/server/ecs/util')
 const {
     buildPlayerEntity
@@ -73,5 +74,72 @@ describe('Unit tests for ECS util functions', () => {
 
         chai.expect(membersInCluster2.length).to.be.equal(1)
         chai.expect(membersInCluster2).to.contain(player4Id)
+    })
+
+    it('createTieBreakerBracket returns expected bracket', () => {
+        for (let i = 3; i < 65; i++) {
+            for (let j = 0; j < 250; j++) {
+                let tournamentMembers = []
+                for (let x = 0; x < i; x++) {
+                    tournamentMembers.push(x)
+                }
+                const bracket = createTieBreakerBracket(tournamentMembers)
+
+                // id is string like <number>-<number>
+                function getMatchById (id) {
+                    return bracket[id[0]][id[2]]
+                }
+
+                // simulate a tournament
+                let tournamentWinner = null
+                for (let i = 0; i < bracket.length; i++) {
+                    const round = bracket[i]
+                    for (let j = 0; j < round.length; j++) {
+                        const match = round[j]
+                        if (match) {
+                            const winner = Math.random() > 0.5 ? 0 : 1
+                            if (!match.parentMatchId) {
+                                tournamentWinner = winner === 0 ? match.opponent1 : match.opponent2
+                                match.winner = tournamentWinner
+                                break
+                            }
+
+                            const parentMatch = getMatchById(match.parentMatchId)
+                            if (
+                                (match.opponent1 === null && match.opponent2 !== null) ||
+                                (match.opponent1 !== null && match.opponent2 === null)
+                            ) {
+                                match.winner = match.opponent1 === null ? match.opponent2 : match.opponent1
+                                if (parentMatch.opponent1 === null) {
+                                    parentMatch.opponent1 = match.winner
+                                } else if (parentMatch.opponent2 === null) {
+                                    parentMatch.opponent2 = match.winner
+                                }
+                                continue
+                            }
+
+                            if (match.opponent1 === null && match.opponent2 === null) {
+                                continue
+                            }
+
+                            const winnerId = winner === 0 ? match.opponent1 : match.opponent2
+                            if (parentMatch.opponent1 === null) {
+                                parentMatch.opponent1 = winnerId
+                            } else if (parentMatch.opponent2 === null) {
+                                parentMatch.opponent2 = winnerId
+                            }
+                            match.winner = winnerId
+                        }
+                    }
+                }
+
+                if (tournamentWinner === null) {
+                    console.log('Tournament winner is: ' + tournamentWinner)
+                    console.log('Bracket: ' + JSON.stringify(bracket))
+                }
+
+                chai.assert(tournamentWinner !== null)
+            }
+        }
     })
 })

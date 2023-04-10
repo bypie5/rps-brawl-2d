@@ -103,10 +103,155 @@ function resolveClusterMembers(avatarEntity, avatarEntityId, gameContext, cluste
     return Array.from(clusterMemberIds)
 }
 
+function _nearestPowerOfTwo (n) {
+    if (n % 2 !== 0) {
+        return Math.pow(2, Math.floor(Math.log2(n)))
+    } else {
+        return Math.pow(2, Math.floor(Math.log2(n - 1)))
+    }
+}
+
+function createTieBreakerBracket (clusterMemberIds) {
+    const numberOfFirstRoundMatches = _nearestPowerOfTwo(clusterMemberIds.length)
+    const numberOfByes = clusterMemberIds.length - numberOfFirstRoundMatches
+    const numberOfRounds = Math.log2(numberOfFirstRoundMatches) + 1
+
+    const bracket = []
+    for (let round = 0; round < numberOfRounds; round++) {
+        const matches = []
+        for (let match = 0; match < numberOfFirstRoundMatches / Math.pow(2, round); match++) {
+            matches.push({
+                matchId: `${round}-${match}`,
+                parentMatchId: round === numberOfRounds - 1 ? null : `${round + 1}-${Math.floor(match / 2)}`, 
+                childrenMatchIds: round === 0 ? null : [`${round - 1}-${match * 2}`, `${round - 1}-${match * 2 + 1}`],
+                opponent1: null,
+                opponent2: null,
+                winner: null,
+            })
+        }
+        bracket.push(matches)
+    }
+
+    const playersInTourament = clusterMemberIds.slice() // copy
+    const firstRoundByes = []
+    for (let i = 0; i < numberOfByes; i++) {
+        let randomIndex = Math.floor(Math.random() * playersInTourament.length)
+        const byePlayerId = playersInTourament[randomIndex]
+
+        playersInTourament.splice(randomIndex, 1) // pick without replacement
+
+        firstRoundByes.push(byePlayerId)
+    }
+
+    const firstRoundOpponents = []
+    for (let i = 0; i < numberOfFirstRoundMatches / 2; i++) {
+        let randomIndex = Math.floor(Math.random() * playersInTourament.length)
+        const opponent1Id = playersInTourament[randomIndex]
+
+        playersInTourament.splice(randomIndex, 1)
+
+        randomIndex = Math.floor(Math.random() * playersInTourament.length)
+        const opponent2Id = playersInTourament[randomIndex]
+
+        playersInTourament.splice(randomIndex, 1)
+
+        firstRoundOpponents.push({opponent1Id, opponent2Id})
+    }
+
+    // fill in the first round matches
+    for (let i = 0; i < bracket[0].length; i++) {
+        const match = bracket[0][i]
+        if (i < firstRoundByes.length) {
+            match.opponent1 = firstRoundByes[i]
+        } else {
+            const opponents = firstRoundOpponents[i - firstRoundByes.length]
+            if (!opponents) {
+                continue
+            }
+
+            match.opponent1 = opponents.opponent1Id
+            match.opponent2 = opponents.opponent2Id
+        }
+    }
+
+    // move byes and matches with no sibbling match to the next round
+    // a sibbling match is a match that has the same parent match
+    function _getChildrenMatches (childrenIds) {
+        const childrenMatches = []
+        for (let i = 0; i < childrenIds.length; i++) {
+            const childId = childrenIds[i]
+            const childMatch = bracket[childId[0]][childId[2]]
+            childrenMatches.push(childMatch)
+        }
+        return childrenMatches
+    }
+
+    const secondRoundMatches = bracket[1]
+    for (let i = 0; i < secondRoundMatches.length; i++) {
+        const match = secondRoundMatches[i]
+        const childMatches = _getChildrenMatches(match.childrenMatchIds)
+        const childOne = childMatches[0]
+        const childTwo = childMatches[1]
+
+        let shiftedBecauseOfBye = false
+        if (childOne.opponent1 === null && childOne.opponent2 !== null) {
+            // bye in child one
+            match.opponent1 = childOne.opponent2
+            childOne.opponent2 = null
+            shiftedBecauseOfBye = true
+        }
+
+        if (childOne.opponent1 !== null && childOne.opponent2 === null) {
+            // bye in child one
+            match.opponent1 = childOne.opponent1
+            childOne.opponent1 = null
+            shiftedBecauseOfBye = true
+        }
+
+        if (childTwo.opponent1 === null && childTwo.opponent2 !== null) {
+            // bye in child two
+            match.opponent2 = childTwo.opponent2
+            childTwo.opponent2 = null
+            shiftedBecauseOfBye = true
+        }
+
+        if (childTwo.opponent1 !== null && childTwo.opponent2 === null) {
+            // bye in child two
+            match.opponent2 = childTwo.opponent1
+            childTwo.opponent1 = null
+            shiftedBecauseOfBye = true
+        }
+
+        if (shiftedBecauseOfBye) {
+            continue
+        }
+
+        if (childOne.opponent1 === null && childOne.opponent2 === null
+            && childTwo.opponent1 !== null && childTwo.opponent2 !== null) {
+            // only child two has a pair of opponents
+            match.opponent1 = childTwo.opponent1
+            match.opponent2 = childTwo.opponent2
+            childTwo.opponent1 = null
+            childTwo.opponent2 = null
+        }
+
+        if (childTwo.opponent1 === null && childTwo.opponent2 === null
+            && childOne.opponent1 !== null && childOne.opponent2 !== null) {
+            // only child one has a pair of opponents
+            match.opponent1 = childOne.opponent1
+            match.opponent2 = childOne.opponent2
+            childOne.opponent1 = null
+            childOne.opponent2 = null
+        }
+    }
+    return bracket
+}
+
 module.exports = {
     directionEnum,
     rpsCompare,
     shiftRps,
     replaceCollisionsWithOtherPlayersSet,
-    resolveClusterMembers
+    resolveClusterMembers,
+    createTieBreakerBracket
 }

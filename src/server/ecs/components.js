@@ -45,7 +45,7 @@ const components = {
                 state: {
                     type: 'string',
                     required: true,
-                    enum: ['dead', 'alive', 'respawning', 'spectating']
+                    enum: ['dead', 'alive', 'breakingtie', 'respawning', 'spectating']
                 },
                 stateData: {
                     type: 'object',
@@ -107,6 +107,30 @@ const components = {
             id: '/SpawnPoint',
             type: 'object',
             properties: {
+            }
+        }
+    },
+    TieBreaker: {
+        name: 'TieBreaker',
+        schema: {
+            id: '/TieBreaker',
+            type: 'object',
+            properties: {
+                idsOfCohortMembers: {
+                    type: 'array',
+                    required: true,
+                    items: {
+                        type: 'number'
+                    }
+                },
+                createdAtTick: {
+                    type: 'number',
+                    required: true
+                },
+                tournamentBracket: {
+                    type: 'object',
+                    required: false, // see createTieBreakerBracket()
+                }
             }
         }
     }
