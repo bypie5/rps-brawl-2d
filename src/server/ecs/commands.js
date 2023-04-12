@@ -191,7 +191,11 @@ const handlers = {
                 return
             }
 
-            if (Avatar.state !== 'alive') {
+            if (
+                Avatar.state === 'dead'
+                || Avatar.state === 'respawning'
+                || Avatar.state === 'spectating'
+            ) {
                 return
             }
 
@@ -220,7 +224,9 @@ const handlers = {
                 return
             }
 
-            if (Avatar.state !== 'alive') {
+            if (Avatar.state === 'dead'
+                || Avatar.state === 'respawning'
+                || Avatar.state === 'spectating') {
                 return
             }
 

@@ -287,6 +287,68 @@ function createTieBreakerBracket (clusterMemberIds) {
     return bracket
 }
 
+function midMatchTieBreakerFSM (tieBreakerEntity, gameContext) {
+    const {
+        state,
+        tieBreakerState,
+        tournamentBracket
+    } = tieBreakerEntity.TieBreaker
+
+    switch (state) {
+        case 'init':
+            tieBreakerState.currRound = 1
+            state = 'playing'
+            break
+        case 'playing':
+            // players in each round have currRoundMaxTicks ticks to
+            // pick either rock, paper, or scissors. If they don't
+            // pick anything, they are automatically assigned a random
+            // choice. The winner of each match advances to the next round.
+
+            // if there is a tie, the match is replayed, but currRoundMaxTicks
+            // is divided by 1.25. This continues until there is a winner.
+            if (tieBreakerState.interRoundTicks < tieBreakerState.ticksBetweenRounds) {
+                // wait between rounds
+                tieBreakerState.interRoundTicks++
+                break
+            }
+
+            if (tieBreakerState.currRoundTick < tieBreakerState.currRoundMaxTicks) {
+                // wait for players to make their choice
+                tieBreakerState.currRoundTick++
+                break
+            }
+
+            // all players have made their choice
+            const matchWithTie = true
+
+            // if there is a tie, replay the round with a shorter time limit
+            if (matchWithTie) {
+                tieBreakerState.currRoundMaxTicks = Math.floor(tieBreakerState.currRoundMaxTicks / 1.25)
+                tieBreakerState.currRoundTick = 0
+                tieBreakerState.interRoundTicks = 0
+                break
+            }
+
+            // otherwise, advance to the next round
+            tieBreakerState.currRound++
+            tieBreakerState.currRoundMaxTicks = tieBreakerState.maxTicksPerRound
+            tieBreakerState.currRoundTick = 0
+            tieBreakerState.interRoundTicks = 0
+
+            if (tieBreakerState.currRound > tournamentBracket.length) {
+                // all rounds in the bracket are over
+                state = 'finished'
+            }
+            break
+        case 'finished':
+            break
+        default:
+            console.log('unknown state', state)
+            break
+    }
+}
+
 module.exports = {
     directionEnum,
     rpsCompare,
@@ -294,5 +356,6 @@ module.exports = {
     replaceCollisionsWithOtherPlayersSet,
     resolveClusterMembers,
     findEntityCenterOfCluster,
+    midMatchTieBreakerFSM,
     createTieBreakerBracket
 }

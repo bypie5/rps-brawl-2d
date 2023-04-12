@@ -122,11 +122,27 @@ function buildSpawnPointEntity (x, y) {
     return entity
 }
 
-function buildTieBreakerManagerEntity (playerEntityIds, currTrick) {
+function buildTieBreakerManagerEntity (playerEntityIds, currTrick, x, y) {
     const entity = {
         [components.TieBreaker.name]: {
             idsOfCohortMembers: playerEntityIds,
+            state: 'init',
+            tieBreakerState: {
+                currRound: 0,
+                ticksBetweenRounds: 33 * 5,
+                interRoundTicks: 0,
+                maxTicksPerRound: 33 * 12,
+                currRoundMaxTicks: 33 * 12,
+                minTicksPerRound: 33 * 3,
+                currRoundTick: 0,
+            },
             createdAtTick: currTrick
+        },
+        [components.Transform.name]: {
+            xPos: x,
+            yPos: y,
+            xVel: 0,
+            yVel: 0
         }
     }
 

@@ -123,9 +123,18 @@ const components = {
                         type: 'number'
                     }
                 },
+                state: {
+                    type: 'string',
+                    required: true,
+                    enum: ['init', 'playing', 'finished']
+                },
                 createdAtTick: {
                     type: 'number',
                     required: true
+                },
+                tieBreakerState: {
+                    type: 'object',
+                    required: true,
                 },
                 tournamentBracket: {
                     type: 'object',

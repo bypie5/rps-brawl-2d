@@ -2,7 +2,9 @@ const {
     rpsCompare,
     replaceCollisionsWithOtherPlayersSet,
     resolveClusterMembers,
-    createTieBreakerBracket
+    createTieBreakerBracket,
+    midMatchTieBreakerFSM,
+    findEntityCenterOfCluster
 } = require('./util')
 
 const {
@@ -204,7 +206,9 @@ function rps (gameContext, session) {
                 }
 
                 // 2. create tie breaker match manager
-                const tieBreakerMatchManager = buildTieBreakerManagerEntity(membersInCluster)
+                const { closestEntityId } = findEntityCenterOfCluster(membersInCluster, gameContext)
+                const { xPos, yPos } = gameContext.entities[closestEntityId].Transform
+                const tieBreakerMatchManager = buildTieBreakerManagerEntity(membersInCluster, gameContext.currentTick, xPos, yPos)
                 session.instantiateEntity(tieBreakerMatchManager)
             }
         }
@@ -219,9 +223,13 @@ function rps (gameContext, session) {
 function tieBreaker (gameContext, session) {
     for (const [id, entity] of Object.entries(gameContext.entities)) {
         if (entity.TieBreaker
-            && !entity.TieBreaker.tournamentBracket
-        ) {
+            && !entity.TieBreaker.tournamentBracket) {
             entity.TieBreaker.tournamentBracket = createTieBreakerBracket(entity.TieBreaker.idsOfCohortMembers)
+        }
+
+        if (entity.TieBreaker
+            && entity.TieBreaker.tournamentBracket) {
+                midMatchTieBreakerFSM(entity, gameContext)
         }
     }
 }
