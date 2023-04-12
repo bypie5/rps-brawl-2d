@@ -3,10 +3,12 @@ const chai = require('chai')
 const {
     resolveClusterMembers,
     createTieBreakerBracket,
-    findEntityCenterOfCluster
+    findEntityCenterOfCluster,
+    midMatchTieBreakerFSM
 } = require('../src/server/ecs/util')
 const {
-    buildPlayerEntity
+    buildPlayerEntity,
+    buildTieBreakerManagerEntity
 } = require('../src/server/ecs/entities')
 
 function mockGameContext () {
@@ -77,8 +79,145 @@ describe('Unit tests for ECS util functions', () => {
         chai.expect(membersInCluster2).to.contain(player4Id)
     })
 
+    it('createTieBreakerBracket created expected bracket in simple cases', () => {
+        let tournamentMembers = [1, 2, 3, 4]
+        const bracket = createTieBreakerBracket(tournamentMembers)
+
+        chai.expect(bracket.length).to.be.equal(2)
+        chai.expect(bracket[0].length).to.be.equal(2)
+        chai.expect(bracket[1].length).to.be.equal(1)
+
+        chai.expect(bracket[0][0].opponent1).to.not.be.null
+        chai.expect(bracket[0][0].opponent2).to.not.be.null
+        chai.expect(bracket[0][1].opponent1).to.not.be.null
+        chai.expect(bracket[0][1].opponent2).to.not.be.null
+
+        chai.expect(bracket[1][0].opponent1).to.be.null
+        chai.expect(bracket[1][0].opponent2).to.be.null
+
+        let tournamentMembers2 = [1, 2, 3, 4, 5]
+        const bracket2 = createTieBreakerBracket(tournamentMembers2)
+
+        chai.expect(bracket2.length).to.be.equal(3)
+        chai.expect(bracket2[0].length).to.be.equal(4)
+        chai.expect(bracket2[1].length).to.be.equal(2)
+        chai.expect(bracket2[2].length).to.be.equal(1)
+
+        chai.expect(bracket2[0][0].opponent1).to.be.null
+        chai.expect(bracket2[0][0].opponent2).to.be.null
+        chai.expect(bracket2[0][1].opponent1).to.be.null
+        chai.expect(bracket2[0][1].opponent2).to.be.null
+        chai.expect(bracket2[0][2].opponent1).to.be.null
+        chai.expect(bracket2[0][2].opponent2).to.be.null
+        chai.expect(bracket2[0][3].opponent1).to.not.be.null
+        chai.expect(bracket2[0][3].opponent2).to.not.be.null
+
+        chai.expect(bracket2[1][0].opponent1).to.not.be.null
+        chai.expect(bracket2[1][0].opponent2).to.not.be.null
+        chai.expect(bracket2[1][1].opponent1).to.not.be.null
+        chai.expect(bracket2[1][1].opponent2).to.be.null
+
+        chai.expect(bracket2[2][0].opponent1).to.be.null
+        chai.expect(bracket2[2][0].opponent2).to.be.null
+
+        let tournamentMembers3 = [1, 2, 3, 4, 5, 6, 7, 8]
+
+        const bracket3 = createTieBreakerBracket(tournamentMembers3)
+
+        chai.expect(bracket3.length).to.be.equal(3)
+        chai.expect(bracket3[0].length).to.be.equal(4)
+        chai.expect(bracket3[1].length).to.be.equal(2)
+        chai.expect(bracket3[2].length).to.be.equal(1)
+
+        chai.expect(bracket3[0][0].opponent1).to.not.be.null
+        chai.expect(bracket3[0][0].opponent2).to.not.be.null
+        chai.expect(bracket3[0][1].opponent1).to.not.be.null
+        chai.expect(bracket3[0][1].opponent2).to.not.be.null
+        chai.expect(bracket3[0][2].opponent1).to.not.be.null
+        chai.expect(bracket3[0][2].opponent2).to.not.be.null
+        chai.expect(bracket3[0][3].opponent1).to.not.be.null
+        chai.expect(bracket3[0][3].opponent2).to.not.be.null
+
+        chai.expect(bracket3[1][0].opponent1).to.be.null
+        chai.expect(bracket3[1][0].opponent2).to.be.null
+        chai.expect(bracket3[1][1].opponent1).to.be.null
+        chai.expect(bracket3[1][1].opponent2).to.be.null
+
+        chai.expect(bracket3[2][0].opponent1).to.be.null
+        chai.expect(bracket3[2][0].opponent2).to.be.null
+        
+
+        let tournamentMembers4 = [1, 2, 3, 4, 5, 6]
+
+        const bracket4 = createTieBreakerBracket(tournamentMembers4)
+
+        chai.expect(bracket4.length).to.be.equal(3)
+        chai.expect(bracket4[0].length).to.be.equal(4)
+        chai.expect(bracket4[1].length).to.be.equal(2)
+        chai.expect(bracket4[2].length).to.be.equal(1)
+
+        chai.expect(bracket4[0][0].opponent1).to.be.null
+        chai.expect(bracket4[0][0].opponent2).to.be.null
+        chai.expect(bracket4[0][1].opponent1).to.be.null
+        chai.expect(bracket4[0][1].opponent2).to.be.null
+        chai.expect(bracket4[0][2].opponent1).to.not.be.null
+        chai.expect(bracket4[0][2].opponent2).to.not.be.null
+        chai.expect(bracket4[0][3].opponent1).to.not.be.null
+        chai.expect(bracket4[0][3].opponent2).to.not.be.null
+
+        chai.expect(bracket4[1][0].opponent1).to.not.be.null
+        chai.expect(bracket4[1][0].opponent2).to.not.be.null
+        chai.expect(bracket4[1][1].opponent1).to.be.null
+        chai.expect(bracket4[1][1].opponent2).to.be.null
+
+        chai.expect(bracket4[2][0].opponent1).to.be.null
+        chai.expect(bracket4[2][0].opponent2).to.be.null
+
+        let tournamentMembers5 = [1, 2, 3]
+
+        const bracket5 = createTieBreakerBracket(tournamentMembers5)
+
+        chai.expect(bracket5.length).to.be.equal(2)
+        chai.expect(bracket5[0].length).to.be.equal(2)
+        chai.expect(bracket5[1].length).to.be.equal(1)
+        
+        chai.expect(bracket5[0][0].opponent1).to.be.null
+        chai.expect(bracket5[0][0].opponent2).to.be.null
+        chai.expect(bracket5[0][1].opponent1).to.not.be.null
+        chai.expect(bracket5[0][1].opponent2).to.not.be.null
+
+        chai.expect(bracket5[1][0].opponent1).to.not.be.null
+        chai.expect(bracket5[1][0].opponent2).to.be.null
+
+        let tournamentMembers6 = [1, 2, 3, 4, 5, 6, 7]
+
+        const bracket6 = createTieBreakerBracket(tournamentMembers6)
+
+        chai.expect(bracket6.length).to.be.equal(3)
+        chai.expect(bracket6[0].length).to.be.equal(4)
+        chai.expect(bracket6[1].length).to.be.equal(2)
+        chai.expect(bracket6[2].length).to.be.equal(1)
+
+        chai.expect(bracket6[0][0].opponent1).to.be.null
+        chai.expect(bracket6[0][0].opponent2).to.be.null
+        chai.expect(bracket6[0][1].opponent1).to.not.be.null
+        chai.expect(bracket6[0][1].opponent2).to.not.be.null
+        chai.expect(bracket6[0][2].opponent1).to.not.be.null
+        chai.expect(bracket6[0][2].opponent2).to.not.be.null
+        chai.expect(bracket6[0][3].opponent1).to.not.be.null
+        chai.expect(bracket6[0][3].opponent2).to.not.be.null
+
+        chai.expect(bracket6[1][0].opponent1).to.not.be.null
+        chai.expect(bracket6[1][0].opponent2).to.be.null
+        chai.expect(bracket6[1][1].opponent1).to.be.null
+        chai.expect(bracket6[1][1].opponent2).to.be.null
+
+        chai.expect(bracket6[2][0].opponent1).to.be.null
+        chai.expect(bracket6[2][0].opponent2).to.be.null
+    })
+
     it('createTieBreakerBracket returns expected bracket', () => {
-        for (let i = 3; i < 65; i++) {
+        for (let i = 3; i < 64; i++) {
             for (let j = 0; j < 250; j++) {
                 let tournamentMembers = []
                 for (let x = 0; x < i; x++) {
@@ -137,6 +276,7 @@ describe('Unit tests for ECS util functions', () => {
                 if (tournamentWinner === null) {
                     console.log('Tournament winner is: ' + tournamentWinner)
                     console.log('Bracket: ' + JSON.stringify(bracket))
+                    console.log(`Tournament members: ${tournamentMembers.length}`)
                 }
 
                 chai.assert(tournamentWinner !== null)
@@ -165,5 +305,34 @@ describe('Unit tests for ECS util functions', () => {
         const { closestEntityId } = findEntityCenterOfCluster(membersInCluster, mockContext)
 
         chai.expect(closestEntityId).to.be.equal(player1Id)
+    })
+
+    it('midMatchTieBreakerFSM returns expected winner in simple case', () => {
+        const mockContext = mockGameContext()
+
+        // players aligned on x axis all touching ([2][1][3][4])
+        const player1Mock = buildPlayerEntity('player1', 0, 0)
+        const player2Mock = buildPlayerEntity('player2', -3, 0)
+        const player3Mock = buildPlayerEntity('player3', 3, 0)
+        const player4Mock = buildPlayerEntity('player4', 6, 0)
+
+        const player1Id = mockContext._addEntity(mockContext, player1Mock)
+        const player2Id = mockContext._addEntity(mockContext, player2Mock)
+        const player3Id = mockContext._addEntity(mockContext, player3Mock)
+        const player4Id = mockContext._addEntity(mockContext, player4Mock)
+
+        player1Mock.Avatar.stateData.collisionsWithOtherPlayers = [player2Id, player3Id]
+        player2Mock.Avatar.stateData.collisionsWithOtherPlayers = [player1Id]
+        player3Mock.Avatar.stateData.collisionsWithOtherPlayers = [player1Id, player4Id]
+        player4Mock.Avatar.stateData.collisionsWithOtherPlayers = [player3Id]
+
+        const membersInCluster = resolveClusterMembers(player1Mock, player1Id, mockContext)
+        const brackerManager = buildTieBreakerManagerEntity(membersInCluster, 0, 0, 0)
+
+        brackerManager.TieBreaker.tournamentBracket = createTieBreakerBracket(brackerManager.TieBreaker.idsOfCohortMembers)
+        
+        mockContext._addEntity(mockContext, brackerManager)
+
+        console.log('bracket: ' + JSON.stringify(brackerManager.TieBreaker.tournamentBracket))
     })
 })

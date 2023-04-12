@@ -143,18 +143,30 @@ function findEntityCenterOfCluster (clusterMemberIds, gameContext) {
     }
 }
 
+function _isPowerOfTwo (n) {
+    return n && (n & (n - 1)) === 0
+}
+
 function _nearestPowerOfTwo (n) {
-    if (n % 2 !== 0) {
-        return Math.pow(2, Math.floor(Math.log2(n)))
-    } else {
-        return Math.pow(2, Math.floor(Math.log2(n - 1)))
+    if (_isPowerOfTwo(n)) {
+        return n / 2
     }
+
+    return Math.pow(2, Math.floor(Math.log2(n)))
+}
+
+function _nextPowerOfTwo (n) {
+    if (_isPowerOfTwo(n)) {
+        return n
+    }
+
+    return Math.pow(2, Math.ceil(Math.log2(n)))
 }
 
 function createTieBreakerBracket (clusterMemberIds) {
     const numberOfFirstRoundMatches = _nearestPowerOfTwo(clusterMemberIds.length)
-    const numberOfByes = clusterMemberIds.length - numberOfFirstRoundMatches
-    const numberOfRounds = Math.log2(numberOfFirstRoundMatches) + 1
+    const numberOfByes = _nextPowerOfTwo(clusterMemberIds.length) - clusterMemberIds.length
+    const numberOfRounds = Math.max(2, Math.log2(numberOfFirstRoundMatches) + 1)
 
     const bracket = []
     for (let round = 0; round < numberOfRounds; round++) {
@@ -184,7 +196,7 @@ function createTieBreakerBracket (clusterMemberIds) {
     }
 
     const firstRoundOpponents = []
-    for (let i = 0; i < numberOfFirstRoundMatches / 2; i++) {
+    for (let i = 0; i < numberOfFirstRoundMatches; i++) {
         let randomIndex = Math.floor(Math.random() * playersInTourament.length)
         const opponent1Id = playersInTourament[randomIndex]
 
@@ -287,7 +299,23 @@ function createTieBreakerBracket (clusterMemberIds) {
     return bracket
 }
 
-function midMatchTieBreakerFSM (tieBreakerEntity, gameContext) {
+// passing read only ref of gameContext to preven game commands from mutating it
+function _computeRoundResults (tournamentBracket, round, readOnlyRefGameContext) {
+    let hadAtLeastOneTie = false
+
+    if (!tournamentBracket[round]) {
+        throw new Error(`Round ${round} does not exist`)
+    }
+
+    const roundMatches = tournamentBracket[round]
+    for (let i = 0; i < roundMatches.length; i++) {
+        const match = roundMatches[i]
+    }
+
+    return hadAtLeastOneTie
+}
+
+function midMatchTieBreakerFSM (tieBreakerEntity, gameContext, onTournamentFinished) {
     const {
         state,
         tieBreakerState,
@@ -320,7 +348,8 @@ function midMatchTieBreakerFSM (tieBreakerEntity, gameContext) {
             }
 
             // all players have made their choice
-            const matchWithTie = true
+            const refGameContext = JSON.parse(JSON.stringify(gameContext))
+            const matchWithTie = _computeRoundResults(tournamentBracket, tieBreakerState.currRound, refGameContext)
 
             // if there is a tie, replay the round with a shorter time limit
             if (matchWithTie) {
@@ -342,6 +371,7 @@ function midMatchTieBreakerFSM (tieBreakerEntity, gameContext) {
             }
             break
         case 'finished':
+            onTournamentFinished()
             break
         default:
             console.log('unknown state', state)

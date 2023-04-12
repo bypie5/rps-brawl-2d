@@ -229,7 +229,8 @@ function tieBreaker (gameContext, session) {
 
         if (entity.TieBreaker
             && entity.TieBreaker.tournamentBracket) {
-                midMatchTieBreakerFSM(entity, gameContext)
+                midMatchTieBreakerFSM(entity, gameContext, () => {
+                })
         }
     }
 }
