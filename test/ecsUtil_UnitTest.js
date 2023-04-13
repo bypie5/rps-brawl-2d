@@ -14,6 +14,7 @@ const {
 function mockGameContext () {
     return {
         _mockEntityId: 0,
+        currentTick: 0,
         _addEntity: (mockContext, components) => {
             const newId = mockContext._mockEntityId
             mockContext.entities[mockContext._mockEntityId] = components
@@ -327,12 +328,78 @@ describe('Unit tests for ECS util functions', () => {
         player4Mock.Avatar.stateData.collisionsWithOtherPlayers = [player3Id]
 
         const membersInCluster = resolveClusterMembers(player1Mock, player1Id, mockContext)
-        const brackerManager = buildTieBreakerManagerEntity(membersInCluster, 0, 0, 0)
+        const bracketManager = buildTieBreakerManagerEntity(membersInCluster, 0, 0, 0)
 
-        brackerManager.TieBreaker.tournamentBracket = createTieBreakerBracket(brackerManager.TieBreaker.idsOfCohortMembers)
+        bracketManager.TieBreaker.tournamentBracket = createTieBreakerBracket(bracketManager.TieBreaker.idsOfCohortMembers)
         
-        mockContext._addEntity(mockContext, brackerManager)
+        mockContext._addEntity(mockContext, bracketManager)
 
-        console.log('bracket: ' + JSON.stringify(brackerManager.TieBreaker.tournamentBracket))
+        const { tournamentBracket, tieBreakerState } = bracketManager.TieBreaker
+        chai.expect(tournamentBracket[0].length).to.be.equal(2)
+        chai.expect(tournamentBracket[1].length).to.be.equal(1)
+
+        // make all players tie
+        player1Mock.Avatar.stateData.rockPaperScissors = 'rock'
+        player2Mock.Avatar.stateData.rockPaperScissors = 'rock'
+        player3Mock.Avatar.stateData.rockPaperScissors = 'rock'
+        player4Mock.Avatar.stateData.rockPaperScissors = 'rock'
+
+        const playerOnesRound1Match = (tournamentBracket[0][0].opponent1 === player1Id || tournamentBracket[0][0].opponent2 === player1Id) ? tournamentBracket[0][0] : tournamentBracket[0][1]
+        const opponentOfPlayerOnesRound1Match = playerOnesRound1Match.opponent2 !== player1Id ? playerOnesRound1Match.opponent2 : playerOnesRound1Match.opponent1
+        const notOpponetsOfPlayerOnesRound1Match = [player2Id, player3Id, player4Id].filter(id => id !== opponentOfPlayerOnesRound1Match)
+
+        let tournamentFinished = false
+        function _invokeFsm () {
+            midMatchTieBreakerFSM(bracketManager, mockContext, () => {
+                chai.expect(bracketManager.TieBreaker.tournamentBracket[1][0].winner).to.be.equal(player1Id)
+                tournamentFinished = true
+            })
+        }
+
+        while (tieBreakerState.currRoundTick < tieBreakerState.currRoundMaxTicks) {
+            _invokeFsm()
+        }
+
+        _invokeFsm()
+
+        // there is a tie in the first round, play round 1 again
+        chai.expect(tieBreakerState.currRound).to.be.equal(1)
+
+        // replay of round 1 will start after delay by ticksBetweenRounds
+        while (tieBreakerState.interRoundTicks < tieBreakerState.ticksBetweenRounds) {
+            _invokeFsm()
+        }
+
+        // replay of round 1
+        player1Mock.Avatar.stateData.rockPaperScissors = 'paper' // player 1 should win round 1
+
+        const nextWinnerOfRound1 = notOpponetsOfPlayerOnesRound1Match[0]
+        mockContext.entities[nextWinnerOfRound1].Avatar.stateData.rockPaperScissors = 'paper' // player 2 should win round 1
+
+        while (tieBreakerState.currRoundTick < tieBreakerState.currRoundMaxTicks) {
+            _invokeFsm()
+        }
+
+        _invokeFsm()
+
+        // round 2 will start after delay by ticksBetweenRounds
+        while (tieBreakerState.interRoundTicks < tieBreakerState.ticksBetweenRounds) {
+            _invokeFsm()
+        }
+
+        chai.expect(tieBreakerState.currRound).to.be.equal(2)
+
+        // round 2
+        player1Mock.Avatar.stateData.rockPaperScissors = 'scissors' // player 1 should win round 2
+        mockContext.entities[nextWinnerOfRound1].Avatar.stateData.rockPaperScissors = 'paper' // player 2 should lose round 2
+
+        while (tieBreakerState.currRoundTick < tieBreakerState.currRoundMaxTicks) {
+            _invokeFsm()
+        }
+
+        _invokeFsm()
+        _invokeFsm()
+
+        chai.expect(tournamentFinished).to.be.true
     })
 })

@@ -163,6 +163,16 @@ function _nextPowerOfTwo (n) {
     return Math.pow(2, Math.ceil(Math.log2(n)))
 }
 
+function _getChildrenMatches (bracket, childrenIds) {
+    const childrenMatches = []
+    for (let i = 0; i < childrenIds.length; i++) {
+        const childId = childrenIds[i]
+        const childMatch = bracket[childId[0]][childId[2]]
+        childrenMatches.push(childMatch)
+    }
+    return childrenMatches
+}
+
 function createTieBreakerBracket (clusterMemberIds) {
     const numberOfFirstRoundMatches = _nearestPowerOfTwo(clusterMemberIds.length)
     const numberOfByes = _nextPowerOfTwo(clusterMemberIds.length) - clusterMemberIds.length
@@ -228,20 +238,10 @@ function createTieBreakerBracket (clusterMemberIds) {
 
     // move byes and matches with no sibbling match to the next round
     // a sibbling match is a match that has the same parent match
-    function _getChildrenMatches (childrenIds) {
-        const childrenMatches = []
-        for (let i = 0; i < childrenIds.length; i++) {
-            const childId = childrenIds[i]
-            const childMatch = bracket[childId[0]][childId[2]]
-            childrenMatches.push(childMatch)
-        }
-        return childrenMatches
-    }
-
     const secondRoundMatches = bracket[1]
     for (let i = 0; i < secondRoundMatches.length; i++) {
         const match = secondRoundMatches[i]
-        const childMatches = _getChildrenMatches(match.childrenMatchIds)
+        const childMatches = _getChildrenMatches(bracket, match.childrenMatchIds)
         const childOne = childMatches[0]
         const childTwo = childMatches[1]
 
@@ -302,17 +302,60 @@ function createTieBreakerBracket (clusterMemberIds) {
 // passing read only ref of gameContext to preven game commands from mutating it
 function _computeRoundResults (tournamentBracket, round, readOnlyRefGameContext) {
     let hadAtLeastOneTie = false
-
-    if (!tournamentBracket[round]) {
+    const roundIndex = round - 1 // round 1 is index 0
+    if (!tournamentBracket[roundIndex]) {
         throw new Error(`Round ${round} does not exist`)
     }
 
-    const roundMatches = tournamentBracket[round]
+    const roundMatches = tournamentBracket[roundIndex]
     for (let i = 0; i < roundMatches.length; i++) {
         const match = roundMatches[i]
+        if (match.opponent1 === null || match.opponent2 === null) {
+            continue
+        }
+
+        const player1 = readOnlyRefGameContext.entities[match.opponent1]
+        const player2 = readOnlyRefGameContext.entities[match.opponent2]
+        if (player1.Avatar.stateData.rockPaperScissors === player2.Avatar.stateData.rockPaperScissors) {
+            hadAtLeastOneTie = true
+        }
+
+        const comp = rpsCompare(player1.Avatar.stateData.rockPaperScissors, player2.Avatar.stateData.rockPaperScissors)
+        if (comp === 0) {
+            // tie
+            match.winner = null
+        } else if (comp === 1) {
+            // player 1 wins
+            match.winner = match.opponent1
+        } else {
+            // player 2 wins
+            match.winner = match.opponent2
+        }
     }
 
     return hadAtLeastOneTie
+}
+
+function _advanceWinnersToNextRound (tournamentBracket, nextRound) {
+    const nextRoundIndex = nextRound - 1
+    if (!tournamentBracket[nextRoundIndex]) {
+        throw new Error(`Round ${nextRound} does not exist`)
+    }
+
+    const nextRoundMatches = tournamentBracket[nextRoundIndex]
+    for (let i = 0; i < nextRoundMatches.length; i++) {
+        const childrenMatches = _getChildrenMatches(tournamentBracket, nextRoundMatches[i].childrenMatchIds)
+        const childOne = childrenMatches[0]
+        const childTwo = childrenMatches[1]
+
+        if (childOne.winner !== null) {
+            nextRoundMatches[i].opponent1 = childOne.winner
+        }
+
+        if (childTwo.winner !== null) {
+            nextRoundMatches[i].opponent2 = childTwo.winner
+        }
+    }
 }
 
 function midMatchTieBreakerFSM (tieBreakerEntity, gameContext, onTournamentFinished) {
@@ -325,7 +368,7 @@ function midMatchTieBreakerFSM (tieBreakerEntity, gameContext, onTournamentFinis
     switch (state) {
         case 'init':
             tieBreakerState.currRound = 1
-            state = 'playing'
+            tieBreakerEntity.TieBreaker.state = 'playing'
             break
         case 'playing':
             // players in each round have currRoundMaxTicks ticks to
@@ -349,10 +392,10 @@ function midMatchTieBreakerFSM (tieBreakerEntity, gameContext, onTournamentFinis
 
             // all players have made their choice
             const refGameContext = JSON.parse(JSON.stringify(gameContext))
-            const matchWithTie = _computeRoundResults(tournamentBracket, tieBreakerState.currRound, refGameContext)
+            const hadAtLeastOneTie = _computeRoundResults(tournamentBracket, tieBreakerState.currRound, refGameContext)
 
             // if there is a tie, replay the round with a shorter time limit
-            if (matchWithTie) {
+            if (hadAtLeastOneTie) {
                 tieBreakerState.currRoundMaxTicks = Math.floor(tieBreakerState.currRoundMaxTicks / 1.25)
                 tieBreakerState.currRoundTick = 0
                 tieBreakerState.interRoundTicks = 0
@@ -367,8 +410,11 @@ function midMatchTieBreakerFSM (tieBreakerEntity, gameContext, onTournamentFinis
 
             if (tieBreakerState.currRound > tournamentBracket.length) {
                 // all rounds in the bracket are over
-                state = 'finished'
+                tieBreakerEntity.TieBreaker.state = 'finished'
+                break
             }
+
+            _advanceWinnersToNextRound(tournamentBracket, tieBreakerState.currRound)
             break
         case 'finished':
             onTournamentFinished()
