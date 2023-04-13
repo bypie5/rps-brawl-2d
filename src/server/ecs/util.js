@@ -167,7 +167,9 @@ function _getChildrenMatches (bracket, childrenIds) {
     const childrenMatches = []
     for (let i = 0; i < childrenIds.length; i++) {
         const childId = childrenIds[i]
-        const childMatch = bracket[childId[0]][childId[2]]
+        const roundKey = Number(childId.split('-')[0])
+        const matchKey = Number(childId.split('-')[1])
+        const childMatch = bracket[roundKey][matchKey]
         childrenMatches.push(childMatch)
     }
     return childrenMatches
@@ -433,5 +435,6 @@ module.exports = {
     resolveClusterMembers,
     findEntityCenterOfCluster,
     midMatchTieBreakerFSM,
+    _advanceWinnersToNextRound,
     createTieBreakerBracket
 }

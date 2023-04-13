@@ -4,6 +4,7 @@ const {
     resolveClusterMembers,
     createTieBreakerBracket,
     findEntityCenterOfCluster,
+    _advanceWinnersToNextRound,
     midMatchTieBreakerFSM
 } = require('../src/server/ecs/util')
 const {
@@ -218,7 +219,7 @@ describe('Unit tests for ECS util functions', () => {
     })
 
     it('createTieBreakerBracket returns expected bracket', () => {
-        for (let i = 3; i < 64; i++) {
+        for (let i = 3; i < 101; i++) {
             for (let j = 0; j < 250; j++) {
                 let tournamentMembers = []
                 for (let x = 0; x < i; x++) {
@@ -233,8 +234,8 @@ describe('Unit tests for ECS util functions', () => {
 
                 // simulate a tournament
                 let tournamentWinner = null
-                for (let i = 0; i < bracket.length; i++) {
-                    const round = bracket[i]
+                for (let x = 0; x < bracket.length; x++) {
+                    const round = bracket[x]
                     for (let j = 0; j < round.length; j++) {
                         const match = round[j]
                         if (match) {
@@ -245,32 +246,16 @@ describe('Unit tests for ECS util functions', () => {
                                 break
                             }
 
-                            const parentMatch = getMatchById(match.parentMatchId)
-                            if (
-                                (match.opponent1 === null && match.opponent2 !== null) ||
-                                (match.opponent1 !== null && match.opponent2 === null)
-                            ) {
-                                match.winner = match.opponent1 === null ? match.opponent2 : match.opponent1
-                                if (parentMatch.opponent1 === null) {
-                                    parentMatch.opponent1 = match.winner
-                                } else if (parentMatch.opponent2 === null) {
-                                    parentMatch.opponent2 = match.winner
-                                }
-                                continue
-                            }
-
                             if (match.opponent1 === null && match.opponent2 === null) {
                                 continue
                             }
 
-                            const winnerId = winner === 0 ? match.opponent1 : match.opponent2
-                            if (parentMatch.opponent1 === null) {
-                                parentMatch.opponent1 = winnerId
-                            } else if (parentMatch.opponent2 === null) {
-                                parentMatch.opponent2 = winnerId
-                            }
-                            match.winner = winnerId
+                           match.winner = winner === 0 ? match.opponent1 : match.opponent2
                         }
+                    }
+
+                    if (x < bracket.length - 1) {
+                        _advanceWinnersToNextRound(bracket, x + 2)
                     }
                 }
 
