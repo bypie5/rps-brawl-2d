@@ -21,3 +21,10 @@ CMD [ "sh" ]
 
 EXPOSE 8080
 EXPOSE 8081
+
+FROM build AS production
+
+CMD [ "npm", "start" ]
+
+EXPOSE 8080
+EXPOSE 8081

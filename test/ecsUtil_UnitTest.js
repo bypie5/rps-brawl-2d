@@ -219,8 +219,8 @@ describe('Unit tests for ECS util functions', () => {
     })
 
     it('createTieBreakerBracket returns expected bracket', () => {
-        for (let i = 3; i < 101; i++) {
-            for (let j = 0; j < 250; j++) {
+        for (let i = 3; i < 512; i++) {
+            for (let j = 0; j < 10; j++) {
                 let tournamentMembers = []
                 for (let x = 0; x < i; x++) {
                     tournamentMembers.push(x)
@@ -228,7 +228,7 @@ describe('Unit tests for ECS util functions', () => {
                 const bracket = createTieBreakerBracket(tournamentMembers)
 
                 // id is string like <number>-<number>
-                function getMatchById (id) {
+                function getMatchById (id) {    
                     return bracket[id[0]][id[2]]
                 }
 

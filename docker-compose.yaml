@@ -4,7 +4,7 @@ services:
     image: rps-services:latest
     build:
       context: .
-      target: development
+      target: production
     environment:
       - DB_USER
       - DB_PASSWORD
@@ -12,6 +12,9 @@ services:
       - JWT_SIGNING_SECRET
     depends_on:
       - rps-db
+    ports:
+      - "8080:8080"
+      - "8181:8181"
     expose:
       - "8181"
       - "8080"
