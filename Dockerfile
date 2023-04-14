@@ -16,8 +16,7 @@ COPY /test ./test
 # install npm
 RUN npm install -g npm
 
-# run bash
-CMD [ "sh" ]
+CMD [ "npm", "run", "dev" ]
 
 EXPOSE 8080
 EXPOSE 8081

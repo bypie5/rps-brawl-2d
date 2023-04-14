@@ -14,9 +14,9 @@ services:
       - rps-db
     ports:
       - "8080:8080"
-      - "8181:8181"
+      - "8081:8081"
     expose:
-      - "8181"
+      - "8081"
       - "8080"
   rps-db:
     image: mysql:latest
