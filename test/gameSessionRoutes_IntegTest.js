@@ -76,37 +76,6 @@ describe('Testing Game Session Routes', () => {
         chai.expect(res.text).to.contain('friendlyName')
     })
 
-    it('prevents user from hosting match if they are already hosting a match', async () => {
-        const authToken = await login('test', 'test')
-        const res = await chai.request(server)
-            .post('/api/game-session/create-private-session')
-            .set('Authorization', `Bearer ${authToken}`)
-            .set('content-type', 'application/json')
-            .send({
-                config: {
-                    maxPlayers: 2,
-                    map: "map0"
-                }
-            })
-
-        chai.expect(res).to.have.status(200)
-
-        const res2 = await chai.request(server)
-            .post('/api/game-session/create-private-session')
-            .set('Authorization', `Bearer ${authToken}`)
-            .set('content-type', 'application/json')
-            .send({
-                config: {
-                    maxPlayers: 2,
-                    map: "map0"
-                }
-            })
-
-        chai.expect(res2).to.have.status(400)
-        chai.expect(res2.text).to.be.a('string')
-        chai.expect(res2.text).to.equal('User already has a private session')
-    })
-
     it('players can use friendly name to join private game session', async () => {
         const authToken = await login('test', 'test')
         const res = await chai.request(server)

@@ -151,6 +151,9 @@ class GameRender {
 
         this.entityIdThreeJsIdMap = new Map()
         this.playersAvatarId = null
+        this.uiElements = {
+            playerUi: null,
+        }
 
         // index of sprites in the tilesheet corresponds to the sprite' id - 1 (i.e. sprite id 1 is at index 0)
         _loadTileSheet(this.scene, 'assets/haunted_house.png', 64).then((spriteMaterials) => {
@@ -183,6 +186,7 @@ class GameRender {
             }
             this.latestTickRendered = this.latestTickReceived
             this.renderer.render(this.scene, this.camera)
+            window.gameUiManager.update()
 
             let self = this
             requestAnimationFrame(() => {
@@ -258,8 +262,14 @@ class GameRender {
             this.entityIdThreeJsIdMap.set(entityId, avatar.id)
             threeJsId = avatar.id
 
-            if (entityComponents.Avatar.playerId === this.username) {
+            if (entityComponents.Avatar && entityComponents.Avatar.playerId === this.username) {
                 this.playersAvatarId = avatar.id
+    
+                this.uiElements.playerUi = window.gameUiManager.addComponentToScene('hudOverlay', {
+                    playerId: this.username,
+                    xPos: entityComponents.Transform.xPos,
+                    yPos: entityComponents.Transform.yPos,
+                })
             }
         }
 
@@ -297,6 +307,16 @@ class GameRender {
             const newMaterial = _getRpsSpriteMaterial(entityComponents.Avatar.stateData.rockPaperScissors)
             entity.material = newMaterial
         }
+
+        if (entityComponents.Avatar
+            && entityComponents.Avatar.playerId === this.username
+            && entityComponents.Transform
+            && this.uiElements.playerUi) {
+            window.gameUiManager.updateComponent(this.uiElements.playerUi, {
+                xPos: entityComponents.Transform.xPos,
+                yPos: entityComponents.Transform.yPos,
+            })
+        }
     }
 
     _removeEntityFromScene (entityId) {
@@ -308,6 +328,8 @@ async function startRenderer (sessionConfig, username, sessionInfo) {
     const gameRender = new GameRender(canvas, sessionConfig, username, sessionInfo)
 
     gameRender.start()
+
+    window.gameUiManager.start()
 
     return gameRender
 }

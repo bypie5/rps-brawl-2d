@@ -274,7 +274,8 @@ class SessionManager extends Service {
 
     createPrivateSession (hostUsername, config) {
         if (this.privateSessionHosts.has(hostUsername)) {
-            throw new UserIsAlreadyHostError('User already has a private session')
+            const sessionId = this.privateSessionHosts.get(hostUsername)
+            this.stopPrivateSession(sessionId)
         }
 
         const id = uuidv4()
@@ -317,6 +318,23 @@ class SessionManager extends Service {
         }
 
         return this.activeSessions.get(sessionId)
+    }
+
+    stopPrivateSession (id) {
+        const session = this.activeSessions.get(id)
+        if (!session) {
+            throw new SessionNotFoundError('Session does not exist')
+        }
+
+        session.endGameSession()
+        this.activeSessions.delete(id)
+
+        if (session.isPrivate) {
+            this.privateSessionHosts.delete(session.host)
+            this.sessionIdToFriendlyName.delete(session.id)
+        }
+
+        console.log(`Session ${id} ended`)
     }
 
     clearSessions () {

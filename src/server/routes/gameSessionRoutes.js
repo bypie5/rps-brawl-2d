@@ -86,6 +86,8 @@ router.post('/start-session', (req, res) => {
     }
 
     session.beginGameSession()
+
+    res.status(200).send()
 })
 
 router.get('/session-info', (req, res) => {
