@@ -37,6 +37,7 @@ function buildPlayerEntity (playerId, x, y) {
                 ticksSinceStartedRespawning: -1,
                 stateSwitchCooldownMaxTicks: 30,
                 stateSwitchCooldownTicks: 0,
+                firstSpawn: true,
                 collisionsWithOtherPlayers: [] // enitity ids
             }
         },

@@ -27,19 +27,20 @@ class GameUiManager {
 
   addComponentToScene(name, props) {
     let newId = null
+    let component = null
     switch (name) {
       case components.hudOverlay:
-        const hudOverlay = new HudOverlay(props)
+        component = new HudOverlay(props)
         newId = this._getNextId()
-        this.components.set(newId, hudOverlay)
         break
       default:
         throw new Error(`Unknown component name: ${name}`)
     }
 
-    const component = this.components.get(newId)
     const content = this._drawComponent(newId, component)
     this.parentDomElement.insertAdjacentHTML('beforeend', content)
+
+    this.components.set(newId, component)
 
     return newId
   }
@@ -55,8 +56,14 @@ class GameUiManager {
   }
 
   _redrawComponent(id, component) {
-    const content = this._drawComponent(id, component)
     const element = document.getElementById(id)
+
+    if (element === null) {
+      throw new Error(`Could not find element with id: ${id}`)
+    }
+
+    const content = this._drawComponent(id, component)
+
     element.innerHTML = content
   }
 

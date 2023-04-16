@@ -267,8 +267,7 @@ class GameRender {
     
                 this.uiElements.playerUi = window.gameUiManager.addComponentToScene('hudOverlay', {
                     playerId: this.username,
-                    xPos: entityComponents.Transform.xPos,
-                    yPos: entityComponents.Transform.yPos,
+                    lives: entityComponents.Avatar.stateData.lives,
                 })
             }
         }
@@ -313,8 +312,7 @@ class GameRender {
             && entityComponents.Transform
             && this.uiElements.playerUi) {
             window.gameUiManager.updateComponent(this.uiElements.playerUi, {
-                xPos: entityComponents.Transform.xPos,
-                yPos: entityComponents.Transform.yPos,
+                lives: entityComponents.Avatar.stateData.lives,
             })
         }
     }

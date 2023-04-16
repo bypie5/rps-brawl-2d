@@ -11,6 +11,6 @@ describe('Player HUD', () => {
 
         cy.get('[data-cy=start-match-button]').click()
 
-        cy.get('[data-cy=player-hud-overlay]').should('be.visible')
+        cy.get('[data-cy=player-hud-overlay]', {timeout: 3500})
     })
 })

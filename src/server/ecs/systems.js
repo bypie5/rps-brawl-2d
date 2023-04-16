@@ -267,10 +267,17 @@ function spawn (gameContext, session) {
         const spawnTransform = gameContext.entities[spawnPoint].Transform
         transform.xPos = spawnTransform.xPos
         transform.yPos = spawnTransform.yPos
+        transform.xVel = 0
+        transform.yVel = 0
         hitBox.physicsEnabled = false
         avatar.state = 'respawning'
         avatar.stateData.ticksSinceStartedRespawning = 0
-        avatar.stateData.lives--
+
+        if (avatar.stateData.firstSpawn) {
+            avatar.stateData.firstSpawn = false
+        } else {
+            avatar.stateData.lives--
+        }
     }
 
     for (const respawningPlayer of respawningPlayers) {

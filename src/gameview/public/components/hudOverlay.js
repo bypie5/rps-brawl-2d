@@ -9,10 +9,13 @@ class HudOverlay extends Component {
   getHtmlContent() {
     const content = `
       <div class="hud-overlay" data-cy="player-hud-overlay">
-        <div class="unselectable-text">
-          Player: ${this.props.playerId}
-          <br>
-          x: ${this.props.xPos}, y: ${this.props.yPos}
+        <div class="player-info">
+          <div class="unselectable-text">
+            Player: ${this.props.playerId}
+          </div>
+          <div class="unselectable-text">
+            Lives: ${this.props.lives}
+          </div>
         </div>
       </div>
     `
@@ -23,7 +26,8 @@ class HudOverlay extends Component {
   getStyleMap() {
     return {
       ...super.getStyleMap(),
-      'hud-overlay': 'position: absolute; top: 10px; left: 0;'
+      'hud-overlay': 'position: absolute; top: 0; left: 0; width: 100%; height: 100%;',
+      'player-info': 'display: flex; justify-content: center; align-items: center; flex-direction: column; width: 100%;'
     }
   }
 }
