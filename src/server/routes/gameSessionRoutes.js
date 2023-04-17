@@ -60,6 +60,40 @@ router.post('/join-private-session', (req, res) => {
     }
 })
 
+router.post('/invite-agent-to-session', (req, res) => {
+    const { username } = req.session.passport.user
+
+    const { sessionId } = req.body
+    console.log(`User ${username} is trying to invite an agent to session ${sessionId}`)
+    if (!sessionId) {
+        res.status(400).send('Missing session id')
+        return
+    }
+
+    const session = sessionManager.findSessionById(sessionId)
+    if (!session) {
+        res.status(404).send('Session does not exist')
+        return
+    }
+
+    if (session.host !== username) {
+        res.status(403).send('User is not the host')
+        return
+    }
+
+    try {
+        sessionManager.inviteAgentToSession(sessionId)
+    } catch (err) {
+        if (err.name === 'SessionIsFullError') {
+            res.status(400).send('Session is full')
+        } else {
+            res.status(500).send('Internal server error')
+        }
+    }
+
+    res.status(200).send()
+})
+
 router.post('/start-session', (req, res) => {
     const { username } = req.session.passport.user
     const { sessionId } = req.query

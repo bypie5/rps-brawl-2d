@@ -17,6 +17,8 @@ const {
 } = require('../ecs/systems')
 const { levelZero } = require('../levels/level')
 
+const { createCpuAgent } = require('../agents/agentFactory')
+
 const sessionStates = {
     INITIALIZING: 'INITIALIZING',
     WAITING_FOR_PLAYERS: 'WAITING_FOR_PLAYERS',
@@ -81,6 +83,7 @@ class Session {
 
         this.currState = sessionStates.INITIALIZING
         this.connectedPlayers = new Set() // Set<username>
+        this.agents = new Map() // Map<agentId, agent>
 
         this.wsConnections = new Map() // Map<username, ws>
 
@@ -107,6 +110,10 @@ class Session {
         this.connectedPlayers.add(username)
     }
 
+    addAgent (agentId, agent) {
+        this.agents.set(agentId, agent)
+    }
+
     isPlayerConnected (username) {
         return this.connectedPlayers.has(username)
     }
@@ -128,6 +135,10 @@ class Session {
     broadcast (msg) {
         for (const ws of this.wsConnections.values()) {
             ws.send(JSON.stringify(msg))
+        }
+
+        for (const agent of this.agents.values()) {
+            agent.tick(msg)
         }
     }
 
@@ -270,6 +281,8 @@ class SessionManager extends Service {
         this.sessionIdToFriendlyName = new Map() // Map<sessionId, friendlyName>
         this.activeSessions = new Map()
         this.playerToSession = new Map() // Map<username, sessionId>
+        this.agents = new Map() // Map<agentId, agent>
+        this.agentsToSession = new Map() // Map<agentId, sessionId>
     }
 
     createPrivateSession (hostUsername, config) {
@@ -305,6 +318,23 @@ class SessionManager extends Service {
         this._connectPlayerToSession(username, sessionId)
 
         return sessionId
+    }
+
+    inviteAgentToSession (sessionId) {
+        const session = this.activeSessions.get(sessionId)
+        if (!session) {
+            throw new SessionNotFoundError('Session does not exist')
+        }
+
+        const agent = this._agentFactory(sessionId)
+        this.agents.set(agent.getBotId(), agent)
+        this.agentsToSession.set(agent.getBotId(), sessionId)
+
+        this._connectPlayerToSession(agent.getBotId(), sessionId)
+
+        session.addAgent(agent.getBotId(), agent)
+
+        return agent.getBotId()
     }
 
     findSessionById (sessionId) {
@@ -379,6 +409,11 @@ class SessionManager extends Service {
         } else {
             return friendlyName
         }
+    }
+
+    _agentFactory (sessionId) {
+        const agentId = `${uuidv4()}-rps-brawl-agent`
+        return createCpuAgent(agentId, sessionId)
     }
 }
 

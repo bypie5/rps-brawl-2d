@@ -69,21 +69,19 @@ const gameplayCommands = {
     }
 }
 
+const commandTypeToHandlerType = {}
+
+for (const handler in gameplayCommands) {
+    commandTypeToHandlerType[gameplayCommands[handler].type] = handler
+}
+
 // register schemas to validator
 for (const msgType in gameplayCommands) {
     v.addSchema(gameplayCommands[msgType].schema, gameplayCommands[msgType].schema.id)
 }
 
 const handlers = {
-    [gameplayCommands.move.type]: (ws, payload) => {
-        // check that payload matches schema
-        const validationResult = v.validate(payload, gameplayCommands.move.schema)
-        if (!validationResult.valid) {
-            console.log('Invalid message: ' + validationResult.errors)
-            return
-        }
-
-        const sender = ws.id
+    [gameplayCommands.move.type]: (sender, payload) => {
         const session = services.sessionManager.findSessionByUser(sender)
         if (session) {
             const { entityId, direction } = payload
@@ -141,14 +139,7 @@ const handlers = {
             Transform.yVel = newYVel
         }
     },
-    [gameplayCommands.stop.type]: (ws, payload) => {
-        const validationResult = v.validate(payload, gameplayCommands.move.schema)
-        if (!validationResult.valid) {
-            console.log('Invalid message: ' + validationResult.errors)
-            return
-        }
-
-        const sender = ws.id
+    [gameplayCommands.stop.type]: (sender, payload) => {
         const session = services.sessionManager.findSessionByUser(sender)
         if (session) {
             const { entityId, direction } = payload
@@ -175,14 +166,7 @@ const handlers = {
             }
         }
     },
-    [gameplayCommands.stateShiftLeft.type]: (ws, payload) => {
-        const validationResult = v.validate(payload, gameplayCommands.stateShiftLeft.schema)
-        if (!validationResult.valid) {
-            console.log('Invalid message: ' + validationResult.errors)
-            return
-        }
-
-        const sender = ws.id
+    [gameplayCommands.stateShiftLeft.type]: (sender, payload) => {
         const session = services.sessionManager.findSessionByUser(sender)
         if (session) {
             const { entityId } = payload
@@ -208,14 +192,7 @@ const handlers = {
             Avatar.stateData.stateSwitchCooldownTicks = Avatar.stateData.stateSwitchCooldownMaxTicks
         }
     },
-    [gameplayCommands.stateShiftRight.type]: (ws, payload) => {
-        const validationResult = v.validate(payload, gameplayCommands.stateShiftRight.schema)
-        if (!validationResult.valid) {
-            console.log('Invalid message: ' + validationResult.errors)
-            return
-        }
-
-        const sender = ws.id
+    [gameplayCommands.stateShiftRight.type]: (sender, payload) => {
         const session = services.sessionManager.findSessionByUser(sender)
         if (session) {
             const { entityId } = payload
@@ -244,8 +221,21 @@ const handlers = {
 function handleGameplayCommand(ws, msg, type) {
     const handler = handlers[type]
     if (handler) {
-        handler(ws, msg)
+        // check that payload matches schema
+        const handlerType = commandTypeToHandlerType[type]
+        const validationResult = v.validate(msg, gameplayCommands[handlerType].schema)
+        if (!validationResult.valid) {
+            console.log('Invalid message: ' + validationResult.errors)
+            return
+        }
+
+        const sender = ws.id
+        handler(sender, msg)
     }
 }
 
-module.exports = handleGameplayCommand
+module.exports = {
+    handleGameplayCommand,
+    gameplayCommands,
+    handlerMethods: handlers,
+}
