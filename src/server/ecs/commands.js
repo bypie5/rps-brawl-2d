@@ -234,6 +234,8 @@ function handleGameplayCommand(ws, msg, type) {
     }
 }
 
+services.sessionManager.registerMessageHandlers(handlers)
+
 module.exports = {
     handleGameplayCommand,
     gameplayCommands,

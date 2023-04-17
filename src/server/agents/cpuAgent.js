@@ -2,9 +2,10 @@ const msgTypes = require('../../common/rps2dProtocol')
 const commandTypes = require('../../common/gameplayCommands')
 
 class CpuAgent {
-  constructor(botId, sessionId) {
+  constructor(botId, sessionId, msgHandlers) {
     this.botId = botId
     this.sessionId = sessionId
+    this.msgHandlers = msgHandlers
 
     this.matchStarted = false
     this.selfEntityId = null
@@ -26,13 +27,11 @@ class CpuAgent {
           }
         }
 
-        console.log(this.selfEntityId)
-
         if (this.matchStarted && this.selfEntityId) {
-          /*this.services.forwardMsgService.forwardMsg(this.selfEntityId, 'MOVE', {
+          this.msgHandlers[commandTypes.MOVE](this.botId, {
             entityId: this.selfEntityId,
             direction: 'up'
-          })*/
+          })
         }
         break
       default:

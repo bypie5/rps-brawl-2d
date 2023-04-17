@@ -283,6 +283,12 @@ class SessionManager extends Service {
         this.playerToSession = new Map() // Map<username, sessionId>
         this.agents = new Map() // Map<agentId, agent>
         this.agentsToSession = new Map() // Map<agentId, sessionId>
+
+        this.messageHandlers = null
+    }
+
+    registerMessageHandlers(messageHandlers) {
+        this.messageHandlers = messageHandlers
     }
 
     createPrivateSession (hostUsername, config) {
@@ -326,7 +332,7 @@ class SessionManager extends Service {
             throw new SessionNotFoundError('Session does not exist')
         }
 
-        const agent = this._agentFactory(sessionId)
+        const agent = this._agentFactory(sessionId, this.messageHandlers)
         this.agents.set(agent.getBotId(), agent)
         this.agentsToSession.set(agent.getBotId(), sessionId)
 
@@ -342,7 +348,7 @@ class SessionManager extends Service {
     }
 
     findSessionByUser (username) {
-        const sessionId = this.playerToSession.get(username)
+        const sessionId = this.playerToSession.get(username) || this.agentsToSession.get(username)
         if (!sessionId) {
             return null
         }
@@ -411,9 +417,9 @@ class SessionManager extends Service {
         }
     }
 
-    _agentFactory (sessionId) {
+    _agentFactory (sessionId, messageHandlers) {
         const agentId = `${uuidv4()}-rps-brawl-agent`
-        return createCpuAgent(agentId, sessionId)
+        return createCpuAgent(agentId, sessionId, messageHandlers)
     }
 }
 
