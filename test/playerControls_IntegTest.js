@@ -208,9 +208,8 @@ describe('Testing situations around gameplay commands', () => {
                     for (const [id, entity] of Object.entries(entities)) {
                         if (entity.Avatar
                             && entity.Avatar.playerId.includes('-rps-brawl-agent')
-                            && entity.Transform.yVel !== 0
+                            && (entity.Transform.yVel !== 0 || entity.Transform.xVel !== 0)
                         ) {
-                            console.log(entity)
                             resolve()
                         }
                     }

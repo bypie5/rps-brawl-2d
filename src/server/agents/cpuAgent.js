@@ -9,6 +9,19 @@ class CpuAgent {
 
     this.matchStarted = false
     this.selfEntityId = null
+
+    this.behaviorTree = null
+
+    this.gameStateBroadcastsQueue = [] // Object { tick: Number, msg: gameContext }
+    this.queueMaxSize = 100
+  }
+  
+  buildBehaviorTree() {
+    throw new Error('Not implemented')
+  }
+
+  setBehaviorTree(behaviorTree) {
+    this.behaviorTree = behaviorTree
   }
 
   async tick(msg) {
@@ -17,21 +30,17 @@ class CpuAgent {
         this.matchStarted = true
         break
       case msgTypes.serverToClient.GAMESTATE_UPDATE.type:
+        const { gameContext } = msg
+        this.gameStateBroadcastsQueue.push({ tick: gameContext.currentTick, msg: gameContext })
         if (!this.selfEntityId) {
-          const { gameContext } = msg
           for (const [entityId, entity] of Object.entries(gameContext.entities)) {
             if (entity.Avatar && entity.Avatar.playerId.includes(this.botId)) {
               this.selfEntityId = entityId
               break
             }
           }
-        }
-
-        if (this.matchStarted && this.selfEntityId) {
-          this.msgHandlers[commandTypes.MOVE](this.botId, {
-            entityId: this.selfEntityId,
-            direction: 'up'
-          })
+        } else if (this.behaviorTree) {
+          this.behaviorTree.tick()
         }
         break
       default:
@@ -40,8 +49,52 @@ class CpuAgent {
     }
   }
 
+  move(direction) {
+    if (this.matchStarted && this.selfEntityId) {
+      this.msgHandlers[commandTypes.MOVE](this.botId, {
+        entityId: this.selfEntityId,
+        direction
+      })
+    }
+  }
+
+  stop(direction) {
+    if (this.matchStarted && this.selfEntityId) {
+      this.msgHandlers[commandTypes.STOP](this.botId, {
+        entityId: this.selfEntityId,
+        direction
+      })
+    }
+  }
+
+  stateShiftLeft() {
+    if (this.matchStarted && this.selfEntityId) {
+      this.msgHandlers[commandTypes.STATE_SHIFT_LEFT](this.botId, {
+        entityId: this.selfEntityId
+      })
+    }
+  }
+
+  stateShiftRight() {
+    if (this.matchStarted && this.selfEntityId) {
+      this.msgHandlers[commandTypes.STATE_SHIFT_RIGHT](this.botId, {
+        entityId: this.selfEntityId
+      })
+    }
+  }
+
   getBotId() {
     return this.botId
+  }
+
+  _pushGameStateBroadcast(tick, gameContext) {
+    if (this.gameStateBroadcastsQueue.length >= this.queueMaxSize) {
+      this.gameStateBroadcastsQueue.shift()
+    }
+    this.gameStateBroadcastsQueue.push({
+      tick,
+      msg: gameContext
+    })
   }
 }
 

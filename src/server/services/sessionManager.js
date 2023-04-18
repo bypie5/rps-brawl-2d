@@ -17,7 +17,7 @@ const {
 } = require('../ecs/systems')
 const { levelZero } = require('../levels/level')
 
-const { createCpuAgent } = require('../agents/agentFactory')
+const { createCpuAgent, createNaivePursuit } = require('../agents/agentFactory')
 
 const sessionStates = {
     INITIALIZING: 'INITIALIZING',
@@ -417,9 +417,9 @@ class SessionManager extends Service {
         }
     }
 
-    _agentFactory (sessionId, messageHandlers) {
+    _agentFactory (sessionId, messageHandlers, sessionContext) {
         const agentId = `${uuidv4()}-rps-brawl-agent`
-        return createCpuAgent(agentId, sessionId, messageHandlers)
+        return createNaivePursuit(agentId, sessionId, messageHandlers, sessionContext)
     }
 }
 
