@@ -20,16 +20,18 @@ class NaivePursuit extends CpuAgent {
     buildBehaviorTree() {
         const context = {
             target: null,
+            latestGameState: null
         }
 
-        const tree = new BehaviorTree(context)
+        const tree = new BehaviorTree(context, () => {
+            context.latestGameState = this.gameStateBroadcastsQueue.pop()
+        })
 
         const root = new Fallback()
 
         const sequence = new Sequence()
 
         const isPlayerNear = new Condition((context) => {
-            console.log(this.gameStateBroadcastsQueue.length)
             return context.target !== null
         })
 

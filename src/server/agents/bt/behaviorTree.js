@@ -5,10 +5,11 @@ const Action = require('./action')
 const Condition = require('./condition')
 
 class BehaviorTree {
-  constructor(context) {
+  constructor(context, onBeforeTick) {
     this.root = null
 
     this.context = context
+    this.onBeforeTick = onBeforeTick
   }
 
   setRoot(root) {
@@ -33,6 +34,10 @@ class BehaviorTree {
 
     if (!this.context) {
       throw new Error('BehaviorTree context is not set')
+    }
+
+    if (this.onBeforeTick) {
+      this.onBeforeTick()
     }
 
     return this.root.tick()
