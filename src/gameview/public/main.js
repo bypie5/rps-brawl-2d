@@ -571,6 +571,33 @@ async function startMatch (event) {
 
 window.startMatch = startMatch
 
+async function addBot (event) {
+    event.preventDefault()
+
+    try {
+        const res = await fetch('/api/game-session/invite-agent-to-session', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${sessionContext.authToken}`,
+            },
+            body: JSON.stringify({
+                sessionId: sessionContext.sessionId,
+            })
+        })
+
+        if (res.status !== 200) {
+            alert(`Failed to add bot - ${res.statusText}`)
+            return
+        }
+
+        console.log('Bot added')
+    } catch (err) {
+        console.error(err)
+        alert('Failed to add bot - ' + err)
+    }
+}
+
 async function _joinPrivateSession (friendlyName) {
     const res = await fetch(`/api/game-session/join-private-session`, {
         method: 'POST',

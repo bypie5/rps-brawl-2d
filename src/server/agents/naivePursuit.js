@@ -1,58 +1,124 @@
 const {
-    BehaviorTree,
-    Sequence,
-    Fallback,
-    Decorator,
-    Action,
-    Condition
+  BehaviorTree,
+  Sequence,
+  Fallback,
+  Decorator,
+  Action,
+  Condition
  } = require("./bt/behaviorTree")
 const { nodeStatus } = require("./bt/enums")
 
 const CpuAgent = require("./cpuAgent")
+const {
+  computeGridKey,
+  getEntitiesInBox,
+  getNearestEntityByGridKey
+} = require("./util")
 
 class NaivePursuit extends CpuAgent {
-    constructor(botId, sessionId, msgHandlers) {
-        super(botId, sessionId, msgHandlers)
+  constructor(botId, sessionId, msgHandlers) {
+    super(botId, sessionId, msgHandlers)
 
-        this.setBehaviorTree(this.buildBehaviorTree())
+    this.setBehaviorTree(this.buildBehaviorTree())
+  }
+
+  buildBehaviorTree() {
+    const context = {
+      target: null,
+      latestGameState: null
     }
 
-    buildBehaviorTree() {
-        const context = {
-            target: null,
-            latestGameState: null
-        }
+    const tree = new BehaviorTree(context, () => {
+      // init context with latest game state
+      const latest = this.gameStateBroadcastsQueue.pop()
+      if (latest) {
+        context.latestGameState = latest.msg
+      }
+    })
 
-        const tree = new BehaviorTree(context, () => {
-            context.latestGameState = this.gameStateBroadcastsQueue.pop()
-        })
+    const root = new Fallback()
 
-        const root = new Fallback()
+    const sequence = new Sequence()
 
-        const sequence = new Sequence()
+    const isPlayerNear = new Condition((context) => {
+      const windowWidth = 10
+      const windowHeight = 10
 
-        const isPlayerNear = new Condition((context) => {
-            return context.target !== null
-        })
+      const myAvatar = context.latestGameState.entities[this.selfEntityId]
+      const currGridKey = computeGridKey(myAvatar.Transform.xPos, myAvatar.Transform.yPos, context.latestGameState.gridWidth)
+      const playerEntitiesInScene = Object.entries(context.latestGameState.entities)
+        .filter(([id, entity]) => { return !!entity.Avatar && !entity.Avatar.playerId.includes(this.botId) })
 
-        const stepTowardsTarget = new Action((context) => {
-        })
+      const perceivedEntities = getEntitiesInBox(
+        playerEntitiesInScene,
+        windowWidth,
+        windowHeight,
+        currGridKey,
+        context.latestGameState.gridWidth
+      )
 
-        sequence.addChild(isPlayerNear)
-        sequence.addChild(stepTowardsTarget)
+      const nearestEntity = getNearestEntityByGridKey(
+        perceivedEntities,
+        currGridKey,
+        context.latestGameState.gridWidth
+      )
 
-        const moveRandomly = new Action((context) => {
-            this.move('up') // picked from a random dice roll
-            return nodeStatus.SUCCESS
-        })
+      if (nearestEntity) {
+        context.target = nearestEntity[0] // [0] is the entity id
+      }
 
-        root.addChild(sequence)
-        root.addChild(moveRandomly)
+      return context.target !== null
+    })
 
-        tree.setRoot(root)
+    const stepTowardsTarget = new Action(async (context) => {
+      const myAvatar = context.latestGameState.entities[this.selfEntityId]
+      const targetAvatar = context.latestGameState.entities[context.target]
+      const myX = myAvatar.Transform.xPos
+      const myY = myAvatar.Transform.yPos
+      const targetX = targetAvatar.Transform.xPos
+      const targetY = targetAvatar.Transform.yPos
 
-        return tree
-    }
+      if (myX < targetX) {
+        this.move('right')
+      }
+      
+      if (myX > targetX) {
+        this.move('left')
+      }
+      
+      if (myY < targetY) {
+        this.move('up')
+      } 
+      
+      if (myY > targetY) {
+        this.move('down')
+      }
+    })
+
+    sequence.addChild(isPlayerNear)
+    sequence.addChild(stepTowardsTarget)
+
+    const moveRandomly = new Action(async (context) => {
+      const myAvatar = context.latestGameState.entities[this.selfEntityId]
+      if (myAvatar.Transform.xVel !== 0 || myAvatar.Transform.yVel !== 0) {
+        return nodeStatus.SUCCESS
+      }
+
+      const directions = ['left', 'right', 'up', 'down']
+      const randomDirection = directions[Math.floor(Math.random() * directions.length)]
+
+      this.move(randomDirection)
+
+      return nodeStatus.SUCCESS
+    })
+
+    root.addChild(sequence)
+    root.addChild(moveRandomly)
+
+    tree.setRoot(root)
+
+    return tree
+  }
 }
 
 module.exports = NaivePursuit
