@@ -271,11 +271,22 @@ class GameRender {
                     lives: entityComponents.Avatar.stateData.lives,
                 })
             }
-        } else if (entityComponents.TieBreaker) {
-            // console.log(entitiesInScene)
-            // console.log(entityComponents.TieBreaker.idsOfCohortMembers)
+        } else if (
+          entityComponents.TieBreaker
+          && Object.entries(entitiesInScene)
+            .filter(([entityId, components]) => {
+                return entityComponents.TieBreaker.idsOfCohortMembers.includes(entityId)
+            })
+            .find(([entityId, components]) => {
+                return components.Avatar && components.Avatar.playerId === this.username
+            })
+        ) {
             this.uiElements.tieBreakerUi = window.gameUiManager.addComponentToScene('tieBreakerView', {
                 tieBreakerBracket: entityComponents.TieBreaker.tournamentBracket,
+                entitiesOfPlayersInTournament: Object.entries(entitiesInScene)
+                    .filter(([entityId, components]) => {
+                      return entityComponents.TieBreaker.idsOfCohortMembers.includes(entityId)
+                    })
             })
         }
 
@@ -323,7 +334,22 @@ class GameRender {
             })
         }
 
-        if (entityComponents.TieBreaker) {
+        if (entityComponents.TieBreaker
+            && Object.entries(entitiesInScene)
+            .filter(([entityId, components]) => {
+                return entityComponents.TieBreaker.idsOfCohortMembers.includes(entityId)
+            })
+            .find(([entityId, components]) => {
+                return components.Avatar && components.Avatar.playerId === this.username
+            })
+            && this.uiElements.tieBreakerUi) {
+            window.gameUiManager.updateComponent(this.uiElements.tieBreakerUi, {
+                tieBreakerBracket: entityComponents.TieBreaker.tournamentBracket,
+                entitiesOfPlayersInTournament: Object.entries(entitiesInScene)
+                    .filter(([entityId, components]) => {
+                        return entityComponents.TieBreaker.idsOfCohortMembers.includes(entityId)
+                    })
+            })
         }
     }
 

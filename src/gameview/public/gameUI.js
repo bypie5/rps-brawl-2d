@@ -33,15 +33,15 @@ class GameUiManager {
     switch (name) {
       case components.hudOverlay:
         component = new HudOverlay(props)
-        newId = this._getNextId()
         break
       case components.tieBreakerView:
         component = new TieBreakerView(props)
-        newId = this._getNextId()
         break
       default:
         throw new Error(`Unknown component name: ${name}`)
     }
+
+    newId = this._getNextId()
 
     const content = this._drawComponent(newId, component)
     this.parentDomElement.insertAdjacentHTML('beforeend', content)
