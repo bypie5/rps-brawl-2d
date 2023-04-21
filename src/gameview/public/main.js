@@ -283,10 +283,10 @@ function _pruneEntitiesInScene () {
 
         // add to renderer
         if (sessionContext.sessionInfo.renderer && !sessionContext.sessionInfo.renderer.isEntityInScene(entityId)) {
-            const threeJsId = sessionContext.sessionInfo.renderer.onEntityAdded(entityId, entityComponents)
+            const threeJsId = sessionContext.sessionInfo.renderer.onEntityAdded(entityId, entityComponents, entities)
             sessionContext.sessionInfo.threeJsIdToEntityId.set(threeJsId, entityId)
         } else if (sessionContext.sessionInfo.renderer) {
-            sessionContext.sessionInfo.renderer.onEntityUpdated(entityId, entityComponents, sessionContext.sessionInfo.latestReceivedGameStateTick)
+            sessionContext.sessionInfo.renderer.onEntityUpdated(entityId, entityComponents, entities, sessionContext.sessionInfo.latestReceivedGameStateTick)
         }
 
         // update components

@@ -119,9 +119,6 @@ const components = {
                 idsOfCohortMembers: {
                     type: 'array',
                     required: true,
-                    items: {
-                        type: 'number'
-                    }
                 },
                 state: {
                     type: 'string',

@@ -202,7 +202,7 @@ function rps (gameContext, session) {
                 // 1. disable physics for all players in cluster
                 for (const id of membersInCluster) {
                     gameContext.entities[id].Avatar.state = 'breakingtie'
-                    gameContext.entities[id].HixBot.physicsEnabled = false
+                    gameContext.entities[id].HitBox.physicsEnabled = false
                 }
 
                 // 2. create tie breaker match manager

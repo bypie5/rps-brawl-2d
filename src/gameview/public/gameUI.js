@@ -1,7 +1,9 @@
 import { HudOverlay } from './components/hudOverlay.js'
+import { TieBreakerView } from './components/tieBreakerView.js'
 
 const components = {
-  hudOverlay: 'hudOverlay'
+  hudOverlay: 'hudOverlay',
+    tieBreakerView: 'tieBreakerView'
 }
 
 window.components = components
@@ -31,6 +33,10 @@ class GameUiManager {
     switch (name) {
       case components.hudOverlay:
         component = new HudOverlay(props)
+        newId = this._getNextId()
+        break
+      case components.tieBreakerView:
+        component = new TieBreakerView(props)
         newId = this._getNextId()
         break
       default:

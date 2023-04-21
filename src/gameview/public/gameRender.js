@@ -153,6 +153,7 @@ class GameRender {
         this.playersAvatarId = null
         this.uiElements = {
             playerUi: null,
+            tieBreakerUi: null
         }
 
         // index of sprites in the tilesheet corresponds to the sprite' id - 1 (i.e. sprite id 1 is at index 0)
@@ -199,21 +200,21 @@ class GameRender {
         return this.entityIdThreeJsIdMap.has(entityId)
     }
 
-    onEntityAdded (entityId, entityComponents) {
+    onEntityAdded (entityId, entityComponents, entitiesInScene) {
         try {
-            return this._addEntityToScene(entityId, entityComponents)
+            return this._addEntityToScene(entityId, entityComponents, entitiesInScene)
         } catch (err) {
             console.log(err)
         }
     }
 
-    onEntityUpdated (entityId, entityComponents, latestReceivedGameStateTick) {
+    onEntityUpdated (entityId, entityComponents, entitiesInScene, latestReceivedGameStateTick) {
         try {
             if (this.latestTickReceived < latestReceivedGameStateTick) {
                 this.latestTickReceived = latestReceivedGameStateTick
             }
 
-            this._updateEntityInScene(entityId, entityComponents, latestReceivedGameStateTick)
+            this._updateEntityInScene(entityId, entityComponents, entitiesInScene)
         } catch (err) {
             console.log(err)
         }
@@ -232,7 +233,7 @@ class GameRender {
         this.isRendering = false
     }
 
-    _addEntityToScene (entityId, entityComponents) {
+    _addEntityToScene (entityId, entityComponents, entitiesInScene) {
         if (this.isEntityInScene(entityId)) {
             return
         }
@@ -270,12 +271,18 @@ class GameRender {
                     lives: entityComponents.Avatar.stateData.lives,
                 })
             }
+        } else if (entityComponents.TieBreaker) {
+            // console.log(entitiesInScene)
+            // console.log(entityComponents.TieBreaker.idsOfCohortMembers)
+            this.uiElements.tieBreakerUi = window.gameUiManager.addComponentToScene('tieBreakerView', {
+                tieBreakerBracket: entityComponents.TieBreaker.tournamentBracket,
+            })
         }
 
         return threeJsId
     }
 
-    _updateEntityInScene (entityId, entityComponents) {
+    _updateEntityInScene (entityId, entityComponents, entitiesInScene) {
         if (!this.isEntityInScene(entityId)) {
             return
         }
@@ -314,6 +321,9 @@ class GameRender {
             window.gameUiManager.updateComponent(this.uiElements.playerUi, {
                 lives: entityComponents.Avatar.stateData.lives,
             })
+        }
+
+        if (entityComponents.TieBreaker) {
         }
     }
 

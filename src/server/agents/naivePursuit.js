@@ -25,7 +25,9 @@ class NaivePursuit extends CpuAgent {
   buildBehaviorTree() {
     const context = {
       target: null,
-      latestGameState: null
+      latestGameState: null,
+      changeDirectionMaxCooldown: 10,
+      changeDirectionCooldown: 0,
     }
 
     const tree = new BehaviorTree(context, () => {
@@ -47,7 +49,11 @@ class NaivePursuit extends CpuAgent {
       const myAvatar = context.latestGameState.entities[this.selfEntityId]
       const currGridKey = computeGridKey(myAvatar.Transform.xPos, myAvatar.Transform.yPos, context.latestGameState.gridWidth)
       const playerEntitiesInScene = Object.entries(context.latestGameState.entities)
-        .filter(([id, entity]) => { return !!entity.Avatar && !entity.Avatar.playerId.includes(this.botId) })
+        .filter(([id, entity]) => {
+          return !!entity.Avatar 
+            && !entity.Avatar.playerId.includes(this.botId)
+            && entity.Avatar.state === 'alive'
+        })
 
       const perceivedEntities = getEntitiesInBox(
         playerEntitiesInScene,
@@ -71,27 +77,33 @@ class NaivePursuit extends CpuAgent {
     })
 
     const stepTowardsTarget = new Action(async (context) => {
-      const myAvatar = context.latestGameState.entities[this.selfEntityId]
-      const targetAvatar = context.latestGameState.entities[context.target]
-      const myX = myAvatar.Transform.xPos
-      const myY = myAvatar.Transform.yPos
-      const targetX = targetAvatar.Transform.xPos
-      const targetY = targetAvatar.Transform.yPos
+      if (context.changeDirectionCooldown > 0) {
+        context.changeDirectionCooldown--
+      } else {
+        const myAvatar = context.latestGameState.entities[this.selfEntityId]
+        const targetAvatar = context.latestGameState.entities[context.target]
+        const myX = myAvatar.Transform.xPos
+        const myY = myAvatar.Transform.yPos
+        const targetX = targetAvatar.Transform.xPos
+        const targetY = targetAvatar.Transform.yPos
 
-      if (myX < targetX) {
-        this.move('right')
-      }
-      
-      if (myX > targetX) {
-        this.move('left')
-      }
-      
-      if (myY < targetY) {
-        this.move('up')
-      } 
-      
-      if (myY > targetY) {
-        this.move('down')
+        if (myX < targetX) {
+          this.move('right')
+        }
+        
+        if (myX > targetX) {
+          this.move('left')
+        }
+        
+        if (myY < targetY) {
+          this.move('up')
+        } 
+        
+        if (myY > targetY) {
+          this.move('down')
+        }
+
+        context.changeDirectionCooldown = context.changeDirectionMaxCooldown
       }
     })
 
