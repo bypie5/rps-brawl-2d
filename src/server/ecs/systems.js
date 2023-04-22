@@ -128,7 +128,7 @@ function doRegularRpsMatch (player1, player2) {
     const player1Rps = player1.Avatar.stateData.rockPaperScissors
     const player2Rps = player2.Avatar.stateData.rockPaperScissors
 
-    if (player1.Avatar.state === 'dead' || player2.Avatar.state === 'dead') {
+    if (player1.Avatar.state !== 'alive' || player2.Avatar.state !== 'alive') {
         return
     }
 
@@ -162,26 +162,32 @@ function physics (gameContext, session) {
             transform.yPos += transform.yVel * dt
 
             const collisions = detectCollision(gameContext, entitiesByLogicalKey, entity, id)
-            if (collisions.length > 0) {
-                // player should be moved in the opposite direction of their velocity
-                // by an an amount that places them just outside of the collision
-                for (let id of collisions) {
-                    const { newXPos, newYPos } = resolveCollision(entity, gameContext.entities[id], dt)
-                    transform.xPos = newXPos
-                    transform.yPos = newYPos
-                }
+            if (collisions.length === 0) {
+                // no collisions, so we can just move on
+                replaceCollisionsWithOtherPlayersSet(entity, [])
+                continue
+            }
 
-                const otherPlayersColliding = collisions.map(id => {
-                    return { id, entity: gameContext.entities[id] }
-                }).filter(info => {
-                    return info.entity.Avatar 
-                        && info.entity.Avatar.playerId !== entity.Avatar.playerId
-                })
+            // there are collisions, so we need to resolve them
 
-                if (otherPlayersColliding.length > 0) {
-                    const otherPlayerIds = otherPlayersColliding.map(info => info.id)
-                    replaceCollisionsWithOtherPlayersSet(entity, otherPlayerIds)
-                }
+            // player should be moved in the opposite direction of their velocity
+            // by an an amount that places them just outside of the collision
+            for (let id of collisions) {
+                const { newXPos, newYPos } = resolveCollision(entity, gameContext.entities[id], dt)
+                transform.xPos = newXPos
+                transform.yPos = newYPos
+            }
+
+            const otherPlayersColliding = collisions.map(id => {
+                return { id, entity: gameContext.entities[id] }
+            }).filter(info => {
+                return info.entity.Avatar
+                    && info.entity.Avatar.playerId !== entity.Avatar.playerId
+            })
+
+            if (otherPlayersColliding.length > 0) {
+                const otherPlayerIds = otherPlayersColliding.map(info => info.id)
+                replaceCollisionsWithOtherPlayersSet(entity, otherPlayerIds)
             } else {
                 replaceCollisionsWithOtherPlayersSet(entity, [])
             }
@@ -264,9 +270,8 @@ function spawn (gameContext, session) {
             spawnPoints.push(id)
         }
 
-        if (entity.Avatar && (entity.Avatar.state === 'dead' 
-        || (entity.Avatar.state === 'respawning'
-            && entity.Avatar.stateData.ticksSinceStartedRespawning === -1))) {
+        if (entity.Avatar && (entity.Avatar.state === 'dead'
+            || entity.Avatar.stateData.firstSpawn)) {
             deadPlayers.push(id)
         }
 
