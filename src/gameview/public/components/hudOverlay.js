@@ -1,8 +1,8 @@
 import { Component } from './component.js'
 
 class HudOverlay extends Component {
-  constructor(props) {
-    super(props)
+  constructor(props, parentDomElement) {
+    super(props, parentDomElement)
     this.name = 'HudOverlay'
   }
 

@@ -128,6 +128,10 @@ function doRegularRpsMatch (player1, player2) {
     const player1Rps = player1.Avatar.stateData.rockPaperScissors
     const player2Rps = player2.Avatar.stateData.rockPaperScissors
 
+    if (player1.Avatar.state === 'dead' || player2.Avatar.state === 'dead') {
+        return
+    }
+
     const result = rpsCompare(player1Rps, player2Rps)
 
     if (result === 1) {
@@ -186,6 +190,7 @@ function physics (gameContext, session) {
 }
 
 function rps (gameContext, session) {
+    const createdRpsMatches = new Set()
     for (const [id, entity] of Object.entries(gameContext.entities)) {
         if (entity.Avatar
             && entity.Avatar.state === 'alive'
@@ -199,6 +204,15 @@ function rps (gameContext, session) {
             } else if (membersInCluster.length > 2) {
                 // cluster collision - must resolve ambiguity
 
+                // does a tie breaker match already exist?
+                for (const id of membersInCluster) {
+                    const entity = gameContext.entities[id]
+                    if (entity.Avatar.state === 'breakingtie') {
+                        // tie breaker match already exists
+                        return
+                    }
+                }
+
                 // 1. disable physics for all players in cluster
                 for (const id of membersInCluster) {
                     gameContext.entities[id].Avatar.state = 'breakingtie'
@@ -206,10 +220,13 @@ function rps (gameContext, session) {
                 }
 
                 // 2. create tie breaker match manager
+                console.log('tie breaker match' + membersInCluster)
                 const { closestEntityId } = findEntityCenterOfCluster(membersInCluster, gameContext)
                 const { xPos, yPos } = gameContext.entities[closestEntityId].Transform
                 const tieBreakerMatchManager = buildTieBreakerManagerEntity(membersInCluster, gameContext.currentTick, xPos, yPos)
                 session.instantiateEntity(tieBreakerMatchManager)
+
+                createdRpsMatches.add(tieBreakerMatchManager)
             }
         }
 

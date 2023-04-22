@@ -1,7 +1,16 @@
 class Component {
-  constructor(props) {
+  constructor(props, parentDomElement) {
     this.props = props
+    this.parentDomElement = parentDomElement
     this.name = 'Component'
+  }
+
+  getParentSize() {
+    const boundingRect = this.parentDomElement.getBoundingClientRect()
+    return {
+      width: boundingRect.width,
+      height: boundingRect.height
+    }
   }
 
   getHtmlContent() {

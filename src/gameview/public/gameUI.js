@@ -27,15 +27,15 @@ class GameUiManager {
     }
   }
 
-  addComponentToScene(name, props) {
+  addComponentToScene(name, props, parentDomElement) {
     let newId = null
     let component = null
     switch (name) {
       case components.hudOverlay:
-        component = new HudOverlay(props)
+        component = new HudOverlay(props, parentDomElement)
         break
       case components.tieBreakerView:
-        component = new TieBreakerView(props)
+        component = new TieBreakerView(props, parentDomElement)
         break
       default:
         throw new Error(`Unknown component name: ${name}`)

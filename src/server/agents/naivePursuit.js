@@ -26,7 +26,7 @@ class NaivePursuit extends CpuAgent {
     const context = {
       target: null,
       latestGameState: null,
-      changeDirectionMaxCooldown: 10,
+      changeDirectionMaxCooldown: 3,
       changeDirectionCooldown: 0,
     }
 

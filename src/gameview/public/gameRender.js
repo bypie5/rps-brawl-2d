@@ -265,7 +265,8 @@ class GameRender {
 
             if (entityComponents.Avatar && entityComponents.Avatar.playerId === this.username) {
                 this.playersAvatarId = avatar.id
-    
+
+                console.log('adding player ui')
                 this.uiElements.playerUi = window.gameUiManager.addComponentToScene('hudOverlay', {
                     playerId: this.username,
                     lives: entityComponents.Avatar.stateData.lives,
@@ -281,6 +282,7 @@ class GameRender {
                 return components.Avatar && components.Avatar.playerId === this.username
             })
         ) {
+            console.log('adding tie breaker ui')
             this.uiElements.tieBreakerUi = window.gameUiManager.addComponentToScene('tieBreakerView', {
                 tieBreakerBracket: entityComponents.TieBreaker.tournamentBracket,
                 entitiesOfPlayersInTournament: Object.entries(entitiesInScene)
@@ -288,6 +290,9 @@ class GameRender {
                       return entityComponents.TieBreaker.idsOfCohortMembers.includes(entityId)
                     })
             })
+
+            threeJsId = 'tieBreakerUi' // can't use the entity id because it's not in the scene
+            this.entityIdThreeJsIdMap.set(entityId, threeJsId)
         }
 
         return threeJsId
