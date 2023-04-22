@@ -19,9 +19,10 @@ class TieBreakerView extends Component {
   }
 
   getStyleMap() {
+    const topOffsetPixels = 50
     return {
       ...super.getStyleMap(),
-      'tie-breaker-view': `position: relative; top: 25px; left: 0; width: 100%; height: 100%; margin: 0px 10px 0px 20px; background-color: ${this.getColorPalette()["light-grey"]};`,
+      'tie-breaker-view': `position: relative; top: ${topOffsetPixels}px; left: 0; margin: 0px auto ${topOffsetPixels}px auto; width: 80%; height: calc(100% - ${topOffsetPixels * 2}px); background-color: ${this.getColorPalette()["light-grey"]}b4;`,
       'tie-breaker-title-info': 'display: flex; justify-content: center; align-items: center; flex-direction: column; width: 100%;'
     }
   }

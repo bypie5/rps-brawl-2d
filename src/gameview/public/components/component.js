@@ -5,12 +5,8 @@ class Component {
     this.name = 'Component'
   }
 
-  getParentSize() {
-    const boundingRect = this.parentDomElement.getBoundingClientRect()
-    return {
-      width: boundingRect.width,
-      height: boundingRect.height
-    }
+  getParentBoundBox() {
+    return this.parentDomElement.getBoundingClientRect()
   }
 
   getHtmlContent() {
