@@ -26,7 +26,7 @@ class HudOverlay extends Component {
   getStyleMap() {
     return {
       ...super.getStyleMap(),
-      'hud-overlay': 'position: absolute; top: 0; left: 0; width: 100%; height: 100%;',
+      'hud-overlay': 'position: relative; top: 0; left: 0; width: 100%; height: 100%;',
       'player-info': 'display: flex; justify-content: center; align-items: center; flex-direction: column; width: 100%;'
     }
   }

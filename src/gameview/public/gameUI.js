@@ -18,9 +18,17 @@ class GameUiManager {
 
   start() {
     this.parentDomElement = document.getElementById('game-ui')
+
+    this._updateBounds()
   }
 
   update() {
+    if (this.parentDomElement === null) {
+      return // Not started yet
+    }
+
+    this._updateBounds()
+
     for (const id of this.components.keys()) {
       const component = this.components.get(id)
       this._redrawComponent(id, component)
@@ -68,9 +76,11 @@ class GameUiManager {
       throw new Error(`Could not find element with id: ${id}`)
     }
 
+    document.getElementById(id).remove()
+
     const content = this._drawComponent(id, component)
 
-    element.innerHTML = content
+    this.parentDomElement.insertAdjacentHTML('beforeend', content)
   }
 
   _drawComponent(id, component) {
@@ -85,6 +95,21 @@ class GameUiManager {
     }
     doc.body.firstChild.setAttribute('id', id)
     return doc.body.innerHTML
+  }
+
+  _updateBounds() {
+    const rect = document.getElementById('game-canvas').getBoundingClientRect()
+
+    if (rect === null) {
+      throw new Error(`Could not find element with id: game-canvas`)
+    }
+
+    if (this.parentDomElement === null) {
+      throw new Error(`Could not find element with id: game-ui`)
+    }
+
+    this.parentDomElement.style.width = `${rect.width}px`
+    this.parentDomElement.style.height = `${rect.height}px`
   }
 }
 

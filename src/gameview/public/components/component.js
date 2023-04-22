@@ -26,6 +26,12 @@ class Component {
   getName() {
     return this.name
   }
+
+  getColorPalette() {
+    return {
+      'light-grey': '#8c8c8c'
+    }
+  }
 }
 
 export { Component }
