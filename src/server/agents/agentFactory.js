@@ -1,12 +1,17 @@
 const CpuAgent = require('./cpuAgent')
 const NaivePursuit = require('./naivePursuit')
 
-function createCpuAgent(id, sessionId, msgHandlers, sessionContext) {
-  return new CpuAgent(id, sessionId, msgHandlers, sessionContext)
+const supportedAgents = {
+  cpuAgent: 'CpuAgent',
+  naivePursuit: 'NaivePursuitAgent'
 }
 
-function createNaivePursuit(id, sessionId, msgHandlers, sessionContext) {
-  return new NaivePursuit(id, sessionId, msgHandlers, sessionContext)
+function createCpuAgent(id, sessionId, msgHandlers) {
+  return new CpuAgent(id, sessionId, msgHandlers)
 }
 
-module.exports = { createCpuAgent, createNaivePursuit }
+function createNaivePursuit(id, sessionId, msgHandlers) {
+  return new NaivePursuit(id, sessionId, msgHandlers)
+}
+
+module.exports = { supportedAgents, createCpuAgent, createNaivePursuit }

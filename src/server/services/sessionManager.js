@@ -17,7 +17,7 @@ const {
 } = require('../ecs/systems')
 const { levelZero } = require('../levels/level')
 
-const { createCpuAgent, createNaivePursuit } = require('../agents/agentFactory')
+const { createCpuAgent, createNaivePursuit, supportedAgents} = require('../agents/agentFactory')
 
 const sessionStates = {
     INITIALIZING: 'INITIALIZING',
@@ -65,6 +65,13 @@ class SessionNotOpenError extends Error {
     constructor (message) {
         super(message)
         this.name = 'SessionNotOpenError'
+    }
+}
+
+class FailedToAddAgentError extends Error {
+    constructor (message) {
+        super(message)
+        this.name = 'FailedToAddAgentError'
     }
 }
 
@@ -332,7 +339,12 @@ class SessionManager extends Service {
             throw new SessionNotFoundError('Session does not exist')
         }
 
-        const agent = this._agentFactory(sessionId, this.messageHandlers)
+        let agent
+        try {
+            agent = this._agentFactory(sessionId, this.messageHandlers, session.getSessionInfo().config)
+        } catch (err) {
+            throw new FailedToAddAgentError('Failed to create agent: ' + err.message)
+        }
         this.agents.set(agent.getBotId(), agent)
         this.agentsToSession.set(agent.getBotId(), sessionId)
 
@@ -417,9 +429,16 @@ class SessionManager extends Service {
         }
     }
 
-    _agentFactory (sessionId, messageHandlers, sessionContext) {
+    _agentFactory (sessionId, messageHandlers, sessionConfig) {
         const agentId = `${uuidv4()}-rps-brawl-agent`
-        return createNaivePursuit(agentId, sessionId, messageHandlers, sessionContext)
+        switch (sessionConfig.agentType) {
+            case supportedAgents.naivePursuit:
+                return createNaivePursuit(agentId, sessionId, messageHandlers)
+            case supportedAgents.cpuAgent:
+                return createCpuAgent(agentId, sessionId, messageHandlers)
+            default:
+                throw new Error(`Unsupported agent type ${sessionConfig.agentType}`)
+        }
     }
 }
 

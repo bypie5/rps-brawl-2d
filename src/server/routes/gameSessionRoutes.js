@@ -4,6 +4,8 @@ const router = express.Router()
 const services = require('../services/services')
 const { sessionManager } = services
 
+const { supportedAgents } = require('../agents/agentFactory')
+
 router.post('/create-private-session', (req, res) => {
     const { username } = req.session.passport.user
 
@@ -12,6 +14,11 @@ router.post('/create-private-session', (req, res) => {
         if (!config) {
             res.status(400).send('Missing session config')
             return
+        }
+
+        if (!config.agentType) {
+            // set default agent type
+            config.agentType = supportedAgents.naivePursuit
         }
 
         const fname = sessionManager.createPrivateSession(username, config)
@@ -58,6 +65,12 @@ router.post('/join-private-session', (req, res) => {
             res.status(500).send('Internal server error')
         }
     }
+})
+
+router.get('/supported-agents', (req, res) => {
+    res.status(200).send({
+        supportedAgentTypes: [supportedAgents.naivePursuit]
+    })
 })
 
 router.post('/invite-agent-to-session', (req, res) => {

@@ -15,10 +15,31 @@ const sessionContext = {
         threeJsIdToEntityId: new Map(), // Map<threeJsId, entityId>
         renderer: null, // GameRenderer
         playersAvatarId: null,
+        supportedAgentTypes: []
     },
     ws: null,
     isWsConnectionAnonymous: true,
     isWsConnectedToSession: false,
+    pageContextInjector: null,
+    pageContext: null
+}
+
+class PageContextInjector {
+    constructor (sessionContext, defaultPageContext, onPopulate) {
+        this.sessionContext = sessionContext
+        this.defaultPageContext = defaultPageContext
+        this.onPopulate = onPopulate
+
+        this.sessionContext.pageContext = this.defaultPageContext
+    }
+
+    populate () {
+        const newValue = this.onPopulate()
+
+        if (newValue) {
+            this.sessionContext.pageContext = newValue
+        }
+    }
 }
 
 const wsUrl = 'ws://localhost:8081'
@@ -186,8 +207,21 @@ function _onLoginLoaded () {
 function _onFindMatchLoaded () {
 }
 
-function _onGameroomLobbyLoaded () {
+async function _onGameroomLobbyLoaded () {
     _connectWsToSession(sessionContext.sessionId)
+
+    // get supported agent types
+    const res = await fetch(`/api/game-session/supported-agents`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${sessionContext.authToken}`,
+        }
+    })
+    const { supportedAgentTypes } = await res.json()
+    sessionContext.sessionInfo.supportedAgentTypes = supportedAgentTypes
+    await _redrawPage(pages.gameroomLobby)
+
     const poll = setInterval(async () => {
         // poll for session info
         const sessionId = sessionContext.sessionId
@@ -204,7 +238,7 @@ function _onGameroomLobbyLoaded () {
         sessionContext.sessionInfo.config = config
         sessionContext.sessionInfo.connectedPlayers = connectedPlayers
         sessionContext.sessionInfo.state = state
-        _redrawPage(pages.gameroomLobby)
+        await _redrawPage(pages.gameroomLobby)
 
         if (sessionContext.sessionInfo.state === 'IN_PROGRESS') {
             clearInterval(poll)
@@ -308,6 +342,8 @@ function _pruneEntitiesInScene () {
 }
 
 function _onPageLoaded (pageName) {
+    sessionContext.pageContext = null
+
     switch (pageName) {
         case pages.login:
             _onLoginLoaded()
@@ -316,6 +352,17 @@ function _onPageLoaded (pageName) {
             _onFindMatchLoaded()
             break
         case pages.gameroomLobby:
+            sessionContext.pageContextInjector = new PageContextInjector(
+              sessionContext,
+              {
+                  selectedBotTypeValue: null,
+              },
+              () => {
+                  const select = document.getElementById('bot-type-select')
+                  if (sessionContext.pageContext && sessionContext.pageContext.selectedBotTypeValue) {
+                      select.value = sessionContext.pageContext.selectedBotTypeValue
+                  }
+              })
             _onGameroomLobbyLoaded()
             break
         case pages.gameroom:
@@ -392,6 +439,23 @@ function _compileTemplates (doc, pageName) {
 
                         return tag.replace('{{', '').replace('}}', '')
                     },
+                    'bot-type-select': (tag) => {
+                        const select = doc.getElementById('bot-type-select')
+                        select.onchange = (e) => {
+                            sessionContext.pageContext.selectedBotTypeValue = e.target.value
+                        }
+
+                        if (tag === '{{bottypeoptions}}') {
+                            let options = ''
+                            for (const botType of getSessionContext().sessionInfo.supportedAgentTypes) {
+                                options += `<option value="${botType}">${botType}</option>`
+                            }
+
+                            return options
+                        }
+
+                        return tag.replace('{{', '').replace('}}', '')
+                    },
                     'gameroom-connectplayers': (tag) => {
                         if (tag === '{{connectedplayernames}}') {
                             return getSessionContext().sessionInfo.connectedPlayers.join(', ')
@@ -426,6 +490,11 @@ async function _redrawPage (pageName) {
     const parser = new DOMParser()
     const doc = parser.parseFromString(html, 'text/html')
     _replacePage(_compileTemplates(doc, pageName, html))
+
+    // re-inject session context
+    if (sessionContext.pageContextInjector) {
+        sessionContext.pageContextInjector.populate()
+    }
 }
 
 function _replaceBody (newBody) {
