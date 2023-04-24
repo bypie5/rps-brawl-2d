@@ -69,7 +69,7 @@ router.post('/join-private-session', (req, res) => {
 
 router.get('/supported-agents', (req, res) => {
     res.status(200).send({
-        supportedAgentTypes: [supportedAgents.naivePursuit]
+        supportedAgentTypes: [supportedAgents.naivePursuit, supportedAgents.naiveMatchTarget]
     })
 })
 

@@ -1,6 +1,8 @@
 const BehaviorTreeNode = require('./node')
 const { nodeStatus } = require('./enums')
 
+const { v4: uuidv4 } = require('uuid')
+
 function inspectablePromise(promise) {
   let isPending = true
   let isRejected = false
@@ -35,8 +37,8 @@ function inspectablePromise(promise) {
 }
 
 class Action extends BehaviorTreeNode {
-  constructor(action, params) {
-    super()
+  constructor(action, params, id) {
+    super(!!id ? id : 'anon-action-' + uuidv4())
 
     this.action = action // (context, params) => Promise
     this.params = params

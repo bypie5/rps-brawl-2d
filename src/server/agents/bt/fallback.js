@@ -1,9 +1,11 @@
 const BehaviorTreeNode = require('./node')
 const { nodeStatus } = require('./enums')
 
+const { v4: uuidv4 } = require('uuid')
+
 class Fallback extends BehaviorTreeNode {
-  constructor() {
-    super()
+  constructor(id) {
+    super(!!id ? id : 'anon-fallback-' + uuidv4())
 
     this.init()
   }

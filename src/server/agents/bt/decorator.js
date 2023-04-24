@@ -1,8 +1,10 @@
 const BehaviorTreeNode = require('./node')
 
+const { v4: uuidv4 } = require('uuid')
+
 class Decorator extends BehaviorTreeNode {
-  constructor(policy) {
-    super()
+  constructor(policy, id) {
+    super(!!id ? id : 'anon-decorator-' + uuidv4())
 
     this.policy = policy // (status) => newStatus
   }

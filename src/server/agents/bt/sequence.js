@@ -1,9 +1,11 @@
 const BehaviorTreeNode = require('./node')
 const { nodeStatus } = require('./enums')
 
+const { v4: uuidv4 } = require('uuid')
+
 class Sequence extends BehaviorTreeNode {
-  constructor() {
-    super()
+  constructor(id) {
+    super(!!id ? id : 'anon-sequence-' + uuidv4())
   }
 
   init() {

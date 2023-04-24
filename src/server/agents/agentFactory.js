@@ -1,9 +1,11 @@
 const CpuAgent = require('./cpuAgent')
 const NaivePursuit = require('./naivePursuit')
+const NaiveMatchTarget = require('./naiveMatchTarget')
 
 const supportedAgents = {
   cpuAgent: 'CpuAgent',
-  naivePursuit: 'NaivePursuitAgent'
+  naivePursuit: 'NaivePursuitAgent',
+  naiveMatchTarget: 'NaiveMatchTargetAgent',
 }
 
 function createCpuAgent(id, sessionId, msgHandlers) {
@@ -14,4 +16,8 @@ function createNaivePursuit(id, sessionId, msgHandlers) {
   return new NaivePursuit(id, sessionId, msgHandlers)
 }
 
-module.exports = { supportedAgents, createCpuAgent, createNaivePursuit }
+function createNaiveMatchTarget(id, sessionId, msgHandlers) {
+  return new NaiveMatchTarget(id, sessionId, msgHandlers)
+}
+
+module.exports = { supportedAgents, createCpuAgent, createNaivePursuit, createNaiveMatchTarget }

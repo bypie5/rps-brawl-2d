@@ -38,9 +38,9 @@ class NaivePursuit extends CpuAgent {
       }
     })
 
-    const root = new Fallback()
+    const root = new Fallback('naive-pursuit-root')
 
-    const sequence = new Sequence()
+    const sequence = new Sequence('pursuit-sequence')
 
     const isPlayerNear = new Condition((context) => {
       const windowWidth = 10
@@ -74,7 +74,7 @@ class NaivePursuit extends CpuAgent {
       }
 
       return context.target !== null
-    })
+    }, 'is-player-near')
 
     const stepTowardsTarget = new Action(async (context) => {
       if (context.changeDirectionCooldown > 0) {
@@ -105,7 +105,7 @@ class NaivePursuit extends CpuAgent {
 
         context.changeDirectionCooldown = context.changeDirectionMaxCooldown
       }
-    })
+    }, 'step-towards-target')
 
     sequence.addChild(isPlayerNear)
     sequence.addChild(stepTowardsTarget)
@@ -122,7 +122,7 @@ class NaivePursuit extends CpuAgent {
       this.move(randomDirection)
 
       return nodeStatus.SUCCESS
-    })
+    }, 'move-randomly')
 
     root.addChild(sequence)
     root.addChild(moveRandomly)

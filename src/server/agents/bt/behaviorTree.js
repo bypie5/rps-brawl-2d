@@ -15,16 +15,47 @@ class BehaviorTree {
   setRoot(root) {
     this.root = root
 
-    // resursively set context for all children
-    const setContextOfAllAncestors = (node) => {
-      node.setContext(this.context)
+    this.setContextOfAllAncestors(root)
+  }
 
-      if (node.children) {
-        node.children.forEach(setContextOfAllAncestors)
+  setContextOfAllAncestors(node, extraContext) {
+    if (extraContext) {
+      for (let key in extraContext) {
+        console.log(key)
+        this.context[key] = extraContext[key]
       }
     }
 
-    setContextOfAllAncestors(root)
+    node.setContext(this.context)
+
+    if (node.children) {
+      node.children.forEach(this.setContextOfAllAncestors.bind(this))
+    }
+  }
+
+  findNodeById(id) {
+    if (!this.root) {
+      throw new Error('BehaviorTree root is not set')
+    }
+
+    const findNodeByIdRecursively = (node) => {
+      if (node.id === id) {
+        return node
+      }
+
+      if (node.children) {
+        for (let i = 0; i < node.children.length; i++) {
+          const found = findNodeByIdRecursively(node.children[i])
+          if (found) {
+            return found
+          }
+        }
+      }
+
+      return null
+    }
+
+    return findNodeByIdRecursively(this.root)
   }
 
   tick() {
