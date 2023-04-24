@@ -21,9 +21,10 @@ router.post('/create-private-session', (req, res) => {
             config.agentType = supportedAgents.naivePursuit
         }
 
-        const fname = sessionManager.createPrivateSession(username, config)
+        const { friendlyName, id } = sessionManager.createPrivateSession(username, config)
         res.status(200).send({
-            friendlyName: fname
+            friendlyName: friendlyName,
+            sessionId: id
         })
     } catch (err) {
         if (err.name === 'UserIsAlreadyHostError') {
@@ -65,6 +66,40 @@ router.post('/join-private-session', (req, res) => {
             res.status(500).send('Internal server error')
         }
     }
+})
+
+router.post('/modify-session-config', (req, res) => {
+    const { username } = req.session.passport.user
+
+    const { sessionId, attributeKey, attributeValue } = req.body
+    console.log(`User ${username} is trying to modify session ${sessionId} config`)
+    if (!sessionId) {
+        res.status(400).send('Missing session id')
+        return
+    }
+
+    const session = sessionManager.findSessionById(sessionId)
+    if (!session) {
+        res.status(404).send('Session does not exist')
+        return
+    }
+
+    if (session.host !== username) {
+        res.status(403).send('User is not the host')
+        return
+    }
+
+    try {
+        session.addAttributeToConfig(attributeKey, attributeValue)
+    } catch (err) {
+        if (err.name === 'InvalidSessionConfigError') {
+            res.status(400).send('Invalid session config')
+        } else {
+            res.status(500).send('Internal server error')
+        }
+    }
+
+    res.status(200).send()
 })
 
 router.get('/supported-agents', (req, res) => {

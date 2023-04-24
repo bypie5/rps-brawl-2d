@@ -19,6 +19,27 @@ const sessionConfigSchema = {
         agentType: {
             type: 'string',
             required: false
+        },
+        initialSpawnLocations: {
+            type: 'array',
+            required: false,
+            items: {
+                type: 'object',
+                properties: {
+                    playerId: {
+                        type: 'string',
+                        required: true
+                    },
+                    xPos: {
+                        type: 'number',
+                        required: true
+                    },
+                    yPos: {
+                        type: 'number',
+                        required: true
+                    }
+                }
+            }
         }
     }
 }

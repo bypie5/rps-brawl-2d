@@ -202,6 +202,21 @@ class Session {
         return id
     }
 
+    addAttributeToConfig (key, value) {
+        const validationResult = this._validateConfig({
+            ...this.config,
+            [key]: value
+        })
+
+        if (!validationResult.valid) {
+            throw new InvalidSessionConfigError('Invalid session config')
+        }
+
+        this.config[key] = value
+
+        console.log(`Added attribute to session config: ${key} = ${value}`)
+    }
+
     getEntity (id) {
         return this.gameContext.entities[id]
     }
@@ -314,7 +329,7 @@ class SessionManager extends Service {
 
         session.openSession()
 
-        return friendlyName
+        return { friendlyName, id }
     }
 
     joinPrivateSession (username, friendlyName) {
