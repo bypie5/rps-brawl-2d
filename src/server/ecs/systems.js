@@ -295,6 +295,14 @@ function spawn (gameContext, session) {
         avatar.state = 'respawning'
         avatar.stateData.ticksSinceStartedRespawning = 0
 
+        if (avatar.stateData.firstSpawn && session.config.initialSpawnLocations) {
+            for (const customPlayerSpawnLocation of session.config.initialSpawnLocations) {
+                if (customPlayerSpawnLocation.playerId === avatar.playerId) {
+                    transform.xPos = customPlayerSpawnLocation.xPos
+                    transform.yPos = customPlayerSpawnLocation.yPos
+                }
+            }
+        }
         if (avatar.stateData.firstSpawn) {
             avatar.stateData.firstSpawn = false
         } else {

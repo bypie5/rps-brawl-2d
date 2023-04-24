@@ -129,8 +129,9 @@ router.post('/invite-agent-to-session', (req, res) => {
         return
     }
 
+    let botId = null
     try {
-        sessionManager.inviteAgentToSession(sessionId)
+        botId = sessionManager.inviteAgentToSession(sessionId)
     } catch (err) {
         if (err.name === 'SessionIsFullError') {
             res.status(400).send('Session is full')
@@ -141,7 +142,10 @@ router.post('/invite-agent-to-session', (req, res) => {
         }
     }
 
-    res.status(200).send()
+    res.status(200).send({
+        botId: botId,
+        sessionId: sessionId
+    })
 })
 
 router.post('/start-session', (req, res) => {
