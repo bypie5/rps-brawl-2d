@@ -30,15 +30,9 @@
                     {{connectedplayernames}}
                 </table>
             </div>
-            <div>
-                <label for="bot-type-select">Select Bot Type (Applies to all Invited Bots): </label>
-                <select name="bot-type-select" id="bot-type-select">
-                    {{bottypeoptions}}
-                </select>
-                <button onclick="addBot(event)" data-cy="add-bot-button">
-                    Add Bot
-                </button>
-            </div>
+            <button onclick="addBot(event)" data-cy="add-bot-button">
+                Add Bot
+            </button>
             <button onclick="startMatch(event)" data-cy="start-match-button">
                 Start Match
             </button>

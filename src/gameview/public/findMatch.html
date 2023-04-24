@@ -23,6 +23,10 @@
                     <p>
                         You will receive a code that can be used to allow other to join.
                     </p>
+                    <label for="bot-type-select">Select Bot Type (Applies to all Invited Bots): </label>
+                    <select name="bot-type-select" id="bot-type-select">
+                        {{bottypeoptions}}
+                    </select>
                     <button
                         id="create-match-button"
                         onclick="createPrivateMatch(event)"
@@ -37,7 +41,7 @@
                     <h2 class="subtitle">Join a Private Match</h2>
                     <p>Please enter a match code to join the match.</p>
                     <div id="join-match-inputs">
-                        <label for="private-match-id">Match ID:</label>
+                        <label for="private-match-id-input">Match ID:</label>
                         <input
                             type="text"
                             id="private-match-id-input"

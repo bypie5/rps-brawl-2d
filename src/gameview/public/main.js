@@ -204,12 +204,7 @@ function _openWebSocket () {
 function _onLoginLoaded () {
 }
 
-function _onFindMatchLoaded () {
-}
-
-async function _onGameroomLobbyLoaded () {
-    _connectWsToSession(sessionContext.sessionId)
-
+async function _onFindMatchLoaded () {
     // get supported agent types
     const res = await fetch(`/api/game-session/supported-agents`, {
         method: 'GET',
@@ -220,7 +215,25 @@ async function _onGameroomLobbyLoaded () {
     })
     const { supportedAgentTypes } = await res.json()
     sessionContext.sessionInfo.supportedAgentTypes = supportedAgentTypes
-    await _redrawPage(pages.gameroomLobby)
+    await _redrawPage(pages.findMatch)
+
+    if (document.getElementById('bot-type-select')) {
+        document.onchange = () => {
+            sessionContext.pageContext = {
+                ...sessionContext.pageContext,
+                selectedAgentType: document.getElementById('bot-type-select').value
+            }
+        }
+
+        sessionContext.pageContext = {
+            ...sessionContext.pageContext,
+            selectedAgentType: document.getElementById('bot-type-select').value
+        }
+    }
+}
+
+async function _onGameroomLobbyLoaded () {
+    _connectWsToSession(sessionContext.sessionId)
 
     const poll = setInterval(async () => {
         // poll for session info
@@ -352,17 +365,6 @@ function _onPageLoaded (pageName) {
             _onFindMatchLoaded()
             break
         case pages.gameroomLobby:
-            sessionContext.pageContextInjector = new PageContextInjector(
-              sessionContext,
-              {
-                  selectedBotTypeValue: null,
-              },
-              () => {
-                  const select = document.getElementById('bot-type-select')
-                  if (sessionContext.pageContext && sessionContext.pageContext.selectedBotTypeValue) {
-                      select.value = sessionContext.pageContext.selectedBotTypeValue
-                  }
-              })
             _onGameroomLobbyLoaded()
             break
         case pages.gameroom:
@@ -407,6 +409,17 @@ function _compileTemplates (doc, pageName) {
                             return getSessionContext().username
                         }
                         return tag
+                    },
+                    'create-private-match': (tag) => {
+                        if (tag === '{{bottypeoptions}}') {
+                            let options = ''
+                            for (const botType of getSessionContext().sessionInfo.supportedAgentTypes) {
+                                options += `<option value="${botType}">${botType}</option>`
+                            }
+
+                            return options
+                        }
+                        return tag.replace('{{', '').replace('}}', '')
                     }
                 }
             )
@@ -435,23 +448,6 @@ function _compileTemplates (doc, pageName) {
 
                         if (tag === '{{maxplayers}}') {
                             return getSessionContext().sessionInfo.config.maxPlayers
-                        }
-
-                        return tag.replace('{{', '').replace('}}', '')
-                    },
-                    'bot-type-select': (tag) => {
-                        const select = doc.getElementById('bot-type-select')
-                        select.onchange = (e) => {
-                            sessionContext.pageContext.selectedBotTypeValue = e.target.value
-                        }
-
-                        if (tag === '{{bottypeoptions}}') {
-                            let options = ''
-                            for (const botType of getSessionContext().sessionInfo.supportedAgentTypes) {
-                                options += `<option value="${botType}">${botType}</option>`
-                            }
-
-                            return options
                         }
 
                         return tag.replace('{{', '').replace('}}', '')
@@ -582,7 +578,8 @@ async function createPrivateMatch (event) {
             body: JSON.stringify({
                 config: {
                     maxPlayers: 10,
-                    map: "map0"
+                    map: "map0",
+                    agentType: sessionContext.pageContext?.selectedAgentType
                 }
             })
         })

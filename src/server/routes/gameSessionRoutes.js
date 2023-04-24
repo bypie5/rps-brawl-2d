@@ -99,6 +99,8 @@ router.post('/invite-agent-to-session', (req, res) => {
     } catch (err) {
         if (err.name === 'SessionIsFullError') {
             res.status(400).send('Session is full')
+        } else if (err.name === 'FailedToAddAgentError') {
+            res.status(500).send('Failed to add agent: ' + err.message)
         } else {
             res.status(500).send('Internal server error')
         }
