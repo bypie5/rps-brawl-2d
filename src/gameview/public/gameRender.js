@@ -266,7 +266,6 @@ class GameRender {
             if (entityComponents.Avatar && entityComponents.Avatar.playerId === this.username) {
                 this.playersAvatarId = avatar.id
 
-                console.log('adding player ui')
                 this.uiElements.playerUi = window.gameUiManager.addComponentToScene('hudOverlay', {
                     playerId: this.username,
                     lives: entityComponents.Avatar.stateData.lives,
@@ -282,8 +281,8 @@ class GameRender {
                 return components.Avatar && components.Avatar.playerId === this.username
             })
         ) {
-            console.log('adding tie breaker ui')
             this.uiElements.tieBreakerUi = window.gameUiManager.addComponentToScene('tieBreakerView', {
+                tieBreakerState: entityComponents.TieBreaker.tieBreakerState,
                 tieBreakerBracket: entityComponents.TieBreaker.tournamentBracket,
                 entitiesOfPlayersInTournament: Object.entries(entitiesInScene)
                     .filter(([entityId, components]) => {
@@ -304,11 +303,33 @@ class GameRender {
         }
 
         const threeJsId = this.entityIdThreeJsIdMap.get(entityId)
+
+        // update "mock" three.js entities here
+        if (entityComponents.TieBreaker
+          && Object.entries(entitiesInScene)
+            .filter(([entityId, components]) => {
+                return entityComponents.TieBreaker.idsOfCohortMembers.includes(entityId)
+            })
+            .find(([entityId, components]) => {
+                return components.Avatar && components.Avatar.playerId === this.username
+            })
+          && this.uiElements.tieBreakerUi) {
+            window.gameUiManager.updateComponent(this.uiElements.tieBreakerUi, {
+                tieBreakerState: entityComponents.TieBreaker.tieBreakerState,
+                tieBreakerBracket: entityComponents.TieBreaker.tournamentBracket,
+                entitiesOfPlayersInTournament: Object.entries(entitiesInScene)
+                  .filter(([entityId, components]) => {
+                      return entityComponents.TieBreaker.idsOfCohortMembers.includes(entityId)
+                  })
+            })
+        }
+
         const entity = this.scene.getObjectById(threeJsId)
         if (!entity) {
             return
         }
 
+        // real three.js entities are updated below
         if (entityComponents.Transform) {
             // translate to the new position
             entity.position.x = entityComponents.Transform.xPos
@@ -336,24 +357,6 @@ class GameRender {
             && this.uiElements.playerUi) {
             window.gameUiManager.updateComponent(this.uiElements.playerUi, {
                 lives: entityComponents.Avatar.stateData.lives,
-            })
-        }
-
-        if (entityComponents.TieBreaker
-            && Object.entries(entitiesInScene)
-            .filter(([entityId, components]) => {
-                return entityComponents.TieBreaker.idsOfCohortMembers.includes(entityId)
-            })
-            .find(([entityId, components]) => {
-                return components.Avatar && components.Avatar.playerId === this.username
-            })
-            && this.uiElements.tieBreakerUi) {
-            window.gameUiManager.updateComponent(this.uiElements.tieBreakerUi, {
-                tieBreakerBracket: entityComponents.TieBreaker.tournamentBracket,
-                entitiesOfPlayersInTournament: Object.entries(entitiesInScene)
-                    .filter(([entityId, components]) => {
-                        return entityComponents.TieBreaker.idsOfCohortMembers.includes(entityId)
-                    })
             })
         }
     }
