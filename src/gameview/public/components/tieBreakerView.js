@@ -1,9 +1,13 @@
 import { Component } from './component.js'
+import { truncateWithEllipsis } from './util.js'
 
 class TieBreakerView extends Component {
   constructor(props, parentDomElement) {
     super(props, parentDomElement)
     this.name = 'TieBreakerView'
+
+    this.opponentCardWidth = 225
+    this.opponentCardHeight = 32
   }
 
   getHtmlContent() {
@@ -45,47 +49,67 @@ class TieBreakerView extends Component {
 
   _buildTournamentBracketSvg(tieBreakerState, tieBreakerBracket, entitiesOfPlayersInTournament) {
     let content = ''
+
+    let xOffset = 0
+    let yOffset = 0
+    let gap = 10
+    let roundNumber = 1
     for (const round of tieBreakerBracket) {
       for (const match of round) {
-        content += this._buildMatchInfoSvg(match, entitiesOfPlayersInTournament)
+        content += this._buildMatchInfoSvg(match, entitiesOfPlayersInTournament, xOffset, yOffset)
+        yOffset += (this.opponentCardHeight * 2) + gap
       }
+
+      xOffset += this.opponentCardWidth
+      yOffset = ((this.opponentCardHeight * roundNumber))
+      // gap += ((this.opponentCardHeight * 2) + gap) * roundNumber
+      roundNumber += 1
     }
 
     return content
   }
 
-  _buildMatchInfoSvg(match, entitiesOfPlayersInTournament) {
+  _buildMatchInfoSvg(match, entitiesOfPlayersInTournament, x = 0, y = 0) {
     const { opponent1, opponent2, winner } = match
 
     let opponent1CardSvg = null
     let opponent2CardSvg = null
     for (const [entityId, entity] of entitiesOfPlayersInTournament) {
       if (entityId === opponent1) {
-        opponent1CardSvg = this._buildOpponentCardSvg(entityId, entity)
+        opponent1CardSvg = this._buildOpponentCardSvg(entityId, entity, x, y)
       } else if (entityId === opponent2) {
-        opponent2CardSvg = this._buildOpponentCardSvg(entityId, entity)
+        opponent2CardSvg = this._buildOpponentCardSvg(entityId, entity, x, y + this.opponentCardHeight)
       }
     }
 
     return `
       <svg class="match-info-svg">
-        ${opponent1CardSvg}
-        ${opponent2CardSvg}
+        ${opponent1CardSvg ? opponent1CardSvg : this._buildBlankOpponentCardSvg(x, y)}
+        ${opponent2CardSvg ? opponent2CardSvg : this._buildBlankOpponentCardSvg(x, y + this.opponentCardHeight)}
       </svg>
      `
   }
 
-  _buildOpponentCardSvg(entityId, entity) {
-    return this._buildBlankOpponentCardSvg()
+  _buildOpponentCardSvg(entityId, entity, x = 0, y = 0) {
+    return `
+      <svg class="opponent-card-svg" width="${this.opponentCardWidth}px" height="${this.opponentCardHeight}px" x="${x}px" y="${y}px">
+        <rect class="opponent-card-rect" width="100%" height="100%" fill=${this.getColorPalette()["light-grey"]} />
+        <text class="opponent-card-text" x="53px" y="50%" dominant-baseline="middle" text-anchor="start" fill="#ffffff">
+            ${truncateWithEllipsis(entity.Avatar.playerId, 20)}
+        </text>
+        <rect class="opponent-card-icon-container" x="3" y="3" width="${this.opponentCardHeight - 6}px" height="${this.opponentCardHeight - 6}px" style="fill:rgba(0,0,0,0);stroke-width:3;stroke:rgb(0,0,0)"/>
+      </svg>
+    `
   }
 
-  _buildBlankOpponentCardSvg() {
+  _buildBlankOpponentCardSvg(x = 0, y = 0) {
     return `
-      <svg class="opponent-card-svg" width="128px" height="50px">
-        <rect class="opponent-card-rect" width="100%" height="100%" fill="#000000" />
-        <text class="opponent-card-text" x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#ffffff">
+      <svg class="opponent-card-svg" width="${this.opponentCardWidth}px" height="${this.opponentCardHeight}px" x="${x}px" y="${y}px">
+        <rect class="opponent-card-rect" width="100%" height="100%" fill=${this.getColorPalette()["light-grey"]} />
+        <text class="opponent-card-text" x="53px" y="50%" dominant-baseline="middle" text-anchor="start" fill="#ffffff">
             ?
         </text>
+        <rect class="opponent-card-icon-container" x="3" y="3" width="${this.opponentCardHeight - 6}px" height="${this.opponentCardHeight - 6}px" style="fill:rgba(0,0,0,0);stroke-width:3;stroke:rgb(0,0,0)"/>
       </svg>
     `
   }

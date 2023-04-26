@@ -46,12 +46,38 @@ describe('Player HUD', () => {
         cy.get('[data-cy=add-bot-button]').click()
 
         cy.wait('@inviteBot').then((interception) => {
+            const { authorization } = interception.request.headers
+            playerAuthorization = authorization
+
+            const { sessionId, botId } = interception.response.body
+            playerSessionId = sessionId
+
+            playersConnected.push(botId)
+        })
+
+        cy.get('[data-cy=add-bot-button]').click()
+
+        cy.wait('@inviteBot').then((interception) => {
+            const { authorization } = interception.request.headers
+            playerAuthorization = authorization
+
+            const { sessionId, botId } = interception.response.body
+            playerSessionId = sessionId
+
+            playersConnected.push(botId)
+        })
+
+        cy.get('[data-cy=add-bot-button]').click()
+
+        cy.wait('@inviteBot').then((interception) => {
             const { sessionId, botId } = interception.response.body
 
             playersConnected.push(botId)
 
             const leftFlank = playersConnected[0]
-            const rightFlank = playersConnected[1]
+            const topFlank = playersConnected[1]
+            const bottomFlank = playersConnected[2]
+            const rightFlank = playersConnected[3]
 
             cy.request({
                 method: 'POST',
@@ -64,12 +90,22 @@ describe('Player HUD', () => {
                     attributeKey: 'initialSpawnLocations',
                     attributeValue: [{
                         playerId: leftFlank,
-                        xPos: 5,
+                        xPos: 15,
                         yPos: -10,
                     },
                     {
                         playerId: rightFlank,
-                        xPos: 10,
+                        xPos: 15,
+                        yPos: -10,
+                    },
+                    {
+                        playerId: topFlank,
+                        xPos: 15,
+                        yPos: -10,
+                    },
+                    {
+                        playerId: bottomFlank,
+                        xPos: 15,
                         yPos: -10,
                     },
                     {
