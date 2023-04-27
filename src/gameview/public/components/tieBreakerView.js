@@ -52,25 +52,30 @@ class TieBreakerView extends Component {
 
     let xOffset = 0
     let yOffset = 0
+    let lastInitialYOffset = 0
     let gap = 10
+    let xGap = 25
+    const maxRoundNumber = tieBreakerBracket.length
     let roundNumber = 1
     for (const round of tieBreakerBracket) {
       for (const match of round) {
-        content += this._buildMatchInfoSvg(match, entitiesOfPlayersInTournament, xOffset, yOffset)
+        content += this._buildMatchInfoSvg(match, entitiesOfPlayersInTournament, roundNumber, xOffset, yOffset)
         yOffset += (this.opponentCardHeight * 2) + gap
       }
 
-      xOffset += this.opponentCardWidth
-      yOffset = ((this.opponentCardHeight * roundNumber))
-      // gap += ((this.opponentCardHeight * 2) + gap) * roundNumber
+      const matchPairHeight = (this.opponentCardHeight * 4) + gap * 2
+      xOffset += this.opponentCardWidth + xGap
+      yOffset = (matchPairHeight / 2 - this.opponentCardHeight - gap / 2) + lastInitialYOffset
+      lastInitialYOffset = yOffset
+      gap += matchPairHeight / 2
       roundNumber += 1
     }
 
     return content
   }
 
-  _buildMatchInfoSvg(match, entitiesOfPlayersInTournament, x = 0, y = 0) {
-    const { opponent1, opponent2, winner } = match
+  _buildMatchInfoSvg(match, entitiesOfPlayersInTournament, roundNumber, x = 0, y = 0) {
+    const { opponent1, opponent2, winner, byeInOpponent1, byeInOpponent2 } = match
 
     let opponent1CardSvg = null
     let opponent2CardSvg = null
@@ -84,8 +89,8 @@ class TieBreakerView extends Component {
 
     return `
       <svg class="match-info-svg">
-        ${opponent1CardSvg ? opponent1CardSvg : this._buildBlankOpponentCardSvg(x, y)}
-        ${opponent2CardSvg ? opponent2CardSvg : this._buildBlankOpponentCardSvg(x, y + this.opponentCardHeight)}
+        ${opponent1CardSvg ? opponent1CardSvg : this._buildBlankOpponentCardSvg(x, y, roundNumber === 1 && byeInOpponent1 ? 'bye' : null)}
+        ${opponent2CardSvg ? opponent2CardSvg : this._buildBlankOpponentCardSvg(x, y + this.opponentCardHeight, roundNumber === 1 && byeInOpponent2 ? 'bye' : null)}
       </svg>
      `
   }
@@ -102,12 +107,12 @@ class TieBreakerView extends Component {
     `
   }
 
-  _buildBlankOpponentCardSvg(x = 0, y = 0) {
+  _buildBlankOpponentCardSvg(x = 0, y = 0, msg) {
     return `
       <svg class="opponent-card-svg" width="${this.opponentCardWidth}px" height="${this.opponentCardHeight}px" x="${x}px" y="${y}px">
         <rect class="opponent-card-rect" width="100%" height="100%" fill=${this.getColorPalette()["light-grey"]} />
         <text class="opponent-card-text" x="53px" y="50%" dominant-baseline="middle" text-anchor="start" fill="#ffffff">
-            ?
+            ${msg ? msg : '?'}
         </text>
         <rect class="opponent-card-icon-container" x="3" y="3" width="${this.opponentCardHeight - 6}px" height="${this.opponentCardHeight - 6}px" style="fill:rgba(0,0,0,0);stroke-width:3;stroke:rgb(0,0,0)"/>
       </svg>

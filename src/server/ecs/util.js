@@ -253,6 +253,7 @@ function createTieBreakerBracket (clusterMemberIds) {
             match.opponent1 = childOne.opponent2
             childOne.opponent2 = null
             shiftedBecauseOfBye = true
+            childOne.byeInOpponent1 = true
         }
 
         if (childOne.opponent1 !== null && childOne.opponent2 === null) {
@@ -260,6 +261,7 @@ function createTieBreakerBracket (clusterMemberIds) {
             match.opponent1 = childOne.opponent1
             childOne.opponent1 = null
             shiftedBecauseOfBye = true
+            childOne.byeInOpponent1 = true
         }
 
         if (childTwo.opponent1 === null && childTwo.opponent2 !== null) {
@@ -267,6 +269,7 @@ function createTieBreakerBracket (clusterMemberIds) {
             match.opponent2 = childTwo.opponent2
             childTwo.opponent2 = null
             shiftedBecauseOfBye = true
+            childTwo.byeInOpponent2 = true
         }
 
         if (childTwo.opponent1 !== null && childTwo.opponent2 === null) {
@@ -274,6 +277,7 @@ function createTieBreakerBracket (clusterMemberIds) {
             match.opponent2 = childTwo.opponent1
             childTwo.opponent1 = null
             shiftedBecauseOfBye = true
+            childTwo.byeInOpponent2 = true
         }
 
         if (shiftedBecauseOfBye) {
