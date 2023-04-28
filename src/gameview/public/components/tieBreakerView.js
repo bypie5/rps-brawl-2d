@@ -54,24 +54,44 @@ class TieBreakerView extends Component {
     let yOffset = 0
     let lastInitialYOffset = 0
     let gap = 10
+    let lastGap = 0
     let xGap = 25
-    const maxRoundNumber = tieBreakerBracket.length
     let roundNumber = 1
     for (const round of tieBreakerBracket) {
+      const matchPairHeight = (this.opponentCardHeight * 4) + gap * 2
       for (const match of round) {
         content += this._buildMatchInfoSvg(match, entitiesOfPlayersInTournament, roundNumber, xOffset, yOffset)
+
+        // draw lines connecting this match with its child matches
+        if (roundNumber > 1) {
+          content += this._drawLineToChildrenMatches(xOffset, yOffset, matchPairHeight, lastGap, xGap)
+        }
+
         yOffset += (this.opponentCardHeight * 2) + gap
       }
 
-      const matchPairHeight = (this.opponentCardHeight * 4) + gap * 2
       xOffset += this.opponentCardWidth + xGap
       yOffset = (matchPairHeight / 2 - this.opponentCardHeight - gap / 2) + lastInitialYOffset
       lastInitialYOffset = yOffset
+      lastGap = gap
       gap += matchPairHeight / 2
       roundNumber += 1
     }
 
     return content
+  }
+
+  _drawLineToChildrenMatches(parentX, parentY, matchPairHeight, gap, xGap) {
+    console.log(parentX, parentY, matchPairHeight, gap, xGap)
+    return `
+        <line x1="${parentX}" y1="${parentY + this.opponentCardHeight}" x2="${parentX - xGap/2}" y2="${parentY + this.opponentCardHeight}" stroke="black" stroke-width="2" />
+        
+        <line x1="${parentX - xGap/2}" y1="${parentY + this.opponentCardHeight}" x2="${parentX - xGap/2}" y2="${(parentY + this.opponentCardHeight) - (this.opponentCardHeight + gap/2)}" stroke="black" stroke-width="2" />
+        <line x1="${parentX - xGap/2}" y1="${(parentY + this.opponentCardHeight) - (this.opponentCardHeight + gap/2)}" x2="${parentX - xGap}" y2="${(parentY + this.opponentCardHeight) - (this.opponentCardHeight + gap/2)}" stroke="black" stroke-width="2" />
+        
+        <line x1="${parentX - xGap/2}" y1="${parentY + this.opponentCardHeight}" x2="${parentX - xGap/2}" y2="${(parentY + this.opponentCardHeight) + (this.opponentCardHeight + gap/2)}" stroke="black" stroke-width="2" />
+        <line x1="${parentX - xGap/2}" y1="${(parentY + this.opponentCardHeight) + (this.opponentCardHeight + gap/2)}" x2="${parentX - xGap}" y2="${(parentY + this.opponentCardHeight) + (this.opponentCardHeight + gap/2)}" stroke="black" stroke-width="2" />
+    `
   }
 
   _buildMatchInfoSvg(match, entitiesOfPlayersInTournament, roundNumber, x = 0, y = 0) {
