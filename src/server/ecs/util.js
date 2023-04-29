@@ -405,6 +405,7 @@ function midMatchTieBreakerFSM (tieBreakerEntity, gameContext, onTournamentFinis
                 tieBreakerState.currRoundMaxTicks = Math.floor(tieBreakerState.currRoundMaxTicks / 1.25)
                 tieBreakerState.currRoundTick = 0
                 tieBreakerState.interRoundTicks = 0
+                tieBreakerState.hasAtLeastOneTieInRound = true
                 break
             }
 
@@ -413,6 +414,7 @@ function midMatchTieBreakerFSM (tieBreakerEntity, gameContext, onTournamentFinis
             tieBreakerState.currRoundMaxTicks = tieBreakerState.maxTicksPerRound
             tieBreakerState.currRoundTick = 0
             tieBreakerState.interRoundTicks = 0
+            tieBreakerState.hasAtLeastOneTieInRound = false
 
             if (tieBreakerState.currRound > tournamentBracket.length) {
                 // all rounds in the bracket are over

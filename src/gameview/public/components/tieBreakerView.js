@@ -1,5 +1,5 @@
 import { Component } from './component.js'
-import { truncateWithEllipsis } from './util.js'
+import { truncateWithEllipsis, ticksToSeconds, setToDecimalPlaces } from './util.js'
 
 class TieBreakerView extends Component {
   constructor(props, parentDomElement) {
@@ -13,6 +13,24 @@ class TieBreakerView extends Component {
   getHtmlContent() {
     const { tieBreakerState, tieBreakerBracket, entitiesOfPlayersInTournament } = this.props
 
+    function _buildTimerMessage() {
+      const roundTimer = `${setToDecimalPlaces(ticksToSeconds(
+      tieBreakerState.currRoundMaxTicks - tieBreakerState.currRoundTick
+      ), 1)} seconds remaining`
+
+      const inBetweenRoundsTimer = `${setToDecimalPlaces(ticksToSeconds(
+      tieBreakerState.ticksBetweenRounds - tieBreakerState.interRoundTicks
+      ), 0)} seconds until round starts...`
+
+      return tieBreakerState.currRoundTick > 0 ? roundTimer : inBetweenRoundsTimer
+    }
+
+    function _buildRoundMsg() {
+      const roundMsg = `Round ${tieBreakerState.currRound} of ${tieBreakerBracket.length}`
+      const replayingMsg = `Replaying round ${tieBreakerState.currRound} of ${tieBreakerBracket.length} due to tie`
+      return tieBreakerState.hasAtLeastOneTieInRound ? replayingMsg : roundMsg
+    }
+
     return `
       <div class="tie-breaker-view" data-cy="tie-breaker-view">
         <div class="tie-breaker-title-info">
@@ -23,7 +41,10 @@ class TieBreakerView extends Component {
               Only the Tournament Winner will survive the Tiebreaker Deathmatch!
             </div>
             <div class="unselectable-text">
-              Round ${tieBreakerState.currRound} of ${tieBreakerBracket.length}
+              ${_buildRoundMsg()}
+            </div>
+            <div class="unselectable-text">
+              ${_buildTimerMessage()}
             </div>
         </div>
         <div class="tournament-bracket">
