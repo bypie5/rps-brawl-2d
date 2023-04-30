@@ -81,7 +81,7 @@ class TieBreakerView extends Component {
     for (const round of tieBreakerBracket) {
       const matchPairHeight = (this.opponentCardHeight * 4) + gap * 2
       for (const match of round) {
-        content += this._buildMatchInfoSvg(match, entitiesOfPlayersInTournament, roundNumber, xOffset, yOffset)
+        content += this._buildMatchInfoSvg(match, entitiesOfPlayersInTournament, roundNumber, tieBreakerState, xOffset, yOffset)
 
         // draw lines connecting this match with its child matches
         if (roundNumber > 1) {
@@ -103,7 +103,6 @@ class TieBreakerView extends Component {
   }
 
   _drawLineToChildrenMatches(parentX, parentY, matchPairHeight, gap, xGap) {
-    console.log(parentX, parentY, matchPairHeight, gap, xGap)
     return `
         <line x1="${parentX}" y1="${parentY + this.opponentCardHeight}" x2="${parentX - xGap/2}" y2="${parentY + this.opponentCardHeight}" stroke="black" stroke-width="2" />
         
@@ -115,7 +114,7 @@ class TieBreakerView extends Component {
     `
   }
 
-  _buildMatchInfoSvg(match, entitiesOfPlayersInTournament, roundNumber, x = 0, y = 0) {
+  _buildMatchInfoSvg(match, entitiesOfPlayersInTournament, roundNumber, tieBreakerState, x = 0, y = 0) {
     const {
       opponent1,
       opponent2,
@@ -123,8 +122,18 @@ class TieBreakerView extends Component {
       winnerRpsState,
       loserRpsState,
       byeInOpponent1,
-      byeInOpponent2
+      byeInOpponent2,
+      opponent1RpsState,
+      opponent2RpsState,
     } = match
+
+    function _isInInterRoundPeriod() {
+      return tieBreakerState.currRoundTick === 0
+    }
+
+    function _isCurrentRound() {
+      return tieBreakerState.currRound === roundNumber
+    }
 
     let opponent1CardSvg = null
     let opponent2CardSvg = null
@@ -136,7 +145,9 @@ class TieBreakerView extends Component {
             isWinner: winner === opponent1,
             winnerRpsState,
             loserRpsState,
-          } : null, entity.Avatar.playerId === this.props.usernameOfPlayer)
+          } : null,
+          entity.Avatar.playerId === this.props.usernameOfPlayer,
+          _isInInterRoundPeriod(), _isCurrentRound(), opponent1RpsState)
       } else if (entityId === opponent2) {
         opponent2CardSvg = this._buildOpponentCardSvg(
           entityId, entity, x, y + this.opponentCardHeight,
@@ -144,7 +155,9 @@ class TieBreakerView extends Component {
             isWinner: winner === opponent2,
             winnerRpsState,
             loserRpsState,
-          } : null, entity.Avatar.playerId === this.props.usernameOfPlayer)
+          } : null,
+          entity.Avatar.playerId === this.props.usernameOfPlayer,
+          _isInInterRoundPeriod(), _isCurrentRound(), opponent2RpsState)
       }
     }
 
@@ -156,7 +169,7 @@ class TieBreakerView extends Component {
      `
   }
 
-  _buildOpponentCardSvg(entityId, entity, x = 0, y = 0, matchEndInfo, isForPlayer) {
+  _buildOpponentCardSvg(entityId, entity, x = 0, y = 0, matchEndInfo, isForPlayer, isInInterRoundPeriod, isCurrentRound, rpsState) {
     function _getRpsSprite(rpsState) {
       if (rpsState === 'rock') {
         return 'assets/rock_avatar.png'
@@ -165,6 +178,8 @@ class TieBreakerView extends Component {
       } else if (rpsState === 'scissors') {
         return 'assets/scissors_avatar.png'
       }
+
+      throw new Error(`Invalid rps state: ${rpsState}`)
     }
 
     function _getSpriteForMatchEnd(matchEndInfo) {
@@ -176,6 +191,22 @@ class TieBreakerView extends Component {
     }
 
     const iconWidth = this.opponentCardHeight - 6
+    function _buildInfoIcon() {
+      if (matchEndInfo) {
+        // show rps state of the player at end of round
+        return `<image href=${_getSpriteForMatchEnd(matchEndInfo)} x="3" y="3" width="${iconWidth}px" height="${iconWidth}px"/>`
+      } else if (isInInterRoundPeriod && isCurrentRound && rpsState) {
+        // display rps state of the player at the end of the match
+        return `<image href=${_getRpsSprite(rpsState)} x="3" y="3" width="${iconWidth}px" height="${iconWidth}px"/>`
+      } else if (isForPlayer && isCurrentRound) {
+        // display rps state of the player during the match
+        return `<image href=${_getRpsSprite(entity.Avatar.stateData.rockPaperScissors)} x="3" y="3" width="${iconWidth}px" height="${iconWidth}px"/>`
+      } else {
+        // display question mark when match has not ended and if this opponent is not the player
+        return `<image href="assets/question_mark.png" x="3" y="3" width="${iconWidth}px" height="${iconWidth}px"/>`
+      }
+    }
+
     return `
       <svg class="opponent-card-svg" width="${this.opponentCardWidth}px" height="${this.opponentCardHeight}px" x="${x}px" y="${y}px">
         <rect class="opponent-card-rect" width="100%" height="100%" fill=${this.getColorPalette()["light-grey"]} />
@@ -183,9 +214,7 @@ class TieBreakerView extends Component {
             ${isForPlayer ? '(You) ' : ''}${truncateWithEllipsis(entity.Avatar.playerId, 20)}
         </text>
         <rect class="opponent-card-icon-container" x="3" y="3" width="${iconWidth}px" height="${iconWidth}px" style="fill:rgba(0,0,0,0);stroke-width:3;stroke:rgb(0,0,0)"/>
-        <image href=${
-          matchEndInfo ? _getSpriteForMatchEnd(matchEndInfo) : _getRpsSprite(entity.Avatar.stateData.rockPaperScissors)
-        } x="3" y="3" width="${iconWidth}px" height="${iconWidth}px"/>
+        ${_buildInfoIcon()}
         ${matchEndInfo && matchEndInfo.isWinner ? `
           <image href="assets/trophy.png" x="3" y="3" width="${iconWidth}px" height="${iconWidth}px"/>
         ` : ''}

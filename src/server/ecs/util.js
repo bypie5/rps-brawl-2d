@@ -326,6 +326,8 @@ function _computeRoundResults (tournamentBracket, round, readOnlyRefGameContext)
             hadAtLeastOneTie = true
         }
 
+        match.opponent1RpsState = player1.Avatar.stateData.rockPaperScissors
+        match.opponent2RpsState = player2.Avatar.stateData.rockPaperScissors
         const comp = rpsCompare(player1.Avatar.stateData.rockPaperScissors, player2.Avatar.stateData.rockPaperScissors)
         if (comp === 0) {
             // tie
