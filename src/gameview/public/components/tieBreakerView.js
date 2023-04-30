@@ -116,15 +116,35 @@ class TieBreakerView extends Component {
   }
 
   _buildMatchInfoSvg(match, entitiesOfPlayersInTournament, roundNumber, x = 0, y = 0) {
-    const { opponent1, opponent2, winner, byeInOpponent1, byeInOpponent2 } = match
+    const {
+      opponent1,
+      opponent2,
+      winner,
+      winnerRpsState,
+      loserRpsState,
+      byeInOpponent1,
+      byeInOpponent2
+    } = match
 
     let opponent1CardSvg = null
     let opponent2CardSvg = null
     for (const [entityId, entity] of entitiesOfPlayersInTournament) {
       if (entityId === opponent1) {
-        opponent1CardSvg = this._buildOpponentCardSvg(entityId, entity, x, y)
+        opponent1CardSvg = this._buildOpponentCardSvg(
+          entityId, entity, x, y,
+          winner ? {
+            isWinner: winner === opponent1,
+            winnerRpsState,
+            loserRpsState,
+          } : null)
       } else if (entityId === opponent2) {
-        opponent2CardSvg = this._buildOpponentCardSvg(entityId, entity, x, y + this.opponentCardHeight)
+        opponent2CardSvg = this._buildOpponentCardSvg(
+          entityId, entity, x, y + this.opponentCardHeight,
+          winner ? {
+            isWinner: winner === opponent2,
+            winnerRpsState,
+            loserRpsState,
+          } : null)
       }
     }
 
@@ -136,7 +156,25 @@ class TieBreakerView extends Component {
      `
   }
 
-  _buildOpponentCardSvg(entityId, entity, x = 0, y = 0) {
+  _buildOpponentCardSvg(entityId, entity, x = 0, y = 0, matchEndInfo) {
+    function _getRpsSprite(rpsState) {
+      if (rpsState === 'rock') {
+        return 'assets/rock_avatar.png'
+      } else if (rpsState === 'paper') {
+        return 'assets/paper_avatar.png'
+      } else if (rpsState === 'scissors') {
+        return 'assets/scissors_avatar.png'
+      }
+    }
+
+    function _getSpriteForMatchEnd(matchEndInfo) {
+      if (matchEndInfo.isWinner) {
+        return _getRpsSprite(matchEndInfo.winnerRpsState)
+      } else {
+        return _getRpsSprite(matchEndInfo.loserRpsState)
+      }
+    }
+
     return `
       <svg class="opponent-card-svg" width="${this.opponentCardWidth}px" height="${this.opponentCardHeight}px" x="${x}px" y="${y}px">
         <rect class="opponent-card-rect" width="100%" height="100%" fill=${this.getColorPalette()["light-grey"]} />
@@ -144,6 +182,12 @@ class TieBreakerView extends Component {
             ${truncateWithEllipsis(entity.Avatar.playerId, 20)}
         </text>
         <rect class="opponent-card-icon-container" x="3" y="3" width="${this.opponentCardHeight - 6}px" height="${this.opponentCardHeight - 6}px" style="fill:rgba(0,0,0,0);stroke-width:3;stroke:rgb(0,0,0)"/>
+        <image href=${
+          matchEndInfo ? _getSpriteForMatchEnd(matchEndInfo) : _getRpsSprite(entity.Avatar.stateData.rockPaperScissors)
+        } x="3" y="3" width="${this.opponentCardHeight - 6}px" height="${this.opponentCardHeight - 6}px"/>
+        ${matchEndInfo && matchEndInfo.isWinner ? `
+          <image href="assets/trophy.png" x="3" y="3" width="${this.opponentCardHeight - 6}px" height="${this.opponentCardHeight - 6}px"/>
+        ` : ''}
       </svg>
     `
   }

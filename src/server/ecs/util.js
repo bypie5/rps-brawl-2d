@@ -333,9 +333,13 @@ function _computeRoundResults (tournamentBracket, round, readOnlyRefGameContext)
         } else if (comp === 1) {
             // player 1 wins
             match.winner = match.opponent1
+            match.winnerRpsState = player1.Avatar.stateData.rockPaperScissors
+            match.loserRpsState = player2.Avatar.stateData.rockPaperScissors
         } else {
             // player 2 wins
             match.winner = match.opponent2
+            match.winnerRpsState = player2.Avatar.stateData.rockPaperScissors
+            match.loserRpsState = player1.Avatar.stateData.rockPaperScissors
         }
     }
 
