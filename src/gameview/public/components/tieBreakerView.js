@@ -136,7 +136,7 @@ class TieBreakerView extends Component {
             isWinner: winner === opponent1,
             winnerRpsState,
             loserRpsState,
-          } : null)
+          } : null, entity.Avatar.playerId === this.props.usernameOfPlayer)
       } else if (entityId === opponent2) {
         opponent2CardSvg = this._buildOpponentCardSvg(
           entityId, entity, x, y + this.opponentCardHeight,
@@ -144,7 +144,7 @@ class TieBreakerView extends Component {
             isWinner: winner === opponent2,
             winnerRpsState,
             loserRpsState,
-          } : null)
+          } : null, entity.Avatar.playerId === this.props.usernameOfPlayer)
       }
     }
 
@@ -156,7 +156,7 @@ class TieBreakerView extends Component {
      `
   }
 
-  _buildOpponentCardSvg(entityId, entity, x = 0, y = 0, matchEndInfo) {
+  _buildOpponentCardSvg(entityId, entity, x = 0, y = 0, matchEndInfo, isForPlayer) {
     function _getRpsSprite(rpsState) {
       if (rpsState === 'rock') {
         return 'assets/rock_avatar.png'
@@ -175,31 +175,33 @@ class TieBreakerView extends Component {
       }
     }
 
+    const iconWidth = this.opponentCardHeight - 6
     return `
       <svg class="opponent-card-svg" width="${this.opponentCardWidth}px" height="${this.opponentCardHeight}px" x="${x}px" y="${y}px">
         <rect class="opponent-card-rect" width="100%" height="100%" fill=${this.getColorPalette()["light-grey"]} />
-        <text class="opponent-card-text" x="53px" y="50%" dominant-baseline="middle" text-anchor="start" fill="#ffffff">
-            ${truncateWithEllipsis(entity.Avatar.playerId, 20)}
+        <text class="opponent-card-text" x="${iconWidth + 10}px" y="50%" dominant-baseline="middle" text-anchor="start" fill="#ffffff">
+            ${isForPlayer ? '(You) ' : ''}${truncateWithEllipsis(entity.Avatar.playerId, 20)}
         </text>
-        <rect class="opponent-card-icon-container" x="3" y="3" width="${this.opponentCardHeight - 6}px" height="${this.opponentCardHeight - 6}px" style="fill:rgba(0,0,0,0);stroke-width:3;stroke:rgb(0,0,0)"/>
+        <rect class="opponent-card-icon-container" x="3" y="3" width="${iconWidth}px" height="${iconWidth}px" style="fill:rgba(0,0,0,0);stroke-width:3;stroke:rgb(0,0,0)"/>
         <image href=${
           matchEndInfo ? _getSpriteForMatchEnd(matchEndInfo) : _getRpsSprite(entity.Avatar.stateData.rockPaperScissors)
-        } x="3" y="3" width="${this.opponentCardHeight - 6}px" height="${this.opponentCardHeight - 6}px"/>
+        } x="3" y="3" width="${iconWidth}px" height="${iconWidth}px"/>
         ${matchEndInfo && matchEndInfo.isWinner ? `
-          <image href="assets/trophy.png" x="3" y="3" width="${this.opponentCardHeight - 6}px" height="${this.opponentCardHeight - 6}px"/>
+          <image href="assets/trophy.png" x="3" y="3" width="${iconWidth}px" height="${iconWidth}px"/>
         ` : ''}
       </svg>
     `
   }
 
   _buildBlankOpponentCardSvg(x = 0, y = 0, msg) {
+    const iconWidth = this.opponentCardHeight - 6
     return `
       <svg class="opponent-card-svg" width="${this.opponentCardWidth}px" height="${this.opponentCardHeight}px" x="${x}px" y="${y}px">
         <rect class="opponent-card-rect" width="100%" height="100%" fill=${this.getColorPalette()["light-grey"]} />
-        <text class="opponent-card-text" x="53px" y="50%" dominant-baseline="middle" text-anchor="start" fill="#ffffff">
+        <text class="opponent-card-text" x="${iconWidth + 10}px" y="50%" dominant-baseline="middle" text-anchor="start" fill="#ffffff">
             ${msg ? msg : '?'}
         </text>
-        <rect class="opponent-card-icon-container" x="3" y="3" width="${this.opponentCardHeight - 6}px" height="${this.opponentCardHeight - 6}px" style="fill:rgba(0,0,0,0);stroke-width:3;stroke:rgb(0,0,0)"/>
+        <rect class="opponent-card-icon-container" x="3" y="3" width="${iconWidth}px" height="${iconWidth}px" style="fill:rgba(0,0,0,0);stroke-width:3;stroke:rgb(0,0,0)"/>
       </svg>
     `
   }

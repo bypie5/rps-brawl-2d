@@ -287,7 +287,8 @@ class GameRender {
                 entitiesOfPlayersInTournament: Object.entries(entitiesInScene)
                     .filter(([entityId, components]) => {
                       return entityComponents.TieBreaker.idsOfCohortMembers.includes(entityId)
-                    })
+                    }),
+                usernameOfPlayer: this.username
             })
 
             threeJsId = 'tieBreakerUi' // can't use the entity id because it's not in the scene
