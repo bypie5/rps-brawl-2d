@@ -71,14 +71,17 @@ class TieBreakerView extends Component {
   _buildTournamentBracketSvg(tieBreakerState, tieBreakerBracket, entitiesOfPlayersInTournament) {
     let content = ''
 
-    let xOffset = 0
-    let yOffset = 0
-    let lastInitialYOffset = 0
+    const currRound = tieBreakerState.currRound
+
+    let xOffset = 15
+    let yOffset = 10
+    let lastInitialYOffset = 10
     let gap = 10
     let lastGap = 0
     let xGap = 25
     let roundNumber = 1
     for (const round of tieBreakerBracket) {
+      let columnHeight = 0
       const matchPairHeight = (this.opponentCardHeight * 4) + gap * 2
       for (const match of round) {
         content += this._buildMatchInfoSvg(match, entitiesOfPlayersInTournament, roundNumber, tieBreakerState, xOffset, yOffset)
@@ -89,6 +92,15 @@ class TieBreakerView extends Component {
         }
 
         yOffset += (this.opponentCardHeight * 2) + gap
+      }
+
+      columnHeight = (this.opponentCardHeight * 4 * round.length / 2) + (gap * (round.length - 1))
+
+      // draw outline of all match pairs in this round
+      if (roundNumber === currRound) {
+        content += `
+          <rect x="${xOffset - xGap/2}" y="${lastInitialYOffset}" width="${this.opponentCardWidth + xGap - 4}" height="${columnHeight}" stroke="${this.getColorPalette()["dark-red"]}" stroke-width="2" fill="none" />
+        `
       }
 
       xOffset += this.opponentCardWidth + xGap
