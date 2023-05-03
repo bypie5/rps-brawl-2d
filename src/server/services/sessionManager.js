@@ -17,7 +17,7 @@ const {
 } = require('../ecs/systems')
 const { levelZero } = require('../levels/level')
 
-const { createCpuAgent, createNaivePursuit, createNaiveMatchTarget, supportedAgents} = require('../agents/agentFactory')
+const { createCpuAgent, createNaivePursuit, createNaiveMatchTarget, createNaiveRandomBracket, supportedAgents} = require('../agents/agentFactory')
 
 const sessionStates = {
     INITIALIZING: 'INITIALIZING',
@@ -453,6 +453,8 @@ class SessionManager extends Service {
                 return createCpuAgent(agentId, sessionId, messageHandlers)
             case supportedAgents.naiveMatchTarget:
                 return createNaiveMatchTarget(agentId, sessionId, messageHandlers)
+            case supportedAgents.naiveRandomBracket:
+                return createNaiveRandomBracket(agentId, sessionId, messageHandlers)
             default:
                 throw new Error(`Unsupported agent type ${sessionConfig.agentType}`)
         }

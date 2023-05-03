@@ -104,7 +104,7 @@ router.post('/modify-session-config', (req, res) => {
 
 router.get('/supported-agents', (req, res) => {
     res.status(200).send({
-        supportedAgentTypes: [supportedAgents.naivePursuit, supportedAgents.naiveMatchTarget]
+        supportedAgentTypes: [supportedAgents.naivePursuit, supportedAgents.naiveMatchTarget, supportedAgents.naiveRandomBracket]
     })
 })
 
