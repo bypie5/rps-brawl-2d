@@ -35,6 +35,11 @@ class BehaviorTreeNode {
       child.parent = this
     }
 
+    addChildAtIndex(child, index) {
+      this.children.splice(index, 0, child)
+      child.parent = this
+    }
+
     setContextField(field, value) {
       this.context[field] = value
     }

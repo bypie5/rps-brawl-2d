@@ -21,7 +21,6 @@ class BehaviorTree {
   setContextOfAllAncestors(node, extraContext) {
     if (extraContext) {
       for (let key in extraContext) {
-        console.log(key)
         this.context[key] = extraContext[key]
       }
     }
