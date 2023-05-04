@@ -14,6 +14,8 @@ class NaiveRandomBracket extends NaiveMatchTarget {
     const ancestorTree = super.buildBehaviorTree()
 
     const context = {
+      maxTicksUntilRandomize: 33,
+      ticksUntilRandomize: 0,
     }
 
     const root = ancestorTree.findNodeById('naive-pursuit-root')
@@ -26,13 +28,19 @@ class NaiveRandomBracket extends NaiveMatchTarget {
     }, 'is-in-mid-match-tie-breaker')
 
     const randomizeRpsState = new Action(async (context) => {
-      const rpsState = Math.floor(Math.random() * 3)
+      if (context.ticksUntilRandomize < context.maxTicksUntilRandomize) {
+        context.ticksUntilRandomize++
+        return
+      }
 
+      const rpsState = Math.floor(Math.random() * 3)
       if (rpsState === 0) {
         this.stateShiftLeft()
       } else if (rpsState === 1) {
         this.stateShiftRight()
       }
+
+      context.ticksUntilRandomize = 0
     }, 'randomize-rps-state')
 
     sequence.addChild(isInMidMatchTieBreaker)
