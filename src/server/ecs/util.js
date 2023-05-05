@@ -431,7 +431,10 @@ function midMatchTieBreakerFSM (tieBreakerEntity, gameContext, onTournamentFinis
             _advanceWinnersToNextRound(tournamentBracket, tieBreakerState.currRound)
             break
         case 'finished':
-            onTournamentFinished()
+            const lastRound = tournamentBracket[tournamentBracket.length - 1]
+            const winner = lastRound[0].winner
+
+            onTournamentFinished(winner)
             break
         default:
             console.log('unknown state', state)

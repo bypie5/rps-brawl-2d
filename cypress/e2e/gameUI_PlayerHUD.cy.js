@@ -139,27 +139,6 @@ describe('Player HUD', () => {
         let playersConnected = []
         let playerAuthorization = null
         let playerSessionId = null
-        cy.wait('@inviteBot').then((interception) => {
-            const { authorization } = interception.request.headers
-            playerAuthorization = authorization
-
-            const { sessionId, botId } = interception.response.body
-            playerSessionId = sessionId
-
-            playersConnected.push(botId)
-        })
-
-        cy.get('[data-cy=add-bot-button]').click()
-
-        cy.wait('@inviteBot').then((interception) => {
-            const { authorization } = interception.request.headers
-            playerAuthorization = authorization
-
-            const { sessionId, botId } = interception.response.body
-            playerSessionId = sessionId
-
-            playersConnected.push(botId)
-        })
 
         cy.get('[data-cy=add-bot-button]').click()
 
@@ -180,10 +159,8 @@ describe('Player HUD', () => {
 
             playersConnected.push(botId)
 
-            const leftFlank = playersConnected[0]
-            const topFlank = playersConnected[1]
-            const bottomFlank = playersConnected[2]
-            const rightFlank = playersConnected[3]
+            const topFlank = playersConnected[0]
+            const bottomFlank = playersConnected[1]
 
             cy.request({
                 method: 'POST',
@@ -194,25 +171,16 @@ describe('Player HUD', () => {
                 body: {
                     sessionId: playerSessionId,
                     attributeKey: 'initialSpawnLocations',
-                    attributeValue: [{
-                        playerId: leftFlank,
-                        xPos: 15,
-                        yPos: -10,
-                    },
-                        {
-                            playerId: rightFlank,
-                            xPos: 15,
-                            yPos: -10,
-                        },
+                    attributeValue: [
                         {
                             playerId: topFlank,
                             xPos: 15,
-                            yPos: -10,
+                            yPos: -9,
                         },
                         {
                             playerId: bottomFlank,
                             xPos: 15,
-                            yPos: -10,
+                            yPos: -11,
                         },
                         {
                             playerId: 'test',
@@ -226,5 +194,11 @@ describe('Player HUD', () => {
         cy.get('[data-cy=start-match-button]').click()
 
         cy.get('[data-cy="tie-breaker-view"]', {timeout: 3500})
+
+        cy.get('[data-cy="match-info-text"]')
+
+        // since there should be three players in this tie breaker
+        // we should see two match-winner-info-text elements
+        cy.get('[data-cy="match-winner-info-text"]', {timeout: 20000 * 5})
     })
 })

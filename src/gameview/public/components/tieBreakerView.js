@@ -222,8 +222,20 @@ class TieBreakerView extends Component {
     return `
       <svg class="opponent-card-svg" width="${this.opponentCardWidth}px" height="${this.opponentCardHeight}px" x="${x}px" y="${y}px">
         <rect class="opponent-card-rect" width="100%" height="100%" fill=${this.getColorPalette()["light-grey"]} />
-        <text class="opponent-card-text" x="${iconWidth + 10}px" y="50%" dominant-baseline="middle" text-anchor="start" fill="#ffffff">
-            ${isForPlayer ? '(You) ' : ''}${truncateWithEllipsis(entity.Avatar.playerId, 20)}
+        <text
+          class="opponent-card-text"
+          x="${iconWidth + 10}px"
+          y="50%"
+          dominant-baseline="middle"
+          text-anchor="start"
+          fill="#ffffff" 
+          ${
+            matchEndInfo && matchEndInfo.isWinner 
+              ? 'font-weight="bold" data-cy="match-winner-info-text"' 
+              : 'data-cy="match-info-text"'
+          }
+        >
+          ${matchEndInfo && matchEndInfo.isWinner ? 'Winner! ' : ''}${isForPlayer ? '(You) ' : ''}${truncateWithEllipsis(entity.Avatar.playerId, 20)}
         </text>
         <rect class="opponent-card-icon-container" x="3" y="3" width="${iconWidth}px" height="${iconWidth}px" style="fill:rgba(0,0,0,0);stroke-width:3;stroke:rgb(0,0,0)"/>
         ${_buildInfoIcon()}

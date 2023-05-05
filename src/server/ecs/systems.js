@@ -252,7 +252,19 @@ function tieBreaker (gameContext, session) {
 
         if (entity.TieBreaker
             && entity.TieBreaker.tournamentBracket) {
-                midMatchTieBreakerFSM(entity, gameContext, () => {
+                midMatchTieBreakerFSM(entity, gameContext, (winner) => {
+                    for (const id of entity.TieBreaker.idsOfCohortMembers) {
+                        const participant = gameContext.entities[id]
+                        if (participant.Avatar.state === 'breakingtie' && id === winner) {
+                            participant.Avatar.state = 'alive'
+                            participant.Avatar.stateData.lives++
+                            participant.HitBox.physicsEnabled = true
+                        }
+
+                        if (participant.Avatar.state === 'breakingtie' && id !== winner) {
+                            participant.Avatar.state = 'dead'
+                        }
+                    }
                 })
         }
     }
