@@ -134,8 +134,6 @@ describe('Player HUD', () => {
 
         cy.intercept('POST', '/api/game-session/invite-agent-to-session').as('inviteBot')
 
-        cy.get('[data-cy=add-bot-button]').click()
-
         let playersConnected = []
         let playerAuthorization = null
         let playerSessionId = null

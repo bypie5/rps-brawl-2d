@@ -265,6 +265,8 @@ function tieBreaker (gameContext, session) {
                             participant.Avatar.state = 'dead'
                         }
                     }
+
+                    session.removeEntity(id)
                 })
         }
     }

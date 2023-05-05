@@ -202,6 +202,10 @@ class Session {
         return id
     }
 
+    removeEntity (id) {
+        delete this.gameContext.entities[id]
+    }
+
     addAttributeToConfig (key, value) {
         const validationResult = this._validateConfig({
             ...this.config,

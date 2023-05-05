@@ -348,7 +348,7 @@ function _pruneEntitiesInScene () {
 
             // remove from renderer
             if (sessionContext.sessionInfo.renderer) {
-                sessionContext.sessionInfo.renderer.onEntityRemoved(entityId)
+                sessionContext.sessionInfo.renderer.onEntityRemoved(entityId, entityComponents, entities)
             }
         }
     }

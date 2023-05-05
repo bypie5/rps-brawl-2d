@@ -59,6 +59,11 @@ class GameUiManager {
     return newId
   }
 
+  removeComponentFromScene(id) {
+    document.getElementById(id).remove()
+    this.components.delete(id)
+  }
+
   updateComponent(id, props) {
     const component = this.components.get(id)
     component.props = { ...component.props, ...props }

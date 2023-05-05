@@ -220,8 +220,8 @@ class GameRender {
         }
     }
 
-    onEntityRemoved (entityId) {
-        this._removeEntityFromScene(entityId)
+    onEntityRemoved (entityId, entityComponents, entitiesInScene) {
+        this._removeEntityFromScene(entityId, entityComponents, entitiesInScene)
     }
 
     start () {
@@ -362,7 +362,22 @@ class GameRender {
         }
     }
 
-    _removeEntityFromScene (entityId) {
+    _removeEntityFromScene (entityId, entityComponents, entitiesInScene) {
+        if (!this.isEntityInScene(entityId)) {
+            return
+        }
+
+        const threeJsId = this.entityIdThreeJsIdMap.get(entityId)
+
+        if (entityComponents.TieBreaker) {
+            entityComponents.TieBreaker.idsOfCohortMembers.forEach((id) => {
+                  const entity = entitiesInScene[id]
+                  if (entity && entity.Avatar && entity.Avatar.playerId === this.username) {
+                      window.gameUiManager.removeComponentFromScene(this.uiElements.tieBreakerUi)
+                  }
+              }
+            )
+        }
     }
 }
 
