@@ -153,8 +153,13 @@ class GameRender {
         this.playersAvatarId = null
         this.uiElements = {
             playerUi: null,
-            tieBreakerUi: null
+            tieBreakerUi: null,
+            intercomTextUi: null
         }
+
+        // of type window.IntercomMsg (see intercomText.js for more info)
+        this.intercomMsgQueue = []
+        this.beganDisplayingIntercomMsgAt = -1
 
         // index of sprites in the tilesheet corresponds to the sprite' id - 1 (i.e. sprite id 1 is at index 0)
         _loadTileSheet(this.scene, 'assets/haunted_house.png', 64).then((spriteMaterials) => {
@@ -233,6 +238,27 @@ class GameRender {
         this.isRendering = false
     }
 
+    pushToIntercomMsgQueue (msg) {
+        this.intercomMsgQueue.push(msg)
+    }
+
+    peekHeadOfIntercomMsgQueue () {
+        if (this.intercomMsgQueue.length === 0) {
+            return null
+        }
+
+        // display the message at the head of queue for specified duration
+        const head = this.intercomMsgQueue[0]
+        if (this.beganDisplayingIntercomMsgAt === -1) {
+            this.beganDisplayingIntercomMsgAt = Date.now()
+        } else if (Date.now() - this.beganDisplayingIntercomMsgAt > head.displayDurationMsg) {
+            this.intercomMsgQueue.shift()
+            this.beganDisplayingIntercomMsgAt = -1
+        }
+
+        return head
+    }
+
     _addEntityToScene (entityId, entityComponents, entitiesInScene) {
         if (this.isEntityInScene(entityId)) {
             return
@@ -270,6 +296,18 @@ class GameRender {
                     playerId: this.username,
                     lives: entityComponents.Avatar.stateData.lives,
                 })
+
+                this.uiElements.intercomTextUi = window.gameUiManager.addComponentToScene('intercomText', {
+                    msgToDisplay: this.peekHeadOfIntercomMsgQueue()
+                })
+
+                this.pushToIntercomMsgQueue(
+                  new IntercomMsg(
+                    'Welcome to the game!',
+                    'Use WASD to move around.',
+                    3500
+                  )
+                )
             }
         } else if (
           entityComponents.TieBreaker
@@ -358,6 +396,10 @@ class GameRender {
             && this.uiElements.playerUi) {
             window.gameUiManager.updateComponent(this.uiElements.playerUi, {
                 lives: entityComponents.Avatar.stateData.lives,
+            })
+
+            window.gameUiManager.updateComponent(this.uiElements.intercomTextUi, {
+                msgToDisplay: this.peekHeadOfIntercomMsgQueue()
             })
         }
     }

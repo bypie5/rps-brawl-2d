@@ -2,7 +2,7 @@ const { supportedAgents } = require('../../src/server/agents/agentFactory')
 
 describe('Player HUD', () => {
 
-    it('should display the player HUD', () => {
+    it('should display the player HUD and welcome message', () => {
         // login
         cy.visit('/')
         cy.get('[data-cy=username-input]').type('test')
@@ -14,6 +14,8 @@ describe('Player HUD', () => {
         cy.get('[data-cy=start-match-button]').click()
 
         cy.get('[data-cy=player-hud-overlay]', {timeout: 3500})
+
+        cy.get('[data-cy=intercom-text-active]', {timeout: 3500})
     })
 
     it('Displays tie breaker ui when player is in tie breaker', () => {

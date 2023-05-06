@@ -1,9 +1,11 @@
 import { HudOverlay } from './components/hudOverlay.js'
 import { TieBreakerView } from './components/tieBreakerView.js'
+import { IntercomText } from './components/intercomText.js'
 
 const components = {
   hudOverlay: 'hudOverlay',
-    tieBreakerView: 'tieBreakerView'
+  tieBreakerView: 'tieBreakerView',
+  intercomText: 'intercomText'
 }
 
 window.components = components
@@ -44,6 +46,9 @@ class GameUiManager {
         break
       case components.tieBreakerView:
         component = new TieBreakerView(props, this.parentDomElement)
+        break
+      case components.intercomText:
+        component = new IntercomText(props, this.parentDomElement)
         break
       default:
         throw new Error(`Unknown component name: ${name}`)
