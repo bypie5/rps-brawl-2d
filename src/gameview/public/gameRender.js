@@ -154,7 +154,8 @@ class GameRender {
         this.uiElements = {
             playerUi: null,
             tieBreakerUi: null,
-            intercomTextUi: null
+            intercomTextUi: null,
+            stateChangeIndicatorsUi: null,
         }
 
         // of type window.IntercomMsg (see intercomText.js for more info)
@@ -301,6 +302,11 @@ class GameRender {
                     msgToDisplay: this.peekHeadOfIntercomMsgQueue()
                 })
 
+                this.uiElements.stateChangeIndicatorsUi = window.gameUiManager.addComponentToScene('stateChangeIndicators', {
+                    playerRpsState: entityComponents.Avatar.stateData.rockPaperScissors,
+                    isOnCoolDown: entityComponents.Avatar.stateData.stateSwitchCooldownTicks > 0,
+                })
+
                 this.pushToIntercomMsgQueue(
                   new IntercomMsg(
                     'Welcome to the game!',
@@ -400,6 +406,11 @@ class GameRender {
 
             window.gameUiManager.updateComponent(this.uiElements.intercomTextUi, {
                 msgToDisplay: this.peekHeadOfIntercomMsgQueue()
+            })
+
+            window.gameUiManager.updateComponent(this.uiElements.stateChangeIndicatorsUi, {
+                playerRpsState: entityComponents.Avatar.stateData.rockPaperScissors,
+                isOnCoolDown: entityComponents.Avatar.stateData.stateSwitchCooldownTicks > 0,
             })
         }
     }
