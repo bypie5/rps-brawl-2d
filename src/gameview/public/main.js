@@ -382,6 +382,22 @@ function _detectAndHandleGameEvents (prevGameContext, currGameContext) {
       sessionContext.sessionInfo.playersAvatarId
       && (!prevGameContext
         || (prevGameContext.entities[sessionContext.sessionInfo.playersAvatarId]
+          && prevGameContext.entities[sessionContext.sessionInfo.playersAvatarId].Avatar.state !== 'spectating'))
+      && (currGameContext.entities[sessionContext.sessionInfo.playersAvatarId]
+        && currGameContext.entities[sessionContext.sessionInfo.playersAvatarId].Avatar.state === 'spectating')
+    ) {
+        // player has died
+        sessionContext.sessionInfo.renderer.pushToIntercomMsgQueue(new IntercomMsg(
+          'You have been eliminated!',
+          'Spectating...',
+          3000
+        ))
+    }
+
+    if (
+      sessionContext.sessionInfo.playersAvatarId
+      && (!prevGameContext
+        || (prevGameContext.entities[sessionContext.sessionInfo.playersAvatarId]
           && prevGameContext.entities[sessionContext.sessionInfo.playersAvatarId].Avatar.state !== 'breakingtie'))
       && (currGameContext.entities[sessionContext.sessionInfo.playersAvatarId]
         && currGameContext.entities[sessionContext.sessionInfo.playersAvatarId].Avatar.state === 'breakingtie')

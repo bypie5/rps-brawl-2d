@@ -32,7 +32,7 @@ function buildPlayerEntity (playerId, x, y) {
             speed: 1,
             stateData: {
                 // keep stuff in here serializable (no functions, no classes, no sets, no maps, etc.)
-                lives: 3,
+                lives: 4,
                 rockPaperScissors: randomRockPaperScissors(),
                 ticksSinceStartedRespawning: -1,
                 stateSwitchCooldownMaxTicks: 30,

@@ -329,6 +329,10 @@ function spawn (gameContext, session) {
         } else {
             avatar.stateData.lives--
         }
+
+        if (avatar.stateData.lives <= 0) {
+            avatar.state = 'spectating'
+        }
     }
 
     for (const respawningPlayer of respawningPlayers) {

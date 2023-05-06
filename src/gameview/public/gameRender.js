@@ -142,6 +142,7 @@ class GameRender {
         this.renderer = new THREE.WebGLRenderer({ canvas: canvas })
 
         this.camera.position.z = 100
+        this.spectatorMode = false
 
         this.renderer.setSize(windowWidth, windowHeight)
 
@@ -191,6 +192,21 @@ class GameRender {
                     this.camera.position.y = playerPosition.y
                 }
             }
+
+            if (this.spectatorMode) {
+                const spectatingFrustumSize = 35
+                const windowWidth = window.innerWidth
+                const windowHeight = window.innerHeight
+                const aspectRatio = windowWidth / windowHeight
+
+                this.camera.left = spectatingFrustumSize * aspectRatio/-2
+                this.camera.right = spectatingFrustumSize * aspectRatio/2
+                this.camera.top = spectatingFrustumSize/2
+                this.camera.bottom = spectatingFrustumSize/-2
+
+                this.camera.updateProjectionMatrix()
+            }
+
             this.latestTickRendered = this.latestTickReceived
             this.renderer.render(this.scene, this.camera)
             window.gameUiManager.update()
@@ -296,6 +312,7 @@ class GameRender {
                 this.uiElements.playerUi = window.gameUiManager.addComponentToScene('hudOverlay', {
                     playerId: this.username,
                     lives: entityComponents.Avatar.stateData.lives,
+                    isSpectating: this.spectatorMode,
                 })
 
                 this.uiElements.intercomTextUi = window.gameUiManager.addComponentToScene('intercomText', {
@@ -402,6 +419,7 @@ class GameRender {
             && this.uiElements.playerUi) {
             window.gameUiManager.updateComponent(this.uiElements.playerUi, {
                 lives: entityComponents.Avatar.stateData.lives,
+                isSpectating: this.spectatorMode
             })
 
             window.gameUiManager.updateComponent(this.uiElements.intercomTextUi, {
@@ -412,6 +430,12 @@ class GameRender {
                 playerRpsState: entityComponents.Avatar.stateData.rockPaperScissors,
                 isOnCoolDown: entityComponents.Avatar.stateData.stateSwitchCooldownTicks > 0,
             })
+        }
+
+        if (entityComponents.Avatar
+          && entityComponents.Avatar.playerId === this.username
+          && entityComponents.Avatar.state === 'spectating') {
+            this.spectatorMode = true
         }
     }
 
