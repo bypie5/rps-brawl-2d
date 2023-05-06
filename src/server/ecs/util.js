@@ -415,20 +415,26 @@ function midMatchTieBreakerFSM (tieBreakerEntity, gameContext, onTournamentFinis
                 break
             }
 
-            // otherwise, advance to the next round
-            tieBreakerState.currRound++
-            tieBreakerState.currRoundMaxTicks = tieBreakerState.maxTicksPerRound
-            tieBreakerState.currRoundTick = 0
-            tieBreakerState.interRoundTicks = 0
-            tieBreakerState.hasAtLeastOneTieInRound = false
-
-            if (tieBreakerState.currRound > tournamentBracket.length) {
+            if (tieBreakerState.currRound === tournamentBracket.length) {
                 // all rounds in the bracket are over
-                tieBreakerEntity.TieBreaker.state = 'finished'
-                break
-            }
+                tieBreakerEntity.TieBreaker.state = 'tournamentSummary'
+            } else {
+                // otherwise, advance to the next round
+                tieBreakerState.currRound++
+                tieBreakerState.currRoundMaxTicks = tieBreakerState.maxTicksPerRound
+                tieBreakerState.currRoundTick = 0
+                tieBreakerState.interRoundTicks = 0
+                tieBreakerState.hasAtLeastOneTieInRound = false
 
-            _advanceWinnersToNextRound(tournamentBracket, tieBreakerState.currRound)
+                _advanceWinnersToNextRound(tournamentBracket, tieBreakerState.currRound)
+            }
+            break
+        case 'tournamentSummary':
+            if (tieBreakerState.summaryDisplayTick < tieBreakerState.summaryDisplayMaxTicks) {
+                tieBreakerState.summaryDisplayTick++
+            } else {
+                tieBreakerEntity.TieBreaker.state = 'finished'
+            }
             break
         case 'finished':
             const lastRound = tournamentBracket[tournamentBracket.length - 1]

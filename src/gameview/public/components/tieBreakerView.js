@@ -34,13 +34,13 @@ class TieBreakerView extends Component {
     return `
       <div class="tie-breaker-view" data-cy="tie-breaker-view">
         <div class="tie-breaker-title-info">
-            <div class="unselectable-text">
-              Tiebreaker - ${Object.entries(this.props.entitiesOfPlayersInTournament).length} player tournament
+            <div class="unselectable-text tie-breaker-title-text">
+              Rock Paper Scissors Showdown - ${Object.entries(this.props.entitiesOfPlayersInTournament).length} player tournament
             </div>
             <div class="unselectable-text">
-              Only the Tournament Winner will survive the Rock Paper Scissors Showdown!
+              The winner of this tournament will get an extra life!
             </div>
-            <div class="unselectable-text">
+            <div class="unselectable-text tie-breaker-round-indicator">
               ${_buildRoundMsg()}
             </div>
             <div class="unselectable-text">
@@ -65,6 +65,8 @@ class TieBreakerView extends Component {
       'tournament-bracket': 'display: flex; justify-content: center; align-items: center; flex-direction: column; width: 100%; height: 100%;',
       'tournament-bracket-svg': 'width: 100%; height: 100%;',
       'opponent-card-text': 'pointer-events: none; user-select: none;',
+      'tie-breaker-title-text': 'font-size: 1.5em; font-weight: bold;',
+      'tie-breaker-round-indicator': 'font-size: 1.2em; font-weight: bold; margin-top: 10px;'
     }
   }
 
@@ -219,9 +221,10 @@ class TieBreakerView extends Component {
       }
     }
 
+    const cardBackgroundColor = isForPlayer && isCurrentRound ? this.getColorPalette()["light-grey"] : this.getColorPalette()["dark-grey"]
     return `
       <svg class="opponent-card-svg" width="${this.opponentCardWidth}px" height="${this.opponentCardHeight}px" x="${x}px" y="${y}px">
-        <rect class="opponent-card-rect" width="100%" height="100%" fill=${this.getColorPalette()["light-grey"]} />
+        <rect class="opponent-card-rect" width="100%" height="100%" fill=${cardBackgroundColor} />
         <text
           class="opponent-card-text"
           x="${iconWidth + 10}px"
@@ -250,7 +253,7 @@ class TieBreakerView extends Component {
     const iconWidth = this.opponentCardHeight - 6
     return `
       <svg class="opponent-card-svg" width="${this.opponentCardWidth}px" height="${this.opponentCardHeight}px" x="${x}px" y="${y}px">
-        <rect class="opponent-card-rect" width="100%" height="100%" fill=${this.getColorPalette()["light-grey"]} />
+        <rect class="opponent-card-rect" width="100%" height="100%" fill=${this.getColorPalette()["dark-grey"]} />
         <text class="opponent-card-text" x="${iconWidth + 10}px" y="50%" dominant-baseline="middle" text-anchor="start" fill="#ffffff">
             ${msg ? msg : '?'}
         </text>

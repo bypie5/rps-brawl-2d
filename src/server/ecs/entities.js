@@ -136,6 +136,8 @@ function buildTieBreakerManagerEntity (playerEntityIds, currTrick, x, y) {
                 currRoundMaxTicks: 33 * 12,
                 minTicksPerRound: 33 * 3,
                 currRoundTick: 0,
+                summaryDisplayMaxTicks: 33 * 3.5,
+                summaryDisplayTick: 0,
                 hasAtLeastOneTieInRound: false,
             },
             createdAtTick: currTrick

@@ -382,7 +382,9 @@ describe('Unit tests for ECS util functions', () => {
             _invokeFsm()
         }
 
-        _invokeFsm()
+        while (bracketManager.TieBreaker.state !== 'finished') {
+            _invokeFsm()
+        }
         _invokeFsm()
 
         chai.expect(tournamentFinished).to.be.true

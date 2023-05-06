@@ -26,6 +26,7 @@ class Component {
   getColorPalette() {
     return {
       'light-grey': '#8c8c8c',
+      'dark-grey': '#4c4c4c',
       'dark-red': '#8c0000',
     }
   }
