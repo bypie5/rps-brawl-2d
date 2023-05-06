@@ -236,6 +236,11 @@ class TieBreakerView extends Component {
             matchEndInfo && matchEndInfo.isWinner 
               ? 'font-weight="bold" data-cy="match-winner-info-text"' 
               : 'data-cy="match-info-text"'
+          }      
+          ${
+            matchEndInfo && !matchEndInfo.isWinner
+              ? 'text-decoration="line-through"'
+              : ''
           }
         >
           ${matchEndInfo && matchEndInfo.isWinner ? 'Winner! ' : ''}${isForPlayer ? '(You) ' : ''}${truncateWithEllipsis(entity.Avatar.playerId, 20)}

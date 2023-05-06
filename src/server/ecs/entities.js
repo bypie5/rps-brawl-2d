@@ -130,10 +130,10 @@ function buildTieBreakerManagerEntity (playerEntityIds, currTrick, x, y) {
             state: 'init',
             tieBreakerState: {
                 currRound: 0,
-                ticksBetweenRounds: 33 * 5,
+                ticksBetweenRounds: 33 * 4,
                 interRoundTicks: 0,
-                maxTicksPerRound: 33 * 12,
-                currRoundMaxTicks: 33 * 12,
+                maxTicksPerRound: 33 * 8,
+                currRoundMaxTicks: 33 * 8,
                 minTicksPerRound: 33 * 3,
                 currRoundTick: 0,
                 summaryDisplayMaxTicks: 33 * 3.5,
