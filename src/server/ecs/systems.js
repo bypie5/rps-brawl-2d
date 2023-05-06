@@ -158,8 +158,13 @@ function physics (gameContext, session) {
     for (const [id, entity] of Object.entries(gameContext.entities)) {
         if (entity.Transform && entity.Avatar) {
             const transform = entity.Transform
-            transform.xPos += transform.xVel * dt
-            transform.yPos += transform.yVel * dt
+            if (entity.HitBox.physicsEnabled) {
+                transform.xPos += transform.xVel * dt
+                transform.yPos += transform.yVel * dt
+            } else {
+                transform.xVel = 0
+                transform.yVel = 0
+            }
 
             const collisions = detectCollision(gameContext, entitiesByLogicalKey, entity, id)
             if (collisions.length === 0) {
@@ -222,6 +227,8 @@ function rps (gameContext, session) {
                 // 1. disable physics for all players in cluster
                 for (const id of membersInCluster) {
                     gameContext.entities[id].Avatar.state = 'breakingtie'
+                    gameContext.entities[id].Transform.xVel = 0
+                    gameContext.entities[id].Transform.yVel = 0
                     gameContext.entities[id].HitBox.physicsEnabled = false
                 }
 

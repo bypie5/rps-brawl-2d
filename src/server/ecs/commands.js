@@ -85,12 +85,12 @@ const handlers = {
         const session = services.sessionManager.findSessionByUser(sender)
         if (session) {
             const { entityId, direction } = payload
-            const { Transform, Avatar } = session.getEntity(entityId)
-            if (!Transform || !Avatar) {
+            const { Transform, Avatar, HitBox } = session.getEntity(entityId)
+            if (!Transform || !Avatar || !HitBox) {
                 return
             }
 
-            if (Avatar.state !== 'alive') {
+            if (Avatar.state !== 'alive' || !HitBox.physicsEnabled) {
                 return
             }
 

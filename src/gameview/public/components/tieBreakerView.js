@@ -38,7 +38,7 @@ class TieBreakerView extends Component {
               Tiebreaker - ${Object.entries(this.props.entitiesOfPlayersInTournament).length} player tournament
             </div>
             <div class="unselectable-text">
-              Only the Tournament Winner will survive the Tiebreaker Deathmatch!
+              Only the Tournament Winner will survive the Rock Paper Scissors Showdown!
             </div>
             <div class="unselectable-text">
               ${_buildRoundMsg()}

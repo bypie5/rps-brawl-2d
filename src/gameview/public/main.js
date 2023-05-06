@@ -180,11 +180,18 @@ function _onMessage (event) {
                 return
             }
 
+            const lastReceivedGameStateBroadcast = sessionContext.sessionInfo.latestReceivedGameState
+
             if (gameContext.currentTick >= sessionContext.sessionInfo.latestReceivedGameStateTick) {
                 sessionContext.sessionInfo.latestReceivedGameState = gameContext
                 sessionContext.sessionInfo.latestReceivedGameStateTick = gameContext.currentTick
 
                 _pruneEntitiesInScene()
+            }
+
+            // detect if any new "events" have happened since last received game state
+            if (sessionContext.sessionInfo.renderer) {
+                _detectAndHandleGameEvents(lastReceivedGameStateBroadcast, gameContext)
             }
             break
         default:
@@ -351,6 +358,72 @@ function _pruneEntitiesInScene () {
                 sessionContext.sessionInfo.renderer.onEntityRemoved(entityId, entityComponents, entities)
             }
         }
+    }
+}
+
+function _detectAndHandleGameEvents (prevGameContext, currGameContext) {
+    if (
+      sessionContext.sessionInfo.playersAvatarId
+      && (!prevGameContext
+        || (prevGameContext.entities[sessionContext.sessionInfo.playersAvatarId]
+        && prevGameContext.entities[sessionContext.sessionInfo.playersAvatarId].Avatar.state === 'alive'))
+      && (currGameContext.entities[sessionContext.sessionInfo.playersAvatarId]
+        && currGameContext.entities[sessionContext.sessionInfo.playersAvatarId].Avatar.state === 'respawning')
+    ) {
+        // player has died
+        sessionContext.sessionInfo.renderer.pushToIntercomMsgQueue(new IntercomMsg(
+          'You died!',
+          'Respawning...',
+          3000
+        ))
+    }
+
+    if (
+      sessionContext.sessionInfo.playersAvatarId
+      && (!prevGameContext
+        || (prevGameContext.entities[sessionContext.sessionInfo.playersAvatarId]
+          && prevGameContext.entities[sessionContext.sessionInfo.playersAvatarId].Avatar.state !== 'breakingtie'))
+      && (currGameContext.entities[sessionContext.sessionInfo.playersAvatarId]
+        && currGameContext.entities[sessionContext.sessionInfo.playersAvatarId].Avatar.state === 'breakingtie')
+    ) {
+        // player won rps showdown
+        sessionContext.sessionInfo.renderer.pushToIntercomMsgQueue(new IntercomMsg(
+          'Rock Paper Scissors Showdown!',
+          'Win the showdown to receive an extra life!',
+          3000
+        ))
+    }
+
+    if (
+      sessionContext.sessionInfo.playersAvatarId
+      && (!prevGameContext
+        || (prevGameContext.entities[sessionContext.sessionInfo.playersAvatarId]
+          && prevGameContext.entities[sessionContext.sessionInfo.playersAvatarId].Avatar.state === 'breakingtie'))
+      && (currGameContext.entities[sessionContext.sessionInfo.playersAvatarId]
+        && currGameContext.entities[sessionContext.sessionInfo.playersAvatarId].Avatar.state === 'respawning')
+    ) {
+       // player lost rps showdown
+        sessionContext.sessionInfo.renderer.pushToIntercomMsgQueue(new IntercomMsg(
+          'You lost the RPS showdown!',
+          'Respawning...',
+          3000
+        ))
+    }
+
+    if (
+      sessionContext.sessionInfo.playersAvatarId
+      && (!prevGameContext
+        || (prevGameContext.entities[sessionContext.sessionInfo.playersAvatarId]
+          && prevGameContext.entities[sessionContext.sessionInfo.playersAvatarId].Avatar.state === 'breakingtie'))
+      && (currGameContext.entities[sessionContext.sessionInfo.playersAvatarId]
+        && currGameContext.entities[sessionContext.sessionInfo.playersAvatarId].Avatar.state === 'alive')
+    ) {
+        // player won rps showdown
+        sessionContext.sessionInfo.renderer.pushToIntercomMsgQueue(new IntercomMsg(
+          'You won the RPS showdown!',
+          'Received an extra life!',
+          3000
+        ))
     }
 }
 
