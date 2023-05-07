@@ -107,6 +107,15 @@ function _buildPlayerEntity (components) {
     sprite.position.x = Transform.xPos
     sprite.position.y = Transform.yPos
 
+    // add power up status icons
+    const shieldPowerUpSpriteTile = new THREE.TextureLoader().load('assets/shield_powerup.png')
+    const shieldPowerUpSpriteMaterial = new THREE.SpriteMaterial({ map: shieldPowerUpSpriteTile })
+    const shieldPowerUpSprite = new THREE.Sprite(shieldPowerUpSpriteMaterial)
+    shieldPowerUpSprite.name = 'shield'
+    sprite.add(shieldPowerUpSprite)
+
+    shieldPowerUpSprite.visible = false
+
     return sprite
 }
 
@@ -430,6 +439,21 @@ class GameRender {
             && entity.material.name !== entityComponents.Avatar.stateData.rockPaperScissors) {
             const newMaterial = _getRpsSpriteMaterial(entityComponents.Avatar.stateData.rockPaperScissors)
             entity.material = newMaterial
+        }
+
+        if (entityComponents.Avatar) {
+            switch (entityComponents.Avatar.stateData.activePowerUp) {
+                case 'shield':
+                    entity.getObjectByName('shield').visible = true
+                    break
+                default:
+                    // disable all indicators for powerups
+                    const powerUpNames = ['shield']
+                    powerUpNames.forEach((powerUpName) => {
+                        entity.getObjectByName(powerUpName).visible = false
+                    })
+                    break
+            }
         }
 
         if (entityComponents.Avatar

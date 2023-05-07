@@ -136,9 +136,15 @@ function doRegularRpsMatch (player1, player2) {
 
     const result = rpsCompare(player1Rps, player2Rps)
 
-    if (result === 1) {
+    if (
+      result === 1
+      && player2.Avatar.stateData.activePowerUp !== 'shield'
+    ) {
         player2.Avatar.state = 'dead'
-    } else if (result === -1) {
+    } else if (
+      result === -1
+      && player1.Avatar.stateData.activePowerUp !== 'shield'
+    ) {
         player1.Avatar.state = 'dead'
     }
 }
