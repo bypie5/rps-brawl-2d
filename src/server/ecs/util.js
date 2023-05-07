@@ -448,6 +448,10 @@ function midMatchTieBreakerFSM (tieBreakerEntity, gameContext, onTournamentFinis
     }
 }
 
+function randomRange (min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min
+}
+
 module.exports = {
     directionEnum,
     rpsCompare,
@@ -457,5 +461,6 @@ module.exports = {
     findEntityCenterOfCluster,
     midMatchTieBreakerFSM,
     _advanceWinnersToNextRound,
-    createTieBreakerBracket
+    createTieBreakerBracket,
+    randomRange
 }

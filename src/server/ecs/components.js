@@ -150,6 +150,10 @@ const components = {
                     type: 'string',
                     required: true,
                     enum: ['speed', 'shield']
+                },
+                ticksSinceCreated: {
+                    type: 'number',
+                    required: true
                 }
             }
         }

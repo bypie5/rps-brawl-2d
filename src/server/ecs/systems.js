@@ -4,11 +4,13 @@ const {
     resolveClusterMembers,
     createTieBreakerBracket,
     midMatchTieBreakerFSM,
-    findEntityCenterOfCluster
+    findEntityCenterOfCluster,
+    randomRange
 } = require('./util')
 
 const {
-    buildTieBreakerManagerEntity
+    buildTieBreakerManagerEntity,
+    buildPowerUpEntity,
 } = require('./entities')
 
 function deltaTimeSeconds (gameContext) {
@@ -141,17 +143,23 @@ function doRegularRpsMatch (player1, player2) {
     }
 }
 
-function physics (gameContext, session) {
+function getEntitiesByLogicalKey (entities, gridWidth) {
     const entitiesByLogicalKey = new Map()
-    for (const [id, entity] of Object.entries(gameContext.entities)) {
+    for (const [id, entity] of Object.entries(entities)) {
         if (entity.Transform) {
-            const key = determineLogicalKey(entity.Transform.xPos, entity.Transform.yPos, gameContext.gridWidth)
+            const key = determineLogicalKey(entity.Transform.xPos, entity.Transform.yPos, gridWidth)
             if (!entitiesByLogicalKey.has(key)) {
                 entitiesByLogicalKey.set(key, [])
             }
             entitiesByLogicalKey.get(key).push(id)
         }
     }
+
+    return entitiesByLogicalKey
+}
+
+function physics (gameContext, session, systemContext) {
+    const entitiesByLogicalKey = getEntitiesByLogicalKey(gameContext.entities, gameContext.gridWidth)
 
     // update positions based on velocity
     const dt = deltaTimeSeconds(gameContext)
@@ -200,16 +208,81 @@ function physics (gameContext, session) {
     }
 }
 
-function powerups (gameContext, session) {
-    const { gridWidth, width, height } = session.map
-    // const maxPowerUps
-    const powerUpsInScene = Object.entries(gameContext.entities)
-        .filter(([id, entity]) => {
-            return entity.PowerUp
+function powerups (gameContext, session, systemContext) {
+    // this system should do nothing until initialDelay has passed
+    if (systemContext.initialDelay > 0) {
+        systemContext.initialDelay--
+        return
+    }
+
+    // manage power ups that are already in the scene
+    const idsToRemove = []
+    for (const id of systemContext.idsOfSpawnedPowerups.entries()) {
+        const effectiveId = id[0]
+        const entity = gameContext.entities[effectiveId]
+        if (!entity.PowerUp) {
+            continue
+        }
+
+        if (entity.PowerUp.ticksSinceCreated < systemContext.timeToLivePowerupTicks) {
+            entity.PowerUp.ticksSinceCreated++
+        } else {
+            idsToRemove.push(effectiveId)
+        }
+    }
+
+    // remove power ups that have expired from scene and system context
+    for (const id of idsToRemove) {
+        session.removeEntity(id)
+        systemContext.idsOfSpawnedPowerups.delete(id)
+    }
+
+    if (systemContext.ticksBetweenPowerupSpawns > 0) {
+        // we're not ready to spawn a powerup yet
+        systemContext.ticksBetweenPowerupSpawns--
+        return
+    }
+
+    // pick a location to spawn next power up
+    const entitiesByLogicalKey = getEntitiesByLogicalKey(gameContext.entities, gameContext.gridWidth)
+    const openTerrainTiles = session.map.getTerrainTiles()
+        .filter(tile => {
+            const key = determineLogicalKey(tile.x, tile.y, gameContext.gridWidth)
+
+            let isOccupied = false
+            const entitiesAtLocation = entitiesByLogicalKey.get(key)
+            if (!entitiesAtLocation) {
+                return false
+            }
+
+            for (const id of entitiesAtLocation) {
+                const entity = gameContext.entities[id]
+                if (entity && !entity.Terrain) {
+                    isOccupied = true
+                    break
+                }
+            }
+
+            return !isOccupied
         })
+
+    const randomIndex = Math.floor(Math.random() * openTerrainTiles.length)
+    const tile = openTerrainTiles[randomIndex]
+    // spawn power up at location
+    const randomPowerUp = (() => {
+      const randomPowerUpIndex = Math.floor(Math.random() * systemContext.supportedPowerups.length)
+      return systemContext.supportedPowerups[randomPowerUpIndex]
+    })()
+    const powerUp = buildPowerUpEntity(randomPowerUp, tile.x, tile.y)
+    const entityId = session.instantiateEntity(powerUp)
+    systemContext.idsOfSpawnedPowerups.add(entityId)
+    systemContext.ticksBetweenPowerupSpawns = randomRange(
+      systemContext.minTicksBetweenPowerupSpawns,
+      systemContext.maxTicksBetweenPowerupSpawns
+    )
 }
 
-function rps (gameContext, session) {
+function rps (gameContext, session, systemContext) {
     const createdRpsMatches = new Set()
     for (const [id, entity] of Object.entries(gameContext.entities)) {
         if (entity.Avatar
@@ -265,7 +338,7 @@ function rps (gameContext, session) {
     }
 }
 
-function tieBreaker (gameContext, session) {
+function tieBreaker (gameContext, session, systemContext) {
     for (const [id, entity] of Object.entries(gameContext.entities)) {
         if (entity.TieBreaker
             && !entity.TieBreaker.tournamentBracket) {
@@ -294,7 +367,7 @@ function tieBreaker (gameContext, session) {
     }
 }
 
-function spawn (gameContext, session) {
+function spawn (gameContext, session, systemContext) {
     // ticks happen about 30 times per second
     const ticksToRespawn = 3 * 30 // 3 seconds
 

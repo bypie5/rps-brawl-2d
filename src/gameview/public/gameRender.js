@@ -110,6 +110,20 @@ function _buildPlayerEntity (components) {
     return sprite
 }
 
+function _buildPowerUpEntity (components) {
+    const { PowerUp, Transform, HitBox } = components
+
+    const spriteTile = new THREE.TextureLoader().load('assets/shield_powerup.png')
+    const spriteMaterial = new THREE.SpriteMaterial({ map: spriteTile })
+    const sprite = new THREE.Sprite(spriteMaterial)
+    sprite.scale.set(HitBox.width, HitBox.height, 1)
+
+    sprite.position.x = Transform.xPos
+    sprite.position.y = Transform.yPos
+
+    return sprite
+}
+
 class GameRender {
     constructor (canvas, sessionConfig, username, sessionInfo) {
         if (!canvas) {
@@ -300,6 +314,11 @@ class GameRender {
             this.scene.add(terrain)
             this.entityIdThreeJsIdMap.set(entityId, terrain.id)
             threeJsId = terrain.id
+        } else if (entityComponents.PowerUp && entityComponents.Transform) {
+            const powerUp = _buildPowerUpEntity(entityComponents)
+            this.scene.add(powerUp)
+            this.entityIdThreeJsIdMap.set(entityId, powerUp.id)
+            threeJsId = powerUp.id
         } else if (entityComponents.Avatar && entityComponents.Transform && entityComponents.HitBox) {
             const avatar = _buildPlayerEntity(entityComponents)
             this.scene.add(avatar)
@@ -463,6 +482,8 @@ class GameRender {
               }
             )
         }
+
+        this.scene.remove(this.scene.getObjectById(threeJsId))
     }
 }
 

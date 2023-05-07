@@ -105,6 +105,27 @@ class Session {
         }
 
         this.gameLoopInterval = null
+
+        // memory for systems to save data between ticks
+        this.systemContexts = {
+            physics: {
+            },
+            rps: {
+            },
+            powerups: {
+                supportedPowerups: ['shield'],
+                initialDelay: 33 * 10, // don't spawn powerups for the first 10 seconds
+                timeToLivePowerupTicks: 33 * 15,
+                maxTicksBetweenPowerupSpawns: 33 * 20,
+                minTicksBetweenPowerupSpawns: 33 * 7.5,
+                ticksBetweenPowerupSpawns: 0,
+                idsOfSpawnedPowerups: new Set()
+            },
+            tieBreaker: {
+            },
+            spawn: {
+            }
+        }
     }
 
     playerConnected (username) {
@@ -277,11 +298,11 @@ class Session {
         let tickRenderStart = Date.now()
         this.gameContext.deltaTime = Date.now() - this.gameContext.lastTickTime
         // invoke systems ( in order of dependency )
-        physics(this.gameContext, this)
-        powerups(this.gameContext, this)
-        rps(this.gameContext, this)
-        tieBreaker(this.gameContext, this)
-        spawn(this.gameContext, this)
+        physics(this.gameContext, this, this.systemContexts.physics)
+        powerups(this.gameContext, this, this.systemContexts.powerups)
+        rps(this.gameContext, this, this.systemContexts.rps)
+        tieBreaker(this.gameContext, this, this.systemContexts.tieBreaker)
+        spawn(this.gameContext, this, this.systemContexts.spawn)
 
         // increment tick
         this.gameContext.currentTick += 1

@@ -62,6 +62,15 @@ class LevelDescription {
         }
     }
 
+    getTerrainTiles () {
+        const tiles = []
+        this.findTerrainTiles((x, y, tileId) => {
+            tiles.push({ x, y, tileId })
+        })
+
+        return tiles
+    }
+
     _defineSpawnPoints () {
         // by convention. layer 1 contains spawn point locations
         const layer2 = this.tileMapData.layers[1]

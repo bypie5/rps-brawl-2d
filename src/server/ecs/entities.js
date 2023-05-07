@@ -167,6 +167,7 @@ function buildPowerUpEntity (type, x, y) {
         },
         [components.PowerUp.name]: {
             type: type,
+            ticksSinceCreated: 0,
         },
         [components.HitBox.name]: {
             width: 3,
