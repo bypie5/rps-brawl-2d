@@ -163,7 +163,15 @@ function physics (gameContext, session, systemContext) {
 
     // update positions based on velocity
     const dt = deltaTimeSeconds(gameContext)
-    for (const [id, entity] of Object.entries(gameContext.entities)) {
+    const entityIds = Object.keys(gameContext.entities)
+    const it = entityIds[Symbol.iterator]()
+    while (true) {
+        const id = it.next().value
+        if (!id) {
+            break
+        }
+
+        const entity = gameContext.entities[id]
         if (entity.Transform && entity.Avatar) {
             const transform = entity.Transform
             if (entity.HitBox.physicsEnabled) {
@@ -204,6 +212,21 @@ function physics (gameContext, session, systemContext) {
             } else {
                 replaceCollisionsWithOtherPlayersSet(entity, [])
             }
+
+            // check if player is colliding with a powerup and if so, apply it
+            const powerupsColliding = collisions.map(id => {
+              return { id, entity: gameContext.entities[id] }
+            }).filter(info => {
+              return info.entity.PowerUp && info.entity.PowerUp.isActive
+            })
+
+            if (powerupsColliding.length > 0 && !entity.Avatar.stateData.activePowerUp) {
+                const powerupEntity = powerupsColliding[0].entity
+                powerupEntity.PowerUp.isActive = false
+
+                entity.Avatar.stateData.activePowerUp = powerupEntity.PowerUp.type
+                entity.Avatar.stateData.ticksSinceCreated = 0
+            }
         }
     }
 }
@@ -215,12 +238,32 @@ function powerups (gameContext, session, systemContext) {
         return
     }
 
+    // manage player power ups
+    for (const [id, entity] of Object.entries(gameContext.entities)) {
+        if (!entity.Avatar || !entity.Avatar.stateData.activePowerUp) {
+            continue
+        }
+
+        if (entity.Avatar.stateData.ticksWithActivePowerUp < systemContext.powerUpDurations[entity.Avatar.stateData.activePowerUp]) {
+            entity.Avatar.stateData.ticksWithActivePowerUp++
+        } else {
+            entity.Avatar.stateData.activePowerUp = null
+            entity.Avatar.stateData.ticksWithActivePowerUp = 0
+        }
+    }
+
     // manage power ups that are already in the scene
     const idsToRemove = []
     for (const id of systemContext.idsOfSpawnedPowerups.entries()) {
         const effectiveId = id[0]
         const entity = gameContext.entities[effectiveId]
         if (!entity.PowerUp) {
+            continue
+        }
+
+        if (!entity.PowerUp.isActive) {
+            // power up has been picked up, so we need to remove it
+            idsToRemove.push(effectiveId)
             continue
         }
 

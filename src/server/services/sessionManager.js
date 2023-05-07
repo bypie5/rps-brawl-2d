@@ -114,6 +114,9 @@ class Session {
             },
             powerups: {
                 supportedPowerups: ['shield'],
+                powerUpDurations: {
+                    shield: 33 * 8.5
+                },
                 initialDelay: 33 * 10, // don't spawn powerups for the first 10 seconds
                 timeToLivePowerupTicks: 33 * 15,
                 maxTicksBetweenPowerupSpawns: 33 * 20,

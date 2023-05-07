@@ -368,7 +368,8 @@ function _detectAndHandleGameEvents (prevGameContext, currGameContext) {
         || (prevGameContext.entities[sessionContext.sessionInfo.playersAvatarId]
         && prevGameContext.entities[sessionContext.sessionInfo.playersAvatarId].Avatar.state === 'alive'))
       && (currGameContext.entities[sessionContext.sessionInfo.playersAvatarId]
-        && currGameContext.entities[sessionContext.sessionInfo.playersAvatarId].Avatar.state === 'respawning')
+        && currGameContext.entities[sessionContext.sessionInfo.playersAvatarId].Avatar.state === 'respawning'
+        && !currGameContext.entities[sessionContext.sessionInfo.playersAvatarId].Avatar.stateData.firstSpawn)
     ) {
         // player has died
         sessionContext.sessionInfo.renderer.pushToIntercomMsgQueue(new IntercomMsg(
@@ -394,7 +395,7 @@ function _detectAndHandleGameEvents (prevGameContext, currGameContext) {
         ))
     }
 
-    if (
+/*if (
       sessionContext.sessionInfo.playersAvatarId
       && (!prevGameContext
         || (prevGameContext.entities[sessionContext.sessionInfo.playersAvatarId]
@@ -440,7 +441,7 @@ function _detectAndHandleGameEvents (prevGameContext, currGameContext) {
           'Received an extra life!',
           3000
         ))
-    }
+    }*/
 }
 
 function _onPageLoaded (pageName) {

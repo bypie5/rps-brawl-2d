@@ -154,6 +154,10 @@ const components = {
                 ticksSinceCreated: {
                     type: 'number',
                     required: true
+                },
+                isActive: {
+                    type: 'boolean',
+                    required: true
                 }
             }
         }

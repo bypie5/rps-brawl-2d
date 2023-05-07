@@ -38,7 +38,9 @@ function buildPlayerEntity (playerId, x, y) {
                 stateSwitchCooldownMaxTicks: 30,
                 stateSwitchCooldownTicks: 0,
                 firstSpawn: true,
-                collisionsWithOtherPlayers: [] // enitity ids
+                collisionsWithOtherPlayers: [], // entity ids
+                activePowerUp: null,
+                ticksWithActivePowerUp: 0,
             }
         },
         [components.HitBox.name]: {
@@ -168,6 +170,7 @@ function buildPowerUpEntity (type, x, y) {
         [components.PowerUp.name]: {
             type: type,
             ticksSinceCreated: 0,
+            isActive: true
         },
         [components.HitBox.name]: {
             width: 3,
