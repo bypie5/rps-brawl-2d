@@ -12,6 +12,7 @@ const {
 const {
     physics,
     rps,
+    powerups,
     tieBreaker,
     spawn
 } = require('../ecs/systems')
@@ -91,6 +92,7 @@ class Session {
         this.currState = sessionStates.INITIALIZING
         this.connectedPlayers = new Set() // Set<username>
         this.agents = new Map() // Map<agentId, agent>
+        this.map = null
 
         this.wsConnections = new Map() // Map<username, ws>
 
@@ -237,6 +239,8 @@ class Session {
                 throw new Error(`Invalid map id: ${mapId}`)
         }
 
+        this.map = map
+
         console.log(`Generating starting conditions for map: ${mapId}`)
 
         const mapGridWith = map.getGridWidth()
@@ -274,6 +278,7 @@ class Session {
         this.gameContext.deltaTime = Date.now() - this.gameContext.lastTickTime
         // invoke systems ( in order of dependency )
         physics(this.gameContext, this)
+        powerups(this.gameContext, this)
         rps(this.gameContext, this)
         tieBreaker(this.gameContext, this)
         spawn(this.gameContext, this)

@@ -139,6 +139,20 @@ const components = {
                 }
             }
         }
+    },
+    PowerUp: {
+        name: 'PowerUp',
+        schema: {
+            id: '/PowerUp',
+            type: 'object',
+            properties: {
+                type: {
+                    type: 'string',
+                    required: true,
+                    enum: ['speed', 'shield']
+                }
+            }
+        }
     }
 }
 

@@ -157,10 +157,36 @@ function buildTieBreakerManagerEntity (playerEntityIds, currTrick, x, y) {
     return entity
 }
 
+function buildPowerUpEntity (type, x, y) {
+    const entity = {
+        [components.Transform.name]: {
+            xPos: x,
+            yPos: y,
+            xVel: 0,
+            yVel: 0
+        },
+        [components.PowerUp.name]: {
+            type: type,
+        },
+        [components.HitBox.name]: {
+            width: 3,
+            height: 3,
+            physicsEnabled: true
+        }
+    }
+
+    if (!validateEntity(entity)) {
+        return
+    }
+
+    return entity
+}
+
 module.exports = {
     buildPlayerEntity,
     buildBarrierEntity,
     buildTerrainEntity,
     buildSpawnPointEntity,
-    buildTieBreakerManagerEntity
+    buildTieBreakerManagerEntity,
+    buildPowerUpEntity
 }

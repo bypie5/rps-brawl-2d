@@ -200,6 +200,15 @@ function physics (gameContext, session) {
     }
 }
 
+function powerups (gameContext, session) {
+    const { gridWidth, width, height } = session.map
+    // const maxPowerUps
+    const powerUpsInScene = Object.entries(gameContext.entities)
+        .filter(([id, entity]) => {
+            return entity.PowerUp
+        })
+}
+
 function rps (gameContext, session) {
     const createdRpsMatches = new Set()
     for (const [id, entity] of Object.entries(gameContext.entities)) {
@@ -355,6 +364,7 @@ function spawn (gameContext, session) {
 module.exports = {
     physics,
     rps,
+    powerups,
     tieBreaker,
     spawn
 }
