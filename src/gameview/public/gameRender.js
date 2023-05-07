@@ -417,9 +417,17 @@ class GameRender {
             && entityComponents.Avatar.playerId === this.username
             && entityComponents.Transform
             && this.uiElements.playerUi) {
+
+            const vector = entity.position.clone()
+            vector.project(this.camera)
             window.gameUiManager.updateComponent(this.uiElements.playerUi, {
                 lives: entityComponents.Avatar.stateData.lives,
-                isSpectating: this.spectatorMode
+                isSpectating: this.spectatorMode,
+                playerInfoStyle: {
+                    left: vector.x + window.innerWidth / 2,
+                    top: (vector.y + window.innerHeight / 2) - 55,
+                    isVisible: entityComponents.Avatar.state === 'alive'
+                }
             })
 
             window.gameUiManager.updateComponent(this.uiElements.intercomTextUi, {

@@ -16,6 +16,9 @@ class HudOverlay extends Component {
           <div class="unselectable-text">
             Lives: ${this.props.lives}${this.props.isSpectating ? ' (spectating)' : ''}
           </div>
+          <div class="unselectable-text player-name">
+            ${this.props.playerId}
+           </div>
         </div>
       </div>
     `
@@ -24,10 +27,17 @@ class HudOverlay extends Component {
   }
 
   getStyleMap() {
+    const { playerInfoStyle } = this.props
+
+    const uiTop = playerInfoStyle ? playerInfoStyle.top : '0'
+    const uiLeft = playerInfoStyle ? playerInfoStyle.left : '0'
+    const isVisible = playerInfoStyle ? playerInfoStyle.isVisible : false
+
     return {
       ...super.getStyleMap(),
       'hud-overlay': 'position: absolute; top: 0; left: 0; width: 100%;',
-      'player-info': 'display: flex; justify-content: center; align-items: center; flex-direction: column; width: 100%;'
+      'player-info': 'display: flex; justify-content: center; align-items: center; flex-direction: column; width: 100%;',
+      'player-name': `position: absolute; top: ${uiTop}px; left: ${uiLeft}px; transform:translateX(-50%); ${isVisible ? '' : 'display: none'};`
     }
   }
 }
