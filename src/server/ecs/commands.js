@@ -95,19 +95,19 @@ const handlers = {
             }
 
             const speedMultiplier = Avatar.speed
-            let sm = 20
+            let sm = 12
             switch (speedMultiplier) {
                 case 0:
                     sm = 0
                     break
                 case 1:
-                    sm = 20
+                    sm = 12
                     break
                 case 2:
-                    sm = 30
+                    sm = 17
                     break
                 default:
-                    sm = 20
+                    sm = 12
                     break
             }
 

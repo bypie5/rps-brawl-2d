@@ -206,17 +206,23 @@ function rps (gameContext, session) {
         if (entity.Avatar
             && entity.Avatar.state === 'alive'
             && entity.Avatar.stateData.collisionsWithOtherPlayers.length > 0) {
-            const membersInCluster = resolveClusterMembers(entity, id, gameContext)  
-            if (membersInCluster.length == 2) {
-                // 2 players in cluster (regular collision)
-                const player1 = gameContext.entities[membersInCluster[0]]
-                const player2 = gameContext.entities[membersInCluster[1]]
-                doRegularRpsMatch(player1, player2)
-            } else if (membersInCluster.length > 2) {
+            // pick a random player to challenge
+            const otherPlayerId = entity.Avatar.stateData.collisionsWithOtherPlayers[
+                Math.floor(Math.random() * entity.Avatar.stateData.collisionsWithOtherPlayers.length)
+            ]
+            doRegularRpsMatch(entity, gameContext.entities[otherPlayerId])
+
+            // const membersInCluster = resolveClusterMembers(entity, id, gameContext)
+            // if (membersInCluster.length == 2) {
+            //     // 2 players in cluster (regular collision)
+            //     const player1 = gameContext.entities[membersInCluster[0]]
+            //     const player2 = gameContext.entities[membersInCluster[1]]
+            //     doRegularRpsMatch(player1, player2)
+            // } else if (membersInCluster.length > 2) {
                 // cluster collision - must resolve ambiguity
 
                 // does a tie breaker match already exist?
-                for (const id of membersInCluster) {
+                /*for (const id of membersInCluster) {
                     const entity = gameContext.entities[id]
                     if (entity.Avatar.state === 'breakingtie') {
                         // tie breaker match already exists
@@ -239,8 +245,8 @@ function rps (gameContext, session) {
                 const tieBreakerMatchManager = buildTieBreakerManagerEntity(membersInCluster, gameContext.currentTick, xPos, yPos)
                 session.instantiateEntity(tieBreakerMatchManager)
 
-                createdRpsMatches.add(tieBreakerMatchManager)
-            }
+                createdRpsMatches.add(tieBreakerMatchManager)*/
+            //}
         }
 
         if (entity.Avatar 

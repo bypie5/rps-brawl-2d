@@ -18,7 +18,7 @@ describe('Player HUD', () => {
         cy.get('[data-cy=intercom-text-active]', {timeout: 3500})
     })
 
-    it('Displays tie breaker ui when player is in tie breaker', () => {
+    /*it('Displays tie breaker ui when player is in tie breaker', () => {
         cy.visit('/')
         cy.get('[data-cy=username-input]').type('test')
         cy.get('[data-cy=password-input]').type('password')
@@ -200,5 +200,5 @@ describe('Player HUD', () => {
         // since there should be three players in this tie breaker
         // we should see two match-winner-info-text elements
         cy.get('[data-cy="match-winner-info-text"]', {timeout: 20000 * 5})
-    })
+    })*/
 })
