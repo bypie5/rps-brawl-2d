@@ -17,7 +17,7 @@ class HudOverlay extends Component {
             Lives: ${this.props.lives}${this.props.isSpectating ? ' (spectating)' : ''}
           </div>
           <div class="unselectable-text player-name">
-            ${this.props.playerId}
+            (You) ${this.props.playerId}
            </div>
         </div>
       </div>
