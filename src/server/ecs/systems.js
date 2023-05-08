@@ -73,10 +73,6 @@ function isColliding (entity1, entity2) {
     const width2 = entity2.HitBox.width
 
     if (
-        /*x1 < x2 + width2 &&
-        x1 + width1 > x2 &&
-        y1 < y2 + height2 &&
-        y1 + height1 > y2*/
         x1 + width1 / 2 > x2 - width2 / 2 &&
         x1 - width1 / 2 < x2 + width2 / 2 &&
         y1 + height1 / 2 > y2 - height2 / 2 &&
@@ -114,12 +110,12 @@ function resolveCollision (player, otherEntity, dt) {
     let newYPos = playerCopy.Transform.yPos
 
     while (xAxisCausesCollison(playerCopy, otherEntity, dt)) {
-        newXPos += playerCopy.Transform.xVel * dt * -1.1
+        newXPos += playerCopy.Transform.xVel * dt * -0.05
         playerCopy.Transform.xPos = newXPos
     }
 
     while (yAxisCausesCollison(playerCopy, otherEntity, dt)) {
-        newYPos += playerCopy.Transform.yVel * dt * -1.1
+        newYPos += playerCopy.Transform.yVel * dt * -0.05
         playerCopy.Transform.yPos = newYPos
     }
 
@@ -200,7 +196,7 @@ function physics (gameContext, session, systemContext) {
             // there are collisions, so we need to resolve them
 
             // player should be moved in the opposite direction of their velocity
-            // by an an amount that places them just outside of the collision
+            // by an amount that places them just outside the collision
             for (let id of collisions) {
                 const { newXPos, newYPos } = resolveCollision(entity, gameContext.entities[id], dt)
                 transform.xPos = newXPos
