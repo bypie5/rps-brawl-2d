@@ -41,6 +41,7 @@ function buildPlayerEntity (playerId, x, y) {
                 collisionsWithOtherPlayers: [], // entity ids
                 activePowerUp: null,
                 ticksWithActivePowerUp: 0,
+                kills: 0,
             }
         },
         [components.HitBox.name]: {

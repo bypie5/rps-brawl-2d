@@ -141,11 +141,13 @@ function doRegularRpsMatch (player1, player2) {
       && player2.Avatar.stateData.activePowerUp !== 'shield'
     ) {
         player2.Avatar.state = 'dead'
+        player1.Avatar.stateData.kills += 1
     } else if (
       result === -1
       && player1.Avatar.stateData.activePowerUp !== 'shield'
     ) {
         player1.Avatar.state = 'dead'
+        player2.Avatar.stateData.kills += 1
     }
 }
 
@@ -443,10 +445,6 @@ function spawn (gameContext, session, systemContext) {
         const avatar = gameContext.entities[deadPlayer].Avatar
         const transform = gameContext.entities[deadPlayer].Transform
         const hitBox = gameContext.entities[deadPlayer].HitBox
-        const spawnPoint = spawnPoints[Math.floor(Math.random() * spawnPoints.length)]
-        const spawnTransform = gameContext.entities[spawnPoint].Transform
-        transform.xPos = spawnTransform.xPos
-        transform.yPos = spawnTransform.yPos
         transform.xVel = 0
         transform.yVel = 0
         hitBox.physicsEnabled = false
@@ -465,6 +463,8 @@ function spawn (gameContext, session, systemContext) {
             avatar.stateData.firstSpawn = false
         } else {
             avatar.stateData.lives--
+            avatar.stateData.activePowerUp = null
+            avatar.stateData.ticksWithActivePowerUp = 0
         }
 
         if (avatar.stateData.lives <= 0) {
@@ -472,12 +472,39 @@ function spawn (gameContext, session, systemContext) {
         }
     }
 
+    const usedSpawnPoints = new Set()
     for (const respawningPlayer of respawningPlayers) {
         const avatar = gameContext.entities[respawningPlayer].Avatar
         const hitBox = gameContext.entities[respawningPlayer].HitBox
+        const transform = gameContext.entities[respawningPlayer].Transform
+
         if (avatar.stateData.ticksSinceStartedRespawning >= ticksToRespawn) {
-            avatar.state = 'alive'
-            hitBox.physicsEnabled = true
+            const entitiesByLogicalKey = getEntitiesByLogicalKey(gameContext.entities, gameContext.gridWidth)
+            const spawnPoint = spawnPoints[Math.floor(Math.random() * spawnPoints.length)]
+            const spawnTransform = gameContext.entities[spawnPoint].Transform
+            const spawnPointLogicalKey = determineLogicalKey(spawnTransform.xPos, spawnTransform.yPos, gameContext.gridWidth)
+
+            let isCrowded = false
+            for (const key of computeNeighborsOfGrid(spawnPointLogicalKey)) {
+                const entitiesNearSpawn = entitiesByLogicalKey.get(spawnPointLogicalKey)
+                const found = entitiesNearSpawn.find((id) => {
+                    const entity = gameContext.entities[id]
+                    return entity.Avatar
+                })
+
+                if (found) {
+                    isCrowded = true
+                    break
+                }
+            }
+
+            if (!isCrowded && !usedSpawnPoints.has(spawnPoint)) {
+                transform.xPos = spawnTransform.xPos
+                transform.yPos = spawnTransform.yPos
+                usedSpawnPoints.add(spawnPoint)
+                avatar.state = 'alive'
+                hitBox.physicsEnabled = true
+            }
         }
         avatar.stateData.ticksSinceStartedRespawning++
     }

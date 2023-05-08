@@ -42,8 +42,6 @@ class PageContextInjector {
     }
 }
 
-const wsUrl = 'ws://localhost:8081'
-
 const pages = {
     login: 'loginPage.html',
     findMatch: 'findMatch.html',
@@ -201,7 +199,8 @@ function _onMessage (event) {
 }
 
 function _openWebSocket () {
-    sessionContext.ws = new WebSocket(wsUrl)
+    const hostname = window.location.hostname
+    sessionContext.ws = new WebSocket(`ws://${hostname}:8081`)
 
     // upgrade anonymous websocket connection sending message with auth token
     sessionContext.ws.addEventListener('open', _onWsOpen)
