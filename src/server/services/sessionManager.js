@@ -113,9 +113,10 @@ class Session {
             rps: {
             },
             powerups: {
-                supportedPowerups: ['shield'],
+                supportedPowerups: ['shield', 'speed'],
                 powerUpDurations: {
-                    shield: 33 * 8.5
+                    shield: 33 * 8.5,
+                    speed: 33 * 8.5
                 },
                 initialDelay: 33 * 10, // don't spawn powerups for the first 10 seconds
                 timeToLivePowerupTicks: 33 * 15,

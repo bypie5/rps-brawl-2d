@@ -116,13 +116,32 @@ function _buildPlayerEntity (components) {
 
     shieldPowerUpSprite.visible = false
 
+    const speedPowerUpSpriteTile = new THREE.TextureLoader().load('assets/speed_powerup.png')
+    const speedPowerUpSpriteMaterial = new THREE.SpriteMaterial({ map: speedPowerUpSpriteTile })
+    const speedPowerUpSprite = new THREE.Sprite(speedPowerUpSpriteMaterial)
+    speedPowerUpSprite.name = 'speed'
+    sprite.add(speedPowerUpSprite)
+
+    speedPowerUpSprite.visible = false
+
     return sprite
 }
 
 function _buildPowerUpEntity (components) {
     const { PowerUp, Transform, HitBox } = components
 
-    const spriteTile = new THREE.TextureLoader().load('assets/shield_powerup.png')
+    let spriteTile
+    switch (PowerUp.type) {
+        case 'shield':
+            spriteTile = new THREE.TextureLoader().load('assets/shield_powerup.png')
+            break
+        case 'speed':
+            spriteTile = new THREE.TextureLoader().load('assets/speed_powerup.png')
+            break
+        default:
+            throw new Error('Invalid power up type')
+
+    }
     const spriteMaterial = new THREE.SpriteMaterial({ map: spriteTile })
     const sprite = new THREE.Sprite(spriteMaterial)
     sprite.scale.set(HitBox.width, HitBox.height, 1)
@@ -446,9 +465,12 @@ class GameRender {
                 case 'shield':
                     entity.getObjectByName('shield').visible = true
                     break
+                case 'speed':
+                    entity.getObjectByName('speed').visible = true
+                    break
                 default:
                     // disable all indicators for powerups
-                    const powerUpNames = ['shield']
+                    const powerUpNames = ['shield', 'speed']
                     powerUpNames.forEach((powerUpName) => {
                         entity.getObjectByName(powerUpName).visible = false
                     })
