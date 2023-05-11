@@ -2,6 +2,7 @@ const chai = require('chai')
 const chaiHttp = require('chai-http')
 const sinon = require('sinon')
 const WebSocket = require('ws')
+const pako = require('pako')
 
 const { server, services } = require('../src/index')
 const msgTypes = require('../src/common/rps2dProtocol')
@@ -81,7 +82,13 @@ describe('Testing situations around gameplay commands', () => {
 
         const p = new Promise((resolve, reject) => {
             ws.on('message', async (data) => {
-                const msg = JSON.parse(data)
+                let msg
+                try {
+                    msg = JSON.parse(data)
+                } catch (e) {
+                    const buf = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength)
+                    msg = JSON.parse(pako.inflate(buf, { to: 'string' }))
+                }
                 if (msgTypes.serverToClient.WELCOME.type === msg.type) {
                     const res4 = await chai.request(server)
                         .post('/api/game-session/start-session?sessionId=' + sessionId)
@@ -190,7 +197,13 @@ describe('Testing situations around gameplay commands', () => {
 
         const p = new Promise((resolve, reject) => {
             ws.on('message', async (data) => {
-                const msg = JSON.parse(data)
+                let msg
+                try {
+                    msg = JSON.parse(data)
+                } catch (e) {
+                    const buf = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength)
+                    msg = JSON.parse(pako.inflate(buf, { to: 'string' }))
+                }
                 if (msgTypes.serverToClient.WELCOME.type === msg.type) {
                     const res4 = await chai.request(server)
                         .post('/api/game-session/start-session?sessionId=' + sessionId)
@@ -268,7 +281,13 @@ describe('Testing situations around gameplay commands', () => {
 
         const p = new Promise((resolve, reject) => {
             ws.on('message', async (data) => {
-                const msg = JSON.parse(data)
+                let msg
+                try {
+                    msg = JSON.parse(data)
+                } catch (e) {
+                    const buf = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength)
+                    msg = JSON.parse(pako.inflate(buf, { to: 'string' }))
+                }
                 if (msgTypes.serverToClient.WELCOME.type === msg.type) {
                     const res4 = await chai.request(server)
                         .post('/api/game-session/start-session?sessionId=' + sessionId)
@@ -346,7 +365,13 @@ describe('Testing situations around gameplay commands', () => {
 
         const p = new Promise((resolve, reject) => {
             ws.on('message', async (data) => {
-                const msg = JSON.parse(data)
+                let msg
+                try {
+                    msg = JSON.parse(data)
+                } catch (e) {
+                    const buf = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength)
+                    msg = JSON.parse(pako.inflate(buf, { to: 'string' }))
+                }
                 if (msgTypes.serverToClient.WELCOME.type === msg.type) {
                     const res4 = await chai.request(server)
                         .post('/api/game-session/start-session?sessionId=' + sessionId)
@@ -493,7 +518,13 @@ describe('Testing situations around gameplay commands', () => {
 
         const p = new Promise((resolve, reject) => {
             ws.on('message', async (data) => {
-                const msg = JSON.parse(data)
+                let msg
+                try {
+                    msg = JSON.parse(data)
+                } catch (e) {
+                    const buf = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength)
+                    msg = JSON.parse(pako.inflate(buf, { to: 'string' }))
+                }
                 if (msgTypes.serverToClient.WELCOME.type === msg.type) {
                     const res4 = await chai.request(server)
                         .post('/api/game-session/start-session?sessionId=' + sessionId)

@@ -1,6 +1,7 @@
 const Service = require('./service')
 const { v4: uuidv4 } = require('uuid')
 const { v, sessionConfigSchema } = require('../schemas')
+const pako = require('pako')
 
 const msgTypes = require('../../common/rps2dProtocol')
 const {
@@ -168,7 +169,12 @@ class Session {
 
     broadcast (msg) {
         for (const ws of this.wsConnections.values()) {
-            ws.send(JSON.stringify(msg))
+            if (msg.type === msgTypes.serverToClient.GAMESTATE_UPDATE.type) {
+                // compress the gamestate update
+                ws.send(pako.deflate(JSON.stringify(msg)))
+            } else {
+                ws.send(JSON.stringify(msg))
+            }
         }
 
         for (const agent of this.agents.values()) {

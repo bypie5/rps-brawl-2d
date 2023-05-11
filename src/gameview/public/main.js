@@ -149,8 +149,14 @@ function _shiftRpsState (entityId, direction) {
     }
 }
 
-function _onMessage (event) {
-    const msg = JSON.parse(event.data)
+async function _onMessage (event) {
+    let msg
+    try {
+        msg = JSON.parse(event.data)
+    } catch (e) {
+        const data = await event.data.arrayBuffer()
+        msg = JSON.parse(pako.inflate(data, { to: 'string' }))
+    }
 
     switch (msg.type) {
         case "UPGRADED_WS_CONNECTION":
