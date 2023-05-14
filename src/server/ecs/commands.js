@@ -130,7 +130,7 @@ const handlers = {
                     break
             }
 
-            if (newXVel != 0 && newYVel != 0) {
+            if (newXVel !== 0 && newYVel !== 0) {
                 newXVel = Math.sign(newXVel) * (sm / Math.sqrt(2))
                 newYVel = Math.sign(newYVel) * (sm / Math.sqrt(2))
             }
@@ -234,10 +234,26 @@ function handleGameplayCommand(ws, msg, type) {
     }
 }
 
+
+function applyCommands(commandQueue) {
+    for (const command of commandQueue) {
+        const { ws, msg, type } = command
+        handleGameplayCommand(ws, msg, type)
+    }
+}
+
+function enqueueCommand(ws, msg, type) {
+    const sender = ws.id
+    const session = services.sessionManager.findSessionByUser(sender)
+    if (session) {
+        session.pushCommand(ws, msg, type, applyCommands)
+    }
+}
+
 services.sessionManager.registerMessageHandlers(handlers)
 
 module.exports = {
-    handleGameplayCommand,
+    enqueueCommand,
     gameplayCommands,
     handlerMethods: handlers,
 }

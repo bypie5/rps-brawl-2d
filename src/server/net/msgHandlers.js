@@ -4,7 +4,7 @@ const { v } = require('../../server/schemas')
 const services = require('../services/services')
 const { sessionManager, authentication } = services
 
-const { handleGameplayCommand } = require('../ecs/commands')
+const { enqueueCommand } = require('../ecs/commands')
 
 function onConnectToSession(ws, msg) {
     const session = sessionManager.findSessionById(msg.sessionId)
@@ -41,7 +41,7 @@ function onConnectToSession(ws, msg) {
 }
 
 function onGameplayCommand(ws, msg) {
-    handleGameplayCommand(ws, msg.payload, msg.gameplayCommandType)
+    enqueueCommand(ws, msg.payload, msg.gameplayCommandType)
 }
 
 function onUpgradeAnonymousWsConnection(ws, msg) {

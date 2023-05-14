@@ -1,3 +1,5 @@
+const util = require('node:util')
+
 const directionEnum = {
     LEFT: 'LEFT',
     RIGHT: 'RIGHT',
@@ -452,6 +454,35 @@ function randomRange (min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min
 }
 
+function buildEntityProxy (id, onModified) {
+    const handler = {
+        entityId: id,
+        get: (target, key) => {
+            if (util.types.isProxy(key)) {
+                return true
+            }
+
+            const prop = target[key]
+            if (typeof prop === 'undefined') {
+                return
+            }
+
+            if (!!prop && !util.types.isProxy(prop) && typeof prop === 'object') {
+                target[key] = new Proxy(prop, handler)
+            }
+
+            return target[key]
+        },
+        set: (target, key, value) => {
+            onModified(id)
+            target[key] = value
+            return true
+        }
+    }
+
+    return handler
+}
+
 module.exports = {
     directionEnum,
     rpsCompare,
@@ -462,5 +493,6 @@ module.exports = {
     midMatchTieBreakerFSM,
     _advanceWinnersToNextRound,
     createTieBreakerBracket,
-    randomRange
+    randomRange,
+    buildEntityProxy
 }

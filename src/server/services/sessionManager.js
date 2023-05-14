@@ -18,6 +18,7 @@ const {
     spawn
 } = require('../ecs/systems')
 const { levelZero } = require('../levels/level')
+const { buildEntityProxy } = require('../ecs/util')
 
 const { createCpuAgent, createNaivePursuit, createNaiveMatchTarget, createNaiveRandomBracket, supportedAgents} = require('../agents/agentFactory')
 
@@ -96,6 +97,8 @@ class Session {
         this.map = null
 
         this.wsConnections = new Map() // Map<username, ws>
+        this.commandQueue = [] // { ws, msg, type }
+        this.applyCommandsCallback = null
 
         this.gameContext = {
             currentTick: 0,
@@ -106,6 +109,12 @@ class Session {
         }
 
         this.gameLoopInterval = null
+        this.frameRate = 1000 / 30 // 30 fps
+
+        this.maxTicksBetweenCheckpoints = Math.floor(this.frameRate)
+        this.ticksSinceLastCheckpoint = this.maxTicksBetweenCheckpoints
+        this.entitiesModified = new Set()
+        this.entitiesRemoved = new Set()
 
         // memory for systems to save data between ticks
         this.systemContexts = {
@@ -145,6 +154,14 @@ class Session {
         this.connectedPlayers.add(username)
     }
 
+    pushCommand (ws, msg, type, applyCommands) {
+        if (!this.applyCommandsCallback) {
+            this.applyCommandsCallback = applyCommands
+        }
+
+        this.commandQueue.push({ ws, msg, type })
+    }
+
     addAgent (agentId, agent) {
         this.agents.set(agentId, agent)
     }
@@ -167,7 +184,7 @@ class Session {
         console.log(`Player ${id} disconnected from session: ${this.id}`)
     }
 
-    broadcast (msg) {
+    broadcast (msg, fullMsg) {
         for (const ws of this.wsConnections.values()) {
             if (msg.type === msgTypes.serverToClient.GAMESTATE_UPDATE.type) {
                 // compress the gamestate update
@@ -178,7 +195,7 @@ class Session {
         }
 
         for (const agent of this.agents.values()) {
-            agent.tick(msg)
+            agent.tick(fullMsg ? fullMsg : msg)
         }
     }
 
@@ -199,7 +216,7 @@ class Session {
 
         this.gameLoopInterval = setInterval(() => {
             this._coreGameLoop()
-        }, 1000 / 30)
+        }, this.frameRate)
 
         this.broadcast({
             type: msgTypes.serverToClient.MATCH_STARTED.type,
@@ -231,11 +248,14 @@ class Session {
 
     instantiateEntity (components) {
         const id = uuidv4()
-        this.gameContext.entities[id] = components
+        this.gameContext.entities[id] = new Proxy(components, buildEntityProxy(id, (id) => {
+            this.entitiesModified.add(id)
+        }))
         return id
     }
 
     removeEntity (id) {
+        this.entitiesRemoved.add(id)
         delete this.gameContext.entities[id]
     }
 
@@ -307,6 +327,13 @@ class Session {
     _coreGameLoop () {
         let tickRenderStart = Date.now()
         this.gameContext.deltaTime = Date.now() - this.gameContext.lastTickTime
+        // apply commands
+        if (this.applyCommandsCallback) {
+            this.applyCommandsCallback(this.commandQueue)
+
+            this.commandQueue = []
+        }
+
         // invoke systems ( in order of dependency )
         physics(this.gameContext, this, this.systemContexts.physics)
         powerups(this.gameContext, this, this.systemContexts.powerups)
@@ -319,14 +346,61 @@ class Session {
         this.gameContext.lastTickTime = Date.now()
 
         // broadcast game state
-        this.broadcast({
-            type: msgTypes.serverToClient.GAMESTATE_UPDATE.type,
-            gameContext: this.gameContext
-        })
+        this.broadcast(this._buildMsgToBroadcast(), this._buildFullMsg())
 
         let deltaTime = Date.now() - tickRenderStart
-        if (deltaTime > 34) {
+        if (deltaTime > this.frameRate) {
             console.warn(`Game loop took ${deltaTime}ms to execute in session: ${this.id}`)
+        }
+    }
+
+    _buildFullMsg () {
+        return {
+            type: msgTypes.serverToClient.GAMESTATE_UPDATE.type,
+            gameContext: this.gameContext,
+            isCheckpoint: true,
+            removedEntities: []
+        }
+    }
+
+    _buildMsgToBroadcast () {
+        if (this.ticksSinceLastCheckpoint >= this.maxTicksBetweenCheckpoints) {
+            this.entitiesModified = new Set()
+            this.entitiesRemoved = new Set()
+            this.ticksSinceLastCheckpoint = 0
+            return {
+                type: msgTypes.serverToClient.GAMESTATE_UPDATE.type,
+                gameContext: this.gameContext,
+                isCheckpoint: true,
+                removedEntities: []
+            }
+        } else {
+            this.ticksSinceLastCheckpoint++
+            return this._buildAbridgedMsg()
+        }
+    }
+
+    _buildAbridgedMsg () {
+        const abridgedGameContext = {
+            entities: {}
+        }
+        for (const [id, entity] of Object.entries(this.gameContext.entities)) {
+            if (this.entitiesModified.has(id)) {
+                abridgedGameContext.entities[id] = entity
+            }
+        }
+
+        return {
+            type: msgTypes.serverToClient.GAMESTATE_UPDATE.type,
+            gameContext: {
+                entities: abridgedGameContext.entities,
+                currentTick: this.gameContext.currentTick,
+                gridWidth: this.gameContext.gridWidth,
+                deltaTime: this.gameContext.deltaTime,
+                lastTickTime: this.gameContext.lastTickTime
+            },
+            isCheckpoint: false,
+            removedEntities: Array.from(this.entitiesRemoved)
         }
     }
 

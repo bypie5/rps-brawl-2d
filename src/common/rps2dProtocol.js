@@ -97,6 +97,8 @@ const msgTypes = {
                 properties: {
                     type: { type: 'string' },
                     gameContext: { type: 'object' },
+                    isCheckpoint: { type: 'boolean' },
+                    removedEntities: { type: 'array' },
                 }
             }
         },

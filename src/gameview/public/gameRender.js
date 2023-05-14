@@ -339,6 +339,7 @@ class GameRender {
             const spriteId = Number(entityComponents.Terrain.spriteId)
             const spriteTile = this.spriteMaterials[spriteId - 1]
             const terrain = _buildSpriteEntity(spriteTile, entityComponents)
+            terrain.renderOrder = -1
             this.scene.add(terrain)
             this.entityIdThreeJsIdMap.set(entityId, terrain.id)
             threeJsId = terrain.id

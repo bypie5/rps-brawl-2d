@@ -11,6 +11,7 @@ const sessionContext = {
         state: null,
         latestReceivedGameState: null,
         latestReceivedGameStateTick: -1,
+        cachedCheckpoint: null,
         entitiesInScene: new Map(), // Map<entityId, components>
         threeJsIdToEntityId: new Map(), // Map<threeJsId, entityId>
         renderer: null, // GameRenderer
@@ -178,10 +179,14 @@ async function _onMessage (event) {
             console.log('Received error message: ' + msg.message)
             break
         case "GAMESTATE_UPDATE":
-            const { gameContext } = msg
-            if (!gameContext) {
+            if (!msg.gameContext) {
                 console.log('Received GAMESTATE_UPDATE message with no gameContext')
                 return
+            }
+
+            const { gameContext } = _rebuildGameContext(msg)
+            if (!sessionContext.sessionInfo.cachedCheckpoint) {
+                return // ignore game state updates until we have a checkpoint
             }
 
             const lastReceivedGameStateBroadcast = sessionContext.sessionInfo.latestReceivedGameState
@@ -202,6 +207,32 @@ async function _onMessage (event) {
             console.log('Unknown message type: ' + msg.type)
             break
     }
+}
+
+function _rebuildGameContext (msg) {
+    const { gameContext, isCheckpoint, removedEntities } = msg
+    if (isCheckpoint) {
+        sessionContext.sessionInfo.cachedCheckpoint = gameContext
+        return msg
+    }
+
+    if (!sessionContext.sessionInfo.cachedCheckpoint) {
+        throw new Error('Received non-checkpoint GAMESTATE_UPDATE message with no cached checkpoint')
+    }
+
+    const setOfRemovedEntities = new Set(removedEntities)
+    for (const [id, entity] of Object.entries(sessionContext.sessionInfo.cachedCheckpoint.entities)) {
+        if (setOfRemovedEntities.has(id)) {
+            continue
+        }
+
+        if (!gameContext.entities[id]) {
+            // entity is unchanged since last checkpoint
+            gameContext.entities[id] = entity
+        }
+    }
+
+    return msg
 }
 
 function _openWebSocket () {
