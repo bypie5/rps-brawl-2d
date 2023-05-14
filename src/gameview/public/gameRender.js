@@ -177,7 +177,7 @@ class GameRender {
         const windowWidth = window.innerWidth
         const windowHeight = window.innerHeight
         const aspectRatio = windowWidth / windowHeight
-        const frustumSize = 20
+        const frustumSize = 25
 
         this.scene = new THREE.Scene()
         this.camera = new THREE.OrthographicCamera(frustumSize * aspectRatio/-2, frustumSize * aspectRatio/2, frustumSize/2, frustumSize/-2, -100, 1000)
