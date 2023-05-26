@@ -1,6 +1,8 @@
 const ws = require('ws')
+const { v4: uuidv4 } = require('uuid')
 
 const handleMessage = require('./msgHandlers')
+const msgTypes = require('../../common/rps2dProtocol')
 const services = require('../services/services')
 const { authentication } = services
 
@@ -11,6 +13,9 @@ class WebSocketServer {
         this.onStopped = onStopped
 
         this.server = null
+        this.connections = new Map() // Map<ws.id, ws>
+        this.heartbeatInterval = null
+        this.intervalBetweenHeartbeats = 5000
     }
 
     start () {
@@ -18,6 +23,10 @@ class WebSocketServer {
         this.server.on('connection', (ws, req) => this.onConnection(ws, req))
 
         this.onStarted()
+
+        this.heartbeatInterval = setInterval(() => {
+            this._wsHeartbeat()
+        }, this.intervalBetweenHeartbeats)
     }
 
     stop () {
@@ -25,11 +34,15 @@ class WebSocketServer {
         this.onStopped()
 
         this.server = null
+        clearInterval(this.heartbeatInterval)
     }
 
     onConnection (ws, req) {
+        ws.onIdChange = this._onWsIdChanged
+        ws.server = this
         if (!req.headers['authorization']) {
             console.log('Anonymous connection opened')
+            ws.id = uuidv4()
         } else {
             const authToken = req.headers['authorization'].split(' ')[1]
             const claims = authentication.getJwtClaims(authToken)
@@ -38,10 +51,40 @@ class WebSocketServer {
             ws.id = username
         }
         ws.on('message', (message) => this.onMessage(ws, message))
+        ws.on('close', () => {
+            this.connections.delete(ws.id)
+        })
+
+        this.connections.set(ws.id, ws)
     }
 
     onMessage (ws, message) {
         handleMessage(ws, message)
+    }
+
+    _onWsIdChanged (newId, oldId) {
+        console.log(`WebSocket id changed from ${oldId} to ${newId}`)
+        const ws = this.server.connections.get(oldId)
+        this.server.connections.delete(oldId)
+        this.server.connections.set(newId, ws)
+    }
+
+    _wsHeartbeat () {
+        this.connections.forEach((ws) => {
+            if (
+              ws.lastPingSent &&
+              ((Date.now() - ws.lastPongSeen > this.intervalBetweenHeartbeats + 125) || !ws.lastPongSeen)
+            ) {
+                console.log(`Closing connection to ${ws.id} due to heartbeat timeout`)
+                ws.close()
+            } else {
+                ws.send(JSON.stringify({
+                    type: msgTypes.serverToClient.PING.type,
+                    message: 'ping'
+                }))
+                ws.lastPingSent = Date.now()
+            }
+        })
     }
 }
 

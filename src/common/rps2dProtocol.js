@@ -60,6 +60,17 @@ const msgTypes = {
                     }
                 }
             }
+        },
+        PONG: {
+            type: 'PONG',
+            schema: {
+                id: '/Pong',
+                type: 'object',
+                properties: {
+                    type: { type: 'string' },
+                    message: { type: 'string' }
+                }
+            }
         }
     },
     serverToClient: {
@@ -116,6 +127,17 @@ const msgTypes = {
             type: 'ERROR',
             schema: {
                 id: '/Error',
+                type: 'object',
+                properties: {
+                    type: { type: 'string' },
+                    message: { type: 'string' },
+                }
+            }
+        },
+        PING: {
+            type: 'PING',
+            schema: {
+                id: '/Ping',
                 type: 'object',
                 properties: {
                     type: { type: 'string' },

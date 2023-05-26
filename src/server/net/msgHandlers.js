@@ -48,9 +48,13 @@ function onUpgradeAnonymousWsConnection(ws, msg) {
     const authToken = msg.authToken
     const claims = authentication.getJwtClaims(authToken)
 
+    const oldId = ws.id
     ws.id = claims.username
+    if (oldId) {
+        console.log(`Upgraded anonymous connection (id ${oldId}) for user ${claims.username}`)
+    }
 
-    console.log(`Upgraded anonymous connection for ${ws.id}`)
+    ws.onIdChange(ws.id, oldId)
 
     ws.send(JSON.stringify({
         type: msgTypes.serverToClient.UPGRADED_WS_CONNECTION.type
@@ -97,6 +101,9 @@ function handleMessage (ws, message) {
             break
         case msgTypes.clientToServer.UPGRADE_ANONYMOUS_WS.type:
             onUpgradeAnonymousWsConnection(ws, msg)
+            break
+        case msgTypes.clientToServer.PONG.type:
+            ws.lastPongSeen = Date.now()
             break
         default:
             console.log('Unknown message type: ' + msg.type)

@@ -19,6 +19,8 @@ const sessionContext = {
         supportedAgentTypes: []
     },
     ws: null,
+    lastPingSeen: null,
+    intervalBetweenHeartbeats: 5000,
     isWsConnectionAnonymous: true,
     isWsConnectedToSession: false,
     pageContextInjector: null,
@@ -95,6 +97,11 @@ async function _onWsOpen (event) {
     if (!upgraded) {
         console.warn('Failed to upgrade websocket connection')
         return
+    }
+
+    if (sessionContext.sessionId) {
+        // Reconnect to session
+        _connectWsToSession(sessionContext.sessionId)
     }
 }
 
@@ -203,6 +210,22 @@ async function _onMessage (event) {
                 _detectAndHandleGameEvents(lastReceivedGameStateBroadcast, gameContext)
             }
             break
+        case "PING":
+            sessionContext.ws.send(JSON.stringify({
+                type: "PONG",
+                message: "pong"
+            }))
+            const now = Date.now()
+            sessionContext.lastPingSeen = now
+
+            setTimeout(() => {
+                // healthcheck to make sure we're still connected
+                if (Date.now() - sessionContext.lastPingSeen > sessionContext.intervalBetweenHeartbeats + 125) {
+                    console.log('Ping timeout')
+                    sessionContext.ws.close()
+                }
+            }, sessionContext.intervalBetweenHeartbeats + 125)
+            break
         default:
             console.log('Unknown message type: ' + msg.type)
             break
@@ -242,6 +265,21 @@ function _openWebSocket () {
     // upgrade anonymous websocket connection sending message with auth token
     sessionContext.ws.addEventListener('open', _onWsOpen)
     sessionContext.ws.addEventListener('message', _onMessage)
+
+    sessionContext.ws.addEventListener('close', (event) => {
+        sessionContext.isWsConnectionAnonymous = true
+        sessionContext.isWsConnectedToSession = false
+        sessionContext.lastPingSeen = null
+
+        setTimeout(() => {
+            _openWebSocket()
+        }, 3750)
+    })
+
+    sessionContext.ws.addEventListener('error', (event) => {
+        console.log('Websocket connection error', event)
+        sessionContext.ws.close()
+    })
 }
 
 function _onLoginLoaded () {
