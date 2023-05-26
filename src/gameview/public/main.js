@@ -729,6 +729,32 @@ async function login (e) {
 
 window.login = login
 
+async function continueAsGuest () {
+    try {
+        const res = await fetch(`/api/user/temp-credentials`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+
+        if (res.status === 200) {
+            const { authToken, username } = await res.json()
+            sessionContext.authToken = authToken
+            sessionContext.username = username
+            _openWebSocket()
+            await _loadHtmlContent(pages.findMatch)
+        } else {
+            alert('Failed to continue as guest')
+        }
+    } catch (err) {
+        console.error(err)
+        alert('Failed to continue as guest')
+    }
+}
+
+window.continueAsGuest = continueAsGuest
+
 async function createPrivateMatch (event) {
     event.preventDefault()
 

@@ -59,6 +59,11 @@ jwtOps.audience = 'rockpaperscissorsbrawl2d.com'
 passport.use(new JwtStrategy(jwtOps,
     async (jwtPayload, done) => {
         try {
+            if (jwtPayload.temp) {
+                // user is anonymous
+                done(null, {username: jwtPayload.username})
+            }
+
             const userExists = await services.authentication.doesUserExist(jwtPayload.username)
             if (userExists) {
                 done(null, {username: jwtPayload.username})

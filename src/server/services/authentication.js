@@ -45,6 +45,21 @@ class Authentication extends Service {
         })
     }
 
+    generateTemporaryAccessToken (anonUser) {
+        const secret = process.env.JWT_SIGNING_SECRET
+        const payload = {
+            username: anonUser,
+            temp: true
+        }
+        return jwt.sign(payload, secret, {
+            algorithm: 'HS256',
+            expiresIn: '30m',
+            issuer: 'rockpaperscissorsbrawl2d.com',
+            audience: 'rockpaperscissorsbrawl2d.com',
+            subject: 'anonymous'
+        })
+    }
+
     getJwtClaims (token) {
         const secret = process.env.JWT_SIGNING_SECRET
         return jwt.verify(token, secret, {
