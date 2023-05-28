@@ -62,6 +62,8 @@ passport.use(new JwtStrategy(jwtOps,
             if (jwtPayload.temp) {
                 // user is anonymous
                 done(null, {username: jwtPayload.username})
+
+                return
             }
 
             const userExists = await services.authentication.doesUserExist(jwtPayload.username)

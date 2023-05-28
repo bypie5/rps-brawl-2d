@@ -356,11 +356,11 @@ class GameRender {
 
             if (entityComponents.Avatar && entityComponents.Avatar.playerId === this.username) {
                 this.playersAvatarId = avatar.id
-
                 this.uiElements.playerUi = window.gameUiManager.addComponentToScene('hudOverlay', {
                     playerId: this.username,
                     lives: entityComponents.Avatar.stateData.lives,
                     kills: entityComponents.Avatar.stateData.kills,
+                    activePowerUp: entityComponents.Avatar.stateData.activePowerUp,
                     isSpectating: this.spectatorMode,
                 })
 
@@ -490,6 +490,7 @@ class GameRender {
             window.gameUiManager.updateComponent(this.uiElements.playerUi, {
                 lives: entityComponents.Avatar.stateData.lives,
                 kills: entityComponents.Avatar.stateData.kills,
+                activePowerUp: entityComponents.Avatar.stateData.activePowerUp,
                 isSpectating: this.spectatorMode,
                 playerInfoStyle: {
                     left: vector.x + window.innerWidth / 2,

@@ -19,6 +19,9 @@ class HudOverlay extends Component {
           <div class="unselectable-text player-name">
             (You) ${this.props.playerId}
            </div>
+           <div class="unselectable-text">
+            ${this.props.activePowerUp ? `Power Up: ${this.props.activePowerUp.toUpperCase()}` : ''}
+           </div>
         </div>
       </div>
     `
