@@ -56,6 +56,8 @@ async function _loadTileSheet (scene, url, tileWidth) {
     for (let i = 0; i < imageDataUrls.length; i++) {
         const url = imageDataUrls[i]
         const map = new THREE.TextureLoader().load(url)
+        map.anisotropy = 16
+        map.magFilter = THREE.NearestFilter
         const material = new THREE.SpriteMaterial({ map: map })
 
         spriteMaterials.push(material)
@@ -549,3 +551,9 @@ async function startRenderer (sessionConfig, username, sessionInfo) {
 }
 
 window.startRenderer = startRenderer
+
+function restartRenderer () {
+    restartUI()
+}
+
+window.restartRenderer = restartRenderer

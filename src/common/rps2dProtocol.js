@@ -71,6 +71,17 @@ const msgTypes = {
                     message: { type: 'string' }
                 }
             }
+        },
+        DISCONNECT_FROM_SESSION: {
+            type: 'DISCONNECT_FROM_SESSION',
+            schema: {
+                id: '/DisconnectFromSession',
+                type: 'object',
+                properties: {
+                    type: { type: 'string' },
+                    sessionId: { type: 'string' }
+                }
+            }
         }
     },
     serverToClient: {
@@ -138,6 +149,17 @@ const msgTypes = {
             type: 'PING',
             schema: {
                 id: '/Ping',
+                type: 'object',
+                properties: {
+                    type: { type: 'string' },
+                    message: { type: 'string' },
+                }
+            }
+        },
+        DISCONNECTED: {
+            type: 'DISCONNECTED',
+            schema: {
+                id: '/Disconnected',
                 type: 'object',
                 properties: {
                     type: { type: 'string' },

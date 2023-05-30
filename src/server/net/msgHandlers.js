@@ -40,6 +40,25 @@ function onConnectToSession(ws, msg) {
     })
 }
 
+function disconnectFromSession (ws, msg) {
+    const session = sessionManager.findSessionById(msg.sessionId)
+    if (!session) {
+        ws.send(JSON.stringify({
+            type: msgTypes.serverToClient.ERROR.type,
+            message: 'Session does not exist'
+        }))
+        return
+    }
+
+    if (session.isPlayerConnected(ws.id)) {
+        sessionManager.disconnectPlayerFromSession(ws.id, msg.sessionId)
+        ws.send(JSON.stringify({
+            type: msgTypes.serverToClient.DISCONNECTED.type,
+            message: 'You are not connected to this session'
+        }))
+    }
+}
+
 function onGameplayCommand(ws, msg) {
     enqueueCommand(ws, msg.payload, msg.gameplayCommandType)
 }
@@ -104,6 +123,9 @@ function handleMessage (ws, message) {
             break
         case msgTypes.clientToServer.PONG.type:
             ws.lastPongSeen = Date.now()
+            break
+        case msgTypes.clientToServer.DISCONNECT_FROM_SESSION.type:
+            disconnectFromSession(ws, msg)
             break
         default:
             console.log('Unknown message type: ' + msg.type)

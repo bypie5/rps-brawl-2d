@@ -154,6 +154,11 @@ class Session {
         this.connectedPlayers.add(username)
     }
 
+    playerDisconnected (username) {
+        this.connectedPlayers.delete(username)
+        this.wsConnections.delete(username)
+    }
+
     pushCommand (ws, msg, type, applyCommands) {
         if (!this.applyCommandsCallback) {
             this.applyCommandsCallback = applyCommands
@@ -460,6 +465,16 @@ class SessionManager extends Service {
         this._connectPlayerToSession(username, sessionId)
 
         return sessionId
+    }
+
+    disconnectPlayerFromSession (username, sessionId) {
+        const session = this.activeSessions.get(sessionId)
+        if (!session) {
+            throw new SessionNotFoundError('Session does not exist')
+        }
+
+        session.playerDisconnected(username)
+        this.playerToSession.delete(username)
     }
 
     inviteAgentToSession (sessionId) {

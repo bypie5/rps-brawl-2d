@@ -91,11 +91,13 @@ class GameUiManager {
       throw new Error(`Could not find element with id: ${id}`)
     }
 
-    document.getElementById(id).remove()
-
     const content = this._drawComponent(id, component)
-
-    this.parentDomElement.insertAdjacentHTML('beforeend', content)
+    const newChecksum = hex_md5(content)
+    if (!component.lastChecksum || component.lastChecksum !== newChecksum) {
+      document.getElementById(id).remove()
+      this.parentDomElement.insertAdjacentHTML('beforeend', content)
+      component.updateChecksum(newChecksum)
+    }
   }
 
   _drawComponent(id, component) {
@@ -129,3 +131,9 @@ class GameUiManager {
 }
 
 window.gameUiManager = new GameUiManager()
+
+function restartUI () {
+  window.gameUiManager = new GameUiManager()
+}
+
+window.restartUI = restartUI

@@ -181,3 +181,14 @@
     align-items: center;
     flex-direction: column;
 }
+
+#gameroom-header-subtext {
+    margin-top: 0px;
+    padding: 0px;
+    margin-bottom: 0px;
+}
+
+#leave-match-button {
+    margin-top: 4px;
+    margin-bottom: 4px;
+}

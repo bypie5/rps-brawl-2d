@@ -3,6 +3,8 @@ class Component {
     this.props = props
     this.parentDomElement = parentDomElement
     this.name = 'Component'
+
+    this.lastChecksum = null
   }
 
   getParentBoundBox() {
@@ -11,6 +13,10 @@ class Component {
 
   getHtmlContent() {
     return ''
+  }
+
+  updateChecksum(checksum) {
+    this.lastChecksum = checksum
   }
 
   getStyleMap() {

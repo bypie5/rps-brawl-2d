@@ -22,6 +22,12 @@ class HudOverlay extends Component {
            <div class="unselectable-text">
             ${this.props.activePowerUp ? `Power Up: ${this.props.activePowerUp.toUpperCase()}` : ''}
            </div>
+
+          ${this.props.lives <= 0 ? `
+            <button class="exit-match-button" onclick="backToMainMenu()">
+              Back to Main Menu
+            </button>
+          ` : ''}
         </div>
       </div>
     `
@@ -40,7 +46,8 @@ class HudOverlay extends Component {
       ...super.getStyleMap(),
       'hud-overlay': 'position: absolute; top: 0; left: 0; width: 100%;',
       'player-info': 'display: flex; justify-content: center; align-items: center; flex-direction: column; width: 100%;',
-      'player-name': `position: absolute; top: ${uiTop}px; left: ${uiLeft}px; transform:translateX(-50%); ${isVisible ? '' : 'display: none'};`
+      'player-name': `position: absolute; top: ${uiTop}px; left: ${uiLeft}px; transform:translateX(-50%); ${isVisible ? '' : 'display: none'};`,
+      'exit-match-button': 'margin-top: 10px; z-index: 2000;'
     }
   }
 }

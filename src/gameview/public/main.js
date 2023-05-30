@@ -1,4 +1,50 @@
-const sessionContext = {
+function deepCopy(obj) {
+    var rv
+
+    switch (typeof obj) {
+        case "object":
+            if (obj === null) {
+                // null => null
+                rv = null
+            } else {
+                switch (toString.call(obj)) {
+                    case "[object Array]":
+                        // It's an array, create a new array with
+                        // deep copies of the entries
+                        rv = obj.map(deepCopy)
+                        break
+                    case "[object Date]":
+                        // Clone the date
+                        rv = new Date(obj)
+                        break
+                    case "[object RegExp]":
+                        // Clone the RegExp
+                        rv = new RegExp(obj)
+                        break
+                    case "[object Map]":
+                        // Clone the Map
+                        rv = new Map(obj)
+                        break
+                    default:
+                        // Some other kind of object, deep-copy its
+                        // properties into a new object
+                        rv = Object.keys(obj).reduce(function(prev, key) {
+                            prev[key] = deepCopy(obj[key])
+                            return prev
+                        }, {})
+                        break
+                }
+            }
+            break
+        default:
+            // It's a primitive, copy via assignment
+            rv = obj
+            break
+    }
+    return rv
+}
+
+const defaultSessionContext = {
     authToken: null,
     username: null,
     sessionId: null,
@@ -26,6 +72,8 @@ const sessionContext = {
     pageContextInjector: null,
     pageContext: null
 }
+
+let sessionContext = deepCopy(defaultSessionContext)
 
 class PageContextInjector {
     constructor (sessionContext, defaultPageContext, onPopulate) {
@@ -226,6 +274,11 @@ async function _onMessage (event) {
                 }
             }, sessionContext.intervalBetweenHeartbeats + 125)
             break
+        case "DISCONNECTED":
+            console.log('Disconnected from session')
+            await _loadHtmlContent(pages.findMatch)
+            restartRenderer()
+            break
         default:
             console.log('Unknown message type: ' + msg.type)
             break
@@ -259,6 +312,8 @@ function _rebuildGameContext (msg) {
 }
 
 function _openWebSocket () {
+    sessionContext.forceWsClose = false
+
     const hostname = window.location.hostname
     sessionContext.ws = new WebSocket(`ws://${hostname}:8081`)
 
@@ -271,9 +326,11 @@ function _openWebSocket () {
         sessionContext.isWsConnectedToSession = false
         sessionContext.lastPingSeen = null
 
-        setTimeout(() => {
-            _openWebSocket()
-        }, 3750)
+        if (sessionContext.forceWsClose) {
+            setTimeout(() => {
+                _openWebSocket()
+            }, 3750)
+        }
     })
 
     sessionContext.ws.addEventListener('error', (event) => {
@@ -754,6 +811,20 @@ async function continueAsGuest () {
 }
 
 window.continueAsGuest = continueAsGuest
+
+function backToMainMenu () {
+    sessionContext.sessionInfo.renderer.stop()
+    sessionContext.sessionInfo = deepCopy(defaultSessionContext.sessionInfo)
+
+    sessionContext.ws.send(JSON.stringify({
+        type: 'DISCONNECT_FROM_SESSION',
+        sessionId: sessionContext.sessionId
+    }))
+
+    sessionContext.sessionId = null
+}
+
+window.backToMainMenu = backToMainMenu
 
 async function createPrivateMatch (event) {
     event.preventDefault()
