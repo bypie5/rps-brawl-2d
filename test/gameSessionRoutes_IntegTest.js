@@ -67,7 +67,8 @@ describe('Testing Game Session Routes', () => {
             .send({
                 config: {
                     maxPlayers: 2,
-                    map: "map0"
+                    map: "map0",
+                    gameMode: "elimination"
                 }
             })
 
@@ -85,7 +86,8 @@ describe('Testing Game Session Routes', () => {
             .send({
                 config: {
                     maxPlayers: 2,
-                    map: "map0"
+                    map: "map0",
+                    gameMode: "elimination"
                 }
             })
 
@@ -128,7 +130,8 @@ describe('Testing Game Session Routes', () => {
             .send({
                 config: {
                     maxPlayers: 2,
-                    map: "map0"
+                    map: "map0",
+                    gameMode: "elimination"
                 }
             })
 
@@ -189,7 +192,8 @@ describe('Testing Game Session Routes', () => {
             .send({
                 config: {
                     maxPlayers: 2,
-                    map: "map0"
+                    map: "map0",
+                    gameMode: "elimination"
                 }
             })
 
@@ -296,7 +300,8 @@ describe('Testing Game Session Routes', () => {
             .send({
                 config: {
                     maxPlayers: 3,
-                    map: "map0"
+                    map: "map0",
+                    gameMode: "elimination"
                 }
             })
 

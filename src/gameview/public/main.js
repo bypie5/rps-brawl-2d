@@ -840,7 +840,8 @@ async function createPrivateMatch (event) {
                 config: {
                     maxPlayers: 10,
                     map: "map0",
-                    agentType: sessionContext.pageContext?.selectedAgentType
+                    agentType: sessionContext.pageContext?.selectedAgentType,
+                    gameMode: 'elimination'
                 }
             })
         })

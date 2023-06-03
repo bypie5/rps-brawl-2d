@@ -43,7 +43,8 @@ describe('Testing situations around gameplay commands', () => {
             .send({
                 config: {
                     maxPlayers: 1,
-                    map: "map0"
+                    map: "map0",
+                    gameMode: "elimination"
                 }
             })
 
@@ -148,7 +149,8 @@ describe('Testing situations around gameplay commands', () => {
             .send({
                 config: {
                     maxPlayers: 2,
-                    map: "map0"
+                    map: "map0",
+                    gameMode: "elimination"
                 }
             })
 
@@ -242,7 +244,8 @@ describe('Testing situations around gameplay commands', () => {
             .send({
                 config: {
                     maxPlayers: 1,
-                    map: "map0"
+                    map: "map0",
+                    gameMode: "elimination"
                 }
             })
 
@@ -326,7 +329,8 @@ describe('Testing situations around gameplay commands', () => {
             .send({
                 config: {
                     maxPlayers: 1,
-                    map: "map0"
+                    map: "map0",
+                    gameMode: "elimination"
                 }
             })
 
@@ -475,7 +479,8 @@ describe('Testing situations around gameplay commands', () => {
             .send({
                 config: {
                     maxPlayers: 1,
-                    map: "map0"
+                    map: "map0",
+                    gameMode: "elimination"
                 }
             })
 

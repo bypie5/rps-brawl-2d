@@ -16,6 +16,11 @@ const sessionConfigSchema = {
             required: true,
             enum: ['map0', 'map1', 'map2', 'map3']
         },
+        gameMode: {
+            type: 'string',
+            required: true,
+            enum: ['elimination', 'endless']
+        },
         agentType: {
             type: 'string',
             required: false
