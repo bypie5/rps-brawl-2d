@@ -506,10 +506,50 @@ function spawn (gameContext, session, systemContext) {
     }
 }
 
+/**
+ * Keeps track of the order in which players are eliminated from the game
+ *
+ * @param gameContext - context about the entities and state of the game
+ * @param session - information about the current session
+ * @param systemContext - context specific to the system
+ * @private
+ */
+function _eliminationScore (gameContext, session, systemContext) {
+    if (!systemContext.playerEliminationOrder) {
+        // initialize the elimination order
+        systemContext.playerEliminationOrder = new Map()
+        systemContext.eliminationOrder = 1
+    }
+
+    for (const [id, entity] of Object.entries(gameContext.entities)) {
+        if (
+          entity.Avatar
+          && entity.Avatar.stateData.lives <= 0
+          && !systemContext.playerEliminationOrder.has(entity.Avatar.playerId)
+        ) {
+            systemContext.playerEliminationOrder.set(entity.Avatar.playerId, systemContext.eliminationOrder)
+            systemContext.eliminationOrder++
+            entity.Avatar.stateData.eliminationOrder = systemContext.playerEliminationOrder.get(entity.Avatar.playerId)
+        }
+    }
+}
+
+function _endlessScore (gameContext, session, systemContext) {
+}
+
+function score (gameContext, session, systemContext) {
+    if (gameContext.gameMode === 'elimination') {
+        _eliminationScore(gameContext, session, systemContext)
+    } else if (gameContext.gameMode === 'endless') {
+        _endlessScore(gameContext, session, systemContext)
+    }
+}
+
 module.exports = {
     physics,
     rps,
     powerups,
     tieBreaker,
-    spawn
+    spawn,
+    score
 }

@@ -44,6 +44,12 @@ function deepCopy(obj) {
     return rv
 }
 
+function numberSuffix(n) {
+    const s = ["th", "st", "nd", "rd"]
+    const v = n % 100
+    return n + (s[(v - 20) % 10] || s[v] || s[0])
+}
+
 const defaultSessionContext = {
     authToken: null,
     username: null,
@@ -519,8 +525,9 @@ function _detectAndHandleGameEvents (prevGameContext, currGameContext) {
         && currGameContext.entities[sessionContext.sessionInfo.playersAvatarId].Avatar.state === 'spectating')
     ) {
         // player has died
+        const playerAvatar = currGameContext.entities[sessionContext.sessionInfo.playersAvatarId].Avatar
         sessionContext.sessionInfo.renderer.pushToIntercomMsgQueue(new IntercomMsg(
-          'You have been eliminated!',
+          `You were eliminated ${numberSuffix(playerAvatar.stateData.eliminationOrder)}!`,
           'Spectating...',
           3000
         ))

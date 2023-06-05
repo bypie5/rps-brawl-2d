@@ -15,7 +15,8 @@ const {
     rps,
     powerups,
     tieBreaker,
-    spawn
+    spawn,
+    score
 } = require('../ecs/systems')
 const { levelZero } = require('../levels/level')
 const { buildEntityProxy } = require('../ecs/util')
@@ -105,6 +106,7 @@ class Session {
             deltaTime: 0,
             lastTickTime: 0,
             gridWidth: 0,
+            gameMode: config.gameMode,
             entities: {}
         }
 
@@ -138,6 +140,8 @@ class Session {
             tieBreaker: {
             },
             spawn: {
+            },
+            score: {
             }
         }
     }
@@ -345,6 +349,7 @@ class Session {
         rps(this.gameContext, this, this.systemContexts.rps)
         tieBreaker(this.gameContext, this, this.systemContexts.tieBreaker)
         spawn(this.gameContext, this, this.systemContexts.spawn)
+        score(this.gameContext, this, this.systemContexts.spawn)
 
         // increment tick
         this.gameContext.currentTick += 1
@@ -402,6 +407,7 @@ class Session {
                 currentTick: this.gameContext.currentTick,
                 gridWidth: this.gameContext.gridWidth,
                 deltaTime: this.gameContext.deltaTime,
+                gameMode: this.gameContext.gameMode,
                 lastTickTime: this.gameContext.lastTickTime
             },
             isCheckpoint: false,
