@@ -846,7 +846,7 @@ async function createPrivateMatch (event) {
             body: JSON.stringify({
                 config: {
                     maxPlayers: 10,
-                    map: "map0",
+                    map: "map1",
                     agentType: sessionContext.pageContext?.selectedAgentType,
                     gameMode: 'elimination'
                 }

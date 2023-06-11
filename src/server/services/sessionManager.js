@@ -18,7 +18,7 @@ const {
     spawn,
     score
 } = require('../ecs/systems')
-const { levelZero } = require('../levels/level')
+const { levelZero, levelOne } = require('../levels/level')
 const { buildEntityProxy } = require('../ecs/util')
 
 const { createCpuAgent, createNaivePursuit, createNaiveMatchTarget, createNaiveRandomBracket, supportedAgents} = require('../agents/agentFactory')
@@ -294,6 +294,9 @@ class Session {
         switch (mapId) {
             case 'map0':
                 map = levelZero()
+                break
+            case 'map1':
+                map = levelOne()
                 break
             default:
                 throw new Error(`Invalid map id: ${mapId}`)

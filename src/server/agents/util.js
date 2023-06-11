@@ -61,8 +61,13 @@ function getNearestEntityByGridKey (entities, gridKey, gridWidth) {
     return [nearestEntityId, nearestEntity]
 }
 
+function computePathToTarget(entities, startGridKey, targetGridKey, gridWidth) {
+
+}
+
 module.exports = {
     computeGridKey,
     getEntitiesInBox,
-    getNearestEntityByGridKey
+    getNearestEntityByGridKey,
+    computePathToTarget
 }

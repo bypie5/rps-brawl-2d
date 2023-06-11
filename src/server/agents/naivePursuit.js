@@ -5,7 +5,7 @@ const {
   Decorator,
   Action,
   Condition
- } = require("./bt/behaviorTree")
+} = require("./bt/behaviorTree")
 const { nodeStatus } = require("./bt/enums")
 
 const CpuAgent = require("./cpuAgent")

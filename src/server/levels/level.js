@@ -99,5 +99,8 @@ class LevelDescription {
 module.exports = {
     levelZero: () => {
         return new LevelDescription('./src/resources/plane.json', 5, 26, [2, 3])
+    },
+    levelOne: () => {
+        return new LevelDescription('./src/resources/plane_obstacles.json', 5, 26, [2, 3])
     }
 }
