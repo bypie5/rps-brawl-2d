@@ -7,7 +7,7 @@
     "start": "node ./src/index.js",
     "test": "mocha --exit --timeout 10000",
     "test:e2e": "cypress run",
-    "dev": "nodemon ./src/index.js"
+    "dev": "nodemon ./src/index.js --ignore ./src/resources/**"
   },
   "author": "Brandon Yi",
   "license": "ISC",

@@ -1,5 +1,29 @@
 const fs = require('fs')
 
+const generateNavGrid = require('./navGrid')
+
+const levelInfo = [
+    {
+        filePath: './src/resources/plane.json',
+        gridWidth: 5,
+        spawnTileId: 26,
+        barrierTileIds: [2, 3]
+    },
+    {
+        filePath: './src/resources/plane_obstacles.json',
+        gridWidth: 5,
+        spawnTileId: 26,
+        barrierTileIds: [2, 3]
+    }
+]
+
+function preComputeDistances () {
+    const now = Date.now()
+    console.log('precomputing distance for levels...')
+    generateNavGrid(levelInfo)
+    console.log(`done precomputing distances in ${Date.now() - now}ms`)
+}
+
 class LevelDescription {
     constructor (tileMap, gridWidth, spawnPointId, barrierTileIds) {
         this.tileMap = tileMap
@@ -7,7 +31,7 @@ class LevelDescription {
         this.spawnPointId = spawnPointId
         this.barrierTileIds = barrierTileIds
 
-        const data = fs.readFileSync(tileMap)
+        const data = fs.readFileSync(this.tileMap)
         this.tileMapData = JSON.parse(data)
 
         this.width = this.tileMapData.width
@@ -97,10 +121,19 @@ class LevelDescription {
 
 
 module.exports = {
+    preComputeDistances,
     levelZero: () => {
-        return new LevelDescription('./src/resources/plane.json', 5, 26, [2, 3])
+        const filePath = levelInfo[0].filePath
+        const gridWidth = levelInfo[0].gridWidth
+        const spawnTileId = levelInfo[0].spawnTileId
+        const barrierTileIds = levelInfo[0].barrierTileIds
+        return new LevelDescription(filePath, gridWidth, spawnTileId, barrierTileIds)
     },
     levelOne: () => {
-        return new LevelDescription('./src/resources/plane_obstacles.json', 5, 26, [2, 3])
+        const filePath = levelInfo[1].filePath
+        const gridWidth = levelInfo[1].gridWidth
+        const spawnTileId = levelInfo[1].spawnTileId
+        const barrierTileIds = levelInfo[1].barrierTileIds
+        return new LevelDescription(filePath, gridWidth, spawnTileId, barrierTileIds)
     }
 }

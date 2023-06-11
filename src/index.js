@@ -10,6 +10,19 @@ require('dotenv').config()
 const services = require('./server/services/services')
 const registerRoutes = require('./server/routes/routes')
 const WebSocketServer = require('./server/net/webSocketServer')
+const { preComputeDistances } = require('./server/levels/level')
+
+function init () {
+    // bake level distances
+    preComputeDistances()
+}
+
+try {
+    init()
+} catch (err) {
+    console.log(err)
+    console.log('Failed to initialize server')
+}
 
 const app = express()
 const port = 8080
