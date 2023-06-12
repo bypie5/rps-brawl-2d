@@ -1,6 +1,6 @@
 const fs = require('fs')
 
-const generateNavGrid = require('./navGrid')
+const { generateNavGrid } = require('./navGrid')
 
 const levelInfo = [
     {
@@ -16,6 +16,17 @@ const levelInfo = [
         barrierTileIds: [2, 3]
     }
 ]
+
+function mapCodeToLevelFilePath (code) {
+    switch (code) {
+        case "map0":
+            return levelInfo[0].filePath
+        case "map1":
+            return levelInfo[1].filePath
+        default:
+            throw new Error(`Unknown map code: ${code}`)
+    }
+}
 
 function preComputeDistances () {
     const now = Date.now()
@@ -121,6 +132,7 @@ class LevelDescription {
 
 
 module.exports = {
+    mapCodeToLevelFilePath,
     preComputeDistances,
     levelZero: () => {
         const filePath = levelInfo[0].filePath

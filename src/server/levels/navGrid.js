@@ -1,6 +1,17 @@
 const fs = require('fs')
 const crypto = require('crypto')
 
+function getNavGridFromFilePath (filePath) {
+    return filePath.replace('.json', '_navGrid.json')
+}
+
+
+function loadNavGrid (filePath) {
+    const navGridPath = getNavGridFromFilePath(filePath)
+    const data = fs.readFileSync(navGridPath)
+    return JSON.parse(data)
+}
+
 function buildGridKey (x, y) {
     return `${x},${y}`
 }
@@ -125,14 +136,14 @@ function generateNavGridFile (distanceMap, filePath, checksum) {
     }
 
     const navGridStr = JSON.stringify(navGrid)
-    const navGridFilePath = filePath.replace('.json', '_navGrid.json')
+    const navGridFilePath = getNavGridFromFilePath(filePath)
     fs.writeFileSync(navGridFilePath, navGridStr)
 
     console.log(`Generated nav grid for ${filePath}`)
 }
 
 function getNavGrid (filePath) {
-    const navGridFilePath = filePath.replace('.json', '_navGrid.json')
+    const navGridFilePath = getNavGridFromFilePath(filePath)
     if (!fs.existsSync(navGridFilePath)) {
         return null
     }
@@ -165,4 +176,7 @@ function generateNavGrid (levelInfo) {
     }
 }
 
-module.exports = generateNavGrid
+module.exports = {
+    generateNavGrid,
+    loadNavGrid
+}

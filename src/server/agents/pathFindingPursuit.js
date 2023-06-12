@@ -17,8 +17,10 @@ const {
 } = require("./util");
 
 class PathFindingPursuit extends CpuAgent {
-  constructor(botId, sessionId, msgHandlers) {
+  constructor(botId, sessionId, msgHandlers, navGrid) {
     super(botId, sessionId, msgHandlers)
+
+    this.navGrid = navGrid
 
     this.setBehaviorTree(this.buildBehaviorTree())
   }
@@ -96,3 +98,5 @@ class PathFindingPursuit extends CpuAgent {
     return tree
   }
 }
+
+module.exports = PathFindingPursuit

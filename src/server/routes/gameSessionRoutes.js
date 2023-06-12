@@ -97,6 +97,9 @@ router.post('/modify-session-config', (req, res) => {
         } else {
             res.status(500).send('Internal server error')
         }
+
+        console.log(err)
+        return
     }
 
     res.status(200).send()
@@ -104,7 +107,12 @@ router.post('/modify-session-config', (req, res) => {
 
 router.get('/supported-agents', (req, res) => {
     res.status(200).send({
-        supportedAgentTypes: [supportedAgents.naivePursuit, supportedAgents.naiveMatchTarget, supportedAgents.naiveRandomBracket]
+        supportedAgentTypes: [
+            supportedAgents.naivePursuit,
+            supportedAgents.naiveMatchTarget,
+            supportedAgents.naiveRandomBracket,
+            supportedAgents.pathFindingPursuit
+        ]
     })
 })
 
@@ -140,6 +148,9 @@ router.post('/invite-agent-to-session', (req, res) => {
         } else {
             res.status(500).send('Internal server error')
         }
+
+        console.log(err)
+        return
     }
 
     res.status(200).send({

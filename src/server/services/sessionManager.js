@@ -18,10 +18,22 @@ const {
     spawn,
     score
 } = require('../ecs/systems')
-const { levelZero, levelOne } = require('../levels/level')
+const { loadNavGrid } = require('../levels/navGrid')
+const {
+    mapCodeToLevelFilePath,
+    levelZero,
+    levelOne
+} = require('../levels/level')
 const { buildEntityProxy } = require('../ecs/util')
 
-const { createCpuAgent, createNaivePursuit, createNaiveMatchTarget, createNaiveRandomBracket, supportedAgents} = require('../agents/agentFactory')
+const {
+    createCpuAgent,
+    createNaivePursuit,
+    createNaiveMatchTarget,
+    createNaiveRandomBracket,
+    createPathFindingPursuit,
+    supportedAgents
+} = require('../agents/agentFactory')
 
 const sessionStates = {
     INITIALIZING: 'INITIALIZING',
@@ -593,6 +605,10 @@ class SessionManager extends Service {
                 return createNaiveMatchTarget(agentId, sessionId, messageHandlers)
             case supportedAgents.naiveRandomBracket:
                 return createNaiveRandomBracket(agentId, sessionId, messageHandlers)
+            case supportedAgents.pathFindingPursuit:
+                const levelFilePath = mapCodeToLevelFilePath(sessionConfig.map)
+                const navGrid = loadNavGrid(levelFilePath)
+                return createPathFindingPursuit(agentId, sessionId, messageHandlers, navGrid)
             default:
                 throw new Error(`Unsupported agent type ${sessionConfig.agentType}`)
         }
