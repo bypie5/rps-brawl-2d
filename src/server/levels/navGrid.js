@@ -69,21 +69,47 @@ function computeNeighbors (tileInfo) {
 
     for (const tile of tileInfo) {
         const neighbors = []
-        const neighborKeys = [
-            buildGridKey(tile.x - 1, tile.y),
-            buildGridKey(tile.x + 1, tile.y),
-            buildGridKey(tile.x, tile.y - 1),
-            buildGridKey(tile.x, tile.y + 1),
-            buildGridKey(tile.x - 1, tile.y - 1),
-            buildGridKey(tile.x + 1, tile.y - 1),
-            buildGridKey(tile.x - 1, tile.y + 1),
-            buildGridKey(tile.x + 1, tile.y + 1),
-        ]
+        // check cardinal directions
+        const northKey = buildGridKey(tile.x, tile.y - 1)
+        const southKey = buildGridKey(tile.x, tile.y + 1)
+        const eastKey = buildGridKey(tile.x + 1, tile.y)
+        const westKey = buildGridKey(tile.x - 1, tile.y)
+        const neighborKeys = [northKey, southKey, eastKey, westKey]
         for (const neighborKey of neighborKeys) {
             if (grids[neighborKey] && grids[neighborKey].navigable) {
                 neighbors.push(grids[neighborKey])
             }
         }
+
+        // check diagonal directions (only if both cardinal directions are navigable)
+        if (grids[northKey] && grids[northKey].navigable && grids[eastKey] && grids[eastKey].navigable) {
+            const northEastKey = buildGridKey(tile.x + 1, tile.y - 1)
+            if (grids[northEastKey] && grids[northEastKey].navigable) {
+                neighbors.push(grids[northEastKey])
+            }
+        }
+
+        if (grids[northKey] && grids[northKey].navigable && grids[westKey] && grids[westKey].navigable) {
+            const northWestKey = buildGridKey(tile.x - 1, tile.y - 1)
+            if (grids[northWestKey] && grids[northWestKey].navigable) {
+                neighbors.push(grids[northWestKey])
+            }
+        }
+
+        if (grids[southKey] && grids[southKey].navigable && grids[eastKey] && grids[eastKey].navigable) {
+            const southEastKey = buildGridKey(tile.x + 1, tile.y + 1)
+            if (grids[southEastKey] && grids[southEastKey].navigable) {
+                neighbors.push(grids[southEastKey])
+            }
+        }
+
+        if (grids[southKey] && grids[southKey].navigable && grids[westKey] && grids[westKey].navigable) {
+            const southWestKey = buildGridKey(tile.x - 1, tile.y + 1)
+            if (grids[southWestKey] && grids[southWestKey].navigable) {
+                neighbors.push(grids[southWestKey])
+            }
+        }
+
         tile.neighbors = neighbors
     }
 
@@ -128,9 +154,10 @@ function createTileInfo (mapTileTypes, levelInfo, levelWidth, levelHeight) {
     return tileInfo
 }
 
-function generateNavGridFile (distanceMap, filePath, checksum) {
+function generateNavGridFile (distanceMap, navigableTileKeys, filePath, checksum) {
     const navGrid = {
         distanceMap,
+        navigableTileKeys,
         checksum,
         generatedAt: Date.now()
     }
@@ -172,7 +199,16 @@ function generateNavGrid (levelInfo) {
         const tileInfo = createTileInfo(mapTileTypes, info, levelWidth, levelHeight)
         const distances = shortestDistanceBetweenAllNavigableTiles(tileInfo, info)
 
-        generateNavGridFile(distances, filePath, tileDataChecksum)
+        const navigableTiles = tileInfo
+          .filter(tile => tile.navigable)
+          .map(tile => buildGridKey(tile.x, tile.y))
+
+        const navigableTileKeys = {}
+        for (const key of navigableTiles) {
+            navigableTileKeys[key] = true
+        }
+
+        generateNavGridFile(distances, navigableTileKeys, filePath, tileDataChecksum)
     }
 }
 
