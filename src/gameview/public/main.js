@@ -160,11 +160,16 @@ async function _onWsOpen (event) {
 }
 
 function _connectWsToSession (sessionId) {
-    sessionContext.ws.send(JSON.stringify({
+    const payload = {
         type: "CONNECT_TO_SESSION",
-        sessionId: sessionId,
-        friendlyName: sessionContext.sessionJoinCode
-    }))
+        sessionId: sessionId
+    }
+
+    if (sessionContext.sessionJoinCode) {
+        payload['friendlyName'] = sessionContext.sessionJoinCode
+    }
+
+    sessionContext.ws.send(JSON.stringify(payload))
 }
 
 function _sendMoveCommand (entityId, direction) {
@@ -879,6 +884,26 @@ async function joinPrivateMatch (event) {
 }
 
 window.joinPrivateMatch = joinPrivateMatch
+
+async function joinPublicSession () {
+    try {
+        const res = await fetch(`/api/game-session/join-public-session`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${sessionContext.authToken}`,
+            }
+        })
+
+        const { sessionId } = await res.json()
+        _getSessionInfo(sessionId)
+    } catch (err) {
+        console.error(err)
+        alert('Failed to join match')
+    }
+}
+
+window.joinPublicSession = joinPublicSession
 
 async function startMatch (event) {
     event.preventDefault()

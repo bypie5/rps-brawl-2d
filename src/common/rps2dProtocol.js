@@ -18,7 +18,7 @@ const msgTypes = {
                     },
                     friendlyName: {
                         type: 'string',
-                        required: true
+                        required: false
                     },
                 }
             }

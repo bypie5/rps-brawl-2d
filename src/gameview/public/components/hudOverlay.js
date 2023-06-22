@@ -13,9 +13,11 @@ class HudOverlay extends Component {
           <div class="unselectable-text">
             Player: ${this.props.playerId}
           </div>
-          <div class="unselectable-text">
-            Lives: ${this.props.lives}, Kills: ${this.props.kills}${this.props.isSpectating ? ' (spectating)' : ''}
-          </div>
+          ${this.props.gameMode === 'elimination' ?
+            `<div class="unselectable-text">
+              Lives: ${this.props.lives}, Kills: ${this.props.kills}${this.props.isSpectating ? ' (spectating)' : ''}
+            </div>` : ''
+          }
           <div class="unselectable-text player-name">
             (You) ${this.props.playerId}
            </div>

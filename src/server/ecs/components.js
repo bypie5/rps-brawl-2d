@@ -161,6 +161,19 @@ const components = {
                 }
             }
         }
+    },
+    KillStreakScoreBoard: {
+        name: 'KillStreakScoreBoard',
+        schema: {
+            id: '/KillStreakScoreBoard',
+            type: 'object',
+            properties: {
+                highestKillStreakByPlayerId: {
+                    type: 'object',
+                    required: true,
+                }
+            }
+        }
     }
 }
 

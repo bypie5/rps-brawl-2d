@@ -91,6 +91,13 @@ class FailedToAddAgentError extends Error {
     }
 }
 
+class FailedToRemoveAgentError extends Error {
+    constructor (message) {
+        super(message)
+        this.name = 'FailedToRemoveAgentError'
+    }
+}
+
 class Session {
     constructor (id, hostId, isPrivate, config) {
         this.id = id
@@ -106,6 +113,7 @@ class Session {
 
         this.currState = sessionStates.INITIALIZING
         this.connectedPlayers = new Set() // Set<username>
+        this.playerEntities = new Map() // Map<username, entity>
         this.agents = new Map() // Map<agentId, agent>
         this.map = null
 
@@ -159,7 +167,11 @@ class Session {
     }
 
     playerConnected (username) {
-        if (this.currState !== sessionStates.WAITING_FOR_PLAYERS) {
+        if (
+          this.currState !== sessionStates.WAITING_FOR_PLAYERS
+          && this.isPrivate
+        ) {
+            // prevent players from joining private sessions that are not waiting for players
             throw new SessionNotOpenError('Session is not waiting for players')
         }
 
@@ -168,6 +180,10 @@ class Session {
         }
 
         this.connectedPlayers.add(username)
+
+        if (!this.playerEntities.has(username)) {
+            this._addPlayerEntityToSession(username)
+        }
     }
 
     playerDisconnected (username) {
@@ -187,12 +203,45 @@ class Session {
         this.agents.set(agentId, agent)
     }
 
+    getRandomAgentId () {
+        const agentIds = Array.from(this.agents.keys())
+        const randomIndex = Math.floor(Math.random() * agentIds.length)
+        return agentIds[randomIndex]
+    }
+
+    removeAgent (agentId) {
+        this.agents.delete(agentId)
+        this.connectedPlayers.delete(agentId)
+    }
+
     isPlayerConnected (username) {
         return this.connectedPlayers.has(username)
     }
 
     getConnectedPlayers () {
         return Array.from(this.connectedPlayers)
+    }
+
+    isMatchFull () {
+        return this.connectedPlayers.size >= this.config.maxPlayers
+    }
+
+    getMaxPlayers () {
+        return this.config.maxPlayers
+    }
+
+    numberOfHumanPlayers () {
+        let count = 0
+        for (const username of this.connectedPlayers) {
+            if (!this.agents.has(username)) {
+                count++
+            }
+        }
+        return count
+    }
+
+    numberOfAgents () {
+        return this.agents.size
     }
 
     onWsConnection (ws) {
@@ -239,6 +288,10 @@ class Session {
             this._coreGameLoop()
         }, this.frameRate)
 
+        this.notifyMatchStart()
+    }
+
+    notifyMatchStart () {
         this.broadcast({
             type: msgTypes.serverToClient.MATCH_STARTED.type,
             sessionState: this.currState
@@ -336,16 +389,22 @@ class Session {
             this.instantiateEntity(spawnPointEntity)
         }
 
-        const playerEntities = []
-
         for (const username of this.connectedPlayers) {
-            const playerEntity = buildPlayerEntity(username, 0, 0)
-            playerEntities.push(playerEntity)
+            if (this.playerEntities.has(username)) {
+                // player already has an entity
+                continue
+            }
 
-            this.instantiateEntity(playerEntity)
+            this._addPlayerEntityToSession(username)
         }
 
         this.gameContext.gridWidth = map.getGridWidth()
+    }
+
+    _addPlayerEntityToSession (username) {
+        const playerEntity = buildPlayerEntity(username, 0, 0)
+        this.instantiateEntity(playerEntity)
+        this.playerEntities.set(username, playerEntity)
     }
 
     _coreGameLoop () {
@@ -441,16 +500,49 @@ class SessionManager extends Service {
 
         this.privateSessionHosts = new Map() // Map<hostId, sessionId>
         this.sessionIdToFriendlyName = new Map() // Map<sessionId, friendlyName>
+        this.publicSessionIds = new Set()
         this.activeSessions = new Map()
         this.playerToSession = new Map() // Map<username, sessionId>
         this.agents = new Map() // Map<agentId, agent>
         this.agentsToSession = new Map() // Map<agentId, sessionId>
 
         this.messageHandlers = null
+
+        this.maxNumberOfPublicSessions = 10
+        this.maxPlayersPerPublicSession = 10
+        this.maxNumberOfBotsPerSession = 7
+
+        // initialize first public session
+        setTimeout(() => {
+            this.createPublicSession()
+        }, 1000)
     }
 
     registerMessageHandlers(messageHandlers) {
         this.messageHandlers = messageHandlers
+    }
+
+    createPublicSession () {
+        const config = {
+            maxPlayers: this.maxPlayersPerPublicSession,
+            map: "map1",
+            agentType: supportedAgents.pathFindingPursuit,
+            gameMode: 'endless'
+        }
+        const id = uuidv4()
+        const session = new Session(id, null, false, config)
+
+        this.activeSessions.set(id, session)
+        this.publicSessionIds.add(id)
+
+        session.beginGameSession()
+
+        this._managePublicBotToHumanRatioForSession(id)
+
+        // agents have just been added. notify them the match has started
+        session.notifyMatchStart()
+
+        return id
     }
 
     createPrivateSession (hostUsername, config) {
@@ -482,6 +574,22 @@ class SessionManager extends Service {
         if (!session) {
             throw new SessionNotFoundError('Session does not exist')
         }
+
+        this._connectPlayerToSession(username, sessionId)
+
+        return sessionId
+    }
+
+    joinPublicSession (username) {
+        const sessionId = this._getRandomPublicSessionId()
+        const session = this.activeSessions.get(sessionId)
+        if (!session) {
+            throw new SessionNotFoundError('Session does not exist')
+        }
+
+        // TODO: handle case where session is full
+
+        this._managePublicBotToHumanRatioForSession(sessionId, 1)
 
         this._connectPlayerToSession(username, sessionId)
 
@@ -520,6 +628,36 @@ class SessionManager extends Service {
         return agent.getBotId()
     }
 
+    removeAgentFromSession (agentId) {
+        const sessionId = this.agentsToSession.get(agentId)
+        if (!sessionId) {
+            throw new SessionNotFoundError('Session does not exist')
+        }
+
+        const session = this.activeSessions.get(sessionId)
+        if (!session) {
+            throw new SessionNotFoundError('Session does not exist')
+        }
+
+        session.removeAgent(agentId)
+        this.agents.delete(agentId)
+        this.agentsToSession.delete(agentId)
+    }
+
+    removeRandomAgentFromSession (sessionId) {
+        const session = this.activeSessions.get(sessionId)
+        if (!session) {
+            throw new SessionNotFoundError('Session does not exist')
+        }
+
+        const agentId = session.getRandomAgentId()
+        if (!agentId) {
+            throw new FailedToRemoveAgentError('No agents in session')
+        }
+
+        this.removeAgentFromSession(agentId)
+    }
+
     findSessionById (sessionId) {
         return this.activeSessions.get(sessionId)
     }
@@ -548,6 +686,10 @@ class SessionManager extends Service {
         }
 
         console.log(`Session ${id} ended`)
+    }
+
+    getNumberOfPublicSessions () {
+        return this.publicSessionIds.size
     }
 
     clearSessions () {
@@ -612,6 +754,77 @@ class SessionManager extends Service {
             default:
                 throw new Error(`Unsupported agent type ${sessionConfig.agentType}`)
         }
+    }
+
+    _managePublicBotToHumanRatioForSession (sessionId, expectedHumanPlayersAdded = 0) {
+        const session = this.activeSessions.get(sessionId)
+        if (!session) {
+            throw new SessionNotFoundError('Session does not exist')
+        }
+
+        const botsNeeded = (() => {
+            const humanPlayers = session.numberOfHumanPlayers() + expectedHumanPlayersAdded
+            if (
+              humanPlayers + session.numberOfAgents()
+              > session.getMaxPlayers()
+            ) {
+                // we will have too many players in this session
+                // remove some bots
+                return session.numberOfAgents() - expectedHumanPlayersAdded
+            } else {
+                return Math.min(
+                    session.getMaxPlayers() - humanPlayers,
+                    this.maxNumberOfBotsPerSession
+                )
+            }
+        })()
+        if (botsNeeded > session.numberOfAgents()) {
+            // we need to add more bots to this session
+            this._fillSessionWithBots(sessionId, botsNeeded)
+        } else if (botsNeeded < session.numberOfAgents()) {
+            const botsToRemove = session.numberOfAgents() - botsNeeded
+            this._removeBotFromSession(sessionId, botsToRemove)
+        }
+    }
+
+    _fillSessionWithBots (sessionId, botsNeeded) {
+        try {
+            for (let i = 0; i < botsNeeded; i++) {
+                this.inviteAgentToSession(sessionId)
+            }
+        } catch (e) {
+            if (e instanceof FailedToAddAgentError) {
+                // we failed to invite an agent to the session. This is fine, we will try again later
+                console.log('Failed to invite agent to session')
+            } else if (e instanceof SessionNotFoundError) {
+                // the session we were trying to add an agent to no longer exists. This is fine, we will try again later
+                console.log('Session no longer exists')
+            } else {
+                throw e
+            }
+        }
+    }
+
+    _removeBotFromSession (sessionId, botsToRemove) {
+        try {
+            for (let i = 0; i < botsToRemove; i++) {
+                this.removeRandomAgentFromSession(sessionId)
+            }
+        } catch (e) {
+            if (e instanceof FailedToRemoveAgentError) {
+                // we failed to remove an agent from the session. This is fine, we will try again later
+                console.log('Failed to remove agent from session')
+            } else if (e instanceof SessionNotFoundError) {
+                // the session we were trying to remove an agent from no longer exists. This is fine, we will try again later
+                console.log('Session no longer exists')
+            } else {
+                throw e
+            }
+        }
+    }
+
+    _getRandomPublicSessionId () {
+        return Array.from(this.publicSessionIds)[Math.floor(Math.random() * this.publicSessionIds.size)]
     }
 }
 

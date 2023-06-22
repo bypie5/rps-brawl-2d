@@ -43,9 +43,9 @@
 }
 
 #login-container {
-    position: absolute;
     top: 0;
     left: 0;
+    margin-top: 50px;
     width: 100%;
     height: 100%;
     display: flex;
@@ -59,6 +59,14 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
+}
+
+#join-endless-match {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 25px;
 }
 
 #private-match-controls {
@@ -106,6 +114,10 @@
 }
 
 #join-match-button {
+    margin-top: 10px;
+}
+
+#join-endless-match-button {
     margin-top: 10px;
 }
 

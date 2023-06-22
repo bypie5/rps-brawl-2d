@@ -535,6 +535,7 @@ function _eliminationScore (gameContext, session, systemContext) {
 }
 
 function _endlessScore (gameContext, session, systemContext) {
+
 }
 
 function score (gameContext, session, systemContext) {

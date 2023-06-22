@@ -68,6 +68,27 @@ router.post('/join-private-session', (req, res) => {
     }
 })
 
+router.post('/join-public-session', (req, res) => {
+    const { username } = req.session.passport.user
+
+    try {
+        const sessionId = sessionManager.joinPublicSession(username)
+        res.status(200).send({
+            sessionId: sessionId
+        })
+    } catch (err) {
+        if (err.name === 'SessionNotFoundError') {
+            res.status(404).send('Session does not exist')
+        } else if (err.name === 'SessionIsFullError') {
+            res.status(400).send('Session is full')
+        } else if (err.name === 'SessionNotOpenError') {
+            res.status(400).send('Session is not open')
+        } else {
+            res.status(500).send('Internal server error')
+        }
+    }
+})
+
 router.post('/modify-session-config', (req, res) => {
     const { username } = req.session.passport.user
 

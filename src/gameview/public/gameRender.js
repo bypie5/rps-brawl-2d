@@ -360,6 +360,7 @@ class GameRender {
                 this.playersAvatarId = avatar.id
                 this.uiElements.playerUi = window.gameUiManager.addComponentToScene('hudOverlay', {
                     playerId: this.username,
+                    gameMode: this.sessionConfig.gameMode,
                     lives: entityComponents.Avatar.stateData.lives,
                     kills: entityComponents.Avatar.stateData.kills,
                     activePowerUp: entityComponents.Avatar.stateData.activePowerUp,
@@ -491,6 +492,7 @@ class GameRender {
             vector.project(this.camera)
             window.gameUiManager.updateComponent(this.uiElements.playerUi, {
                 lives: entityComponents.Avatar.stateData.lives,
+                gameMode: this.sessionConfig.gameMode,
                 kills: entityComponents.Avatar.stateData.kills,
                 activePowerUp: entityComponents.Avatar.stateData.activePowerUp,
                 isSpectating: this.spectatorMode,
