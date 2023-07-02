@@ -187,11 +187,26 @@ function buildPowerUpEntity (type, x, y) {
     return entity
 }
 
+function buildKillStreakScoreKeeper () {
+    const entity = {
+        [components.KillStreakScoreBoard.name]: {
+            highestKillStreakByPlayerId: {}
+        }
+    }
+
+    if (!validateEntity(entity)) {
+        return
+    }
+
+    return entity
+}
+
 module.exports = {
     buildPlayerEntity,
     buildBarrierEntity,
     buildTerrainEntity,
     buildSpawnPointEntity,
     buildTieBreakerManagerEntity,
-    buildPowerUpEntity
+    buildPowerUpEntity,
+    buildKillStreakScoreKeeper
 }

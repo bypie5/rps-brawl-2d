@@ -16,7 +16,9 @@ class HudOverlay extends Component {
           ${this.props.gameMode === 'elimination' ?
             `<div class="unselectable-text">
               Lives: ${this.props.lives}, Kills: ${this.props.kills}${this.props.isSpectating ? ' (spectating)' : ''}
-            </div>` : ''
+            </div>` : `<div class="unselectable-text">
+                Current Kill Streak: ${this.props.kills}
+            </div>`
           }
           <div class="unselectable-text player-name">
             (You) ${this.props.playerId}
@@ -25,7 +27,7 @@ class HudOverlay extends Component {
             ${this.props.activePowerUp ? `Power Up: ${this.props.activePowerUp.toUpperCase()}` : ''}
            </div>
 
-          ${this.props.lives <= 0 ? `
+          ${this.props.lives <= 0 && this.props.gameMode === 'elimination' ? `
             <button class="exit-match-button" onclick="backToMainMenu()">
               Back to Main Menu
             </button>

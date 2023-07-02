@@ -1,3 +1,5 @@
+const EventEmitter = require('node:events')
+
 const Service = require('./service')
 const { v4: uuidv4 } = require('uuid')
 const { v, sessionConfigSchema } = require('../schemas')
@@ -40,6 +42,10 @@ const sessionStates = {
     WAITING_FOR_PLAYERS: 'WAITING_FOR_PLAYERS',
     IN_PROGRESS: 'IN_PROGRESS',
     FINISHED: 'FINISHED'
+}
+
+const sessionEvents = {
+    PLAYER_DISCONNECTED: 'PLAYER_DISCONNECTED',
 }
 
 class UserIsAlreadyHostError extends Error {
@@ -98,8 +104,10 @@ class FailedToRemoveAgentError extends Error {
     }
 }
 
-class Session {
+class Session extends EventEmitter {
     constructor (id, hostId, isPrivate, config) {
+        super()
+
         this.id = id
         this.host = hostId
         this.isPrivate = isPrivate
@@ -189,6 +197,14 @@ class Session {
     playerDisconnected (username) {
         this.connectedPlayers.delete(username)
         this.wsConnections.delete(username)
+
+        console.log(`Player ${username} left session ${this.id}`)
+
+        this.emit(sessionEvents.PLAYER_DISCONNECTED, username)
+    }
+
+    doesPlayerHaveWsConnection (username) {
+        return this.wsConnections.has(username)
     }
 
     pushCommand (ws, msg, type, applyCommands) {
@@ -246,12 +262,12 @@ class Session {
 
     onWsConnection (ws) {
         this.wsConnections.set(ws.id, ws)
-        console.log(`Player ${ws.id} connected to session: ${this.id}`)
+        console.log(`Player ${ws.id} WebSocket connected to session: ${this.id}`)
     }
 
     onWsDisconnection (id) {
         this.wsConnections.delete(id)
-        console.log(`Player ${id} disconnected from session: ${this.id}`)
+        console.log(`Player ${id} WebSocket disconnected from session: ${this.id}`)
     }
 
     broadcast (msg, fullMsg) {
@@ -532,6 +548,8 @@ class SessionManager extends Service {
         const id = uuidv4()
         const session = new Session(id, null, false, config)
 
+        this._registerSessionEventHandlers(session)
+
         this.activeSessions.set(id, session)
         this.publicSessionIds.add(id)
 
@@ -553,6 +571,8 @@ class SessionManager extends Service {
 
         const id = uuidv4()
         const session = new Session(id, hostUsername, true, config)
+
+        this._registerSessionEventHandlers(session)
 
         this.activeSessions.set(id, session)
         this.privateSessionHosts.set(hostUsername, id)
@@ -825,6 +845,12 @@ class SessionManager extends Service {
 
     _getRandomPublicSessionId () {
         return Array.from(this.publicSessionIds)[Math.floor(Math.random() * this.publicSessionIds.size)]
+    }
+
+    _registerSessionEventHandlers (session) {
+        session.on(sessionEvents.PLAYER_DISCONNECTED, (username, sessionId) => {
+            // this.disconnectPlayerFromSession(username, sessionId)
+        })
     }
 }
 

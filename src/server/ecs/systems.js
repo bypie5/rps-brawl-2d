@@ -10,6 +10,7 @@ const {
 
 const {
     buildTieBreakerManagerEntity,
+    buildKillStreakScoreKeeper,
     buildPowerUpEntity,
 } = require('./entities')
 
@@ -459,11 +460,15 @@ function spawn (gameContext, session, systemContext) {
             avatar.stateData.firstSpawn = false
         } else {
             avatar.stateData.lives--
+            avatar.stateData.kills = 0 // reset kills
             avatar.stateData.activePowerUp = null
             avatar.stateData.ticksWithActivePowerUp = 0
         }
 
-        if (avatar.stateData.lives <= 0) {
+        if (
+          avatar.stateData.lives <= 0 &&
+          gameContext.gameMode === 'elimination'
+        ) {
             avatar.state = 'spectating'
         }
     }
@@ -535,7 +540,47 @@ function _eliminationScore (gameContext, session, systemContext) {
 }
 
 function _endlessScore (gameContext, session, systemContext) {
+    // create scorekeeper entity if it doesn't exist
+    let scoreKeeperId = null
+    for (const [id, entity] of Object.entries(gameContext.entities)) {
+        if (entity.KillStreakScoreBoard) {
+            scoreKeeperId = id
+        }
+    }
 
+    if (!scoreKeeperId) {
+        const entity = buildKillStreakScoreKeeper()
+        scoreKeeperId = session.instantiateEntity(entity)
+    }
+
+    // update scorekeeper entity
+    const scoreBoard = gameContext.entities[scoreKeeperId].KillStreakScoreBoard
+
+    // 1. get current kill streak for all connected players
+    const currentKillStreaks = new Map()
+    for (const [id, entity] of Object.entries(gameContext.entities)) {
+        if (entity.Avatar) {
+            currentKillStreaks.set(entity.Avatar.playerId, entity.Avatar.stateData.kills)
+        }
+    }
+
+    // 2. prune score board of players who are no longer connected
+    for (const [playerId, killStreak] of Object.entries(scoreBoard.highestKillStreakByPlayerId)) {
+        if (!currentKillStreaks.has(playerId)) {
+            delete scoreBoard.highestKillStreakByPlayerId[playerId]
+        }
+    }
+
+    // 3. update highest kill streak for all connected players
+    for (const [playerId, killStreak] of currentKillStreaks) {
+        if (!scoreBoard.highestKillStreakByPlayerId[playerId]) {
+            scoreBoard.highestKillStreakByPlayerId[playerId] = 0
+        }
+
+        if (killStreak > scoreBoard.highestKillStreakByPlayerId[playerId]) {
+            scoreBoard.highestKillStreakByPlayerId[playerId] = killStreak
+        }
+    }
 }
 
 function score (gameContext, session, systemContext) {

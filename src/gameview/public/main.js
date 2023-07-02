@@ -328,6 +328,8 @@ function _openWebSocket () {
     const hostname = window.location.hostname
     sessionContext.ws = new WebSocket(`ws://${hostname}:8081`)
 
+    window.mainSocket = sessionContext.ws
+
     // upgrade anonymous websocket connection sending message with auth token
     sessionContext.ws.addEventListener('open', _onWsOpen)
     sessionContext.ws.addEventListener('message', _onMessage)
@@ -337,7 +339,7 @@ function _openWebSocket () {
         sessionContext.isWsConnectedToSession = false
         sessionContext.lastPingSeen = null
 
-        if (sessionContext.forceWsClose) {
+        if (!sessionContext.forceWsClose) {
             setTimeout(() => {
                 _openWebSocket()
             }, 3750)

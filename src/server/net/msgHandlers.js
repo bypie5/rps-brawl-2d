@@ -24,6 +24,10 @@ function onConnectToSession(ws, msg) {
         return
     }
 
+    if (session.doesPlayerHaveWsConnection(ws.id)) {
+        return // already connected
+    }
+
     ws.send(JSON.stringify({
         type: msgTypes.serverToClient.WELCOME.type,
         id: session.id,
@@ -57,6 +61,10 @@ function disconnectFromSession (ws, msg) {
             message: 'You are not connected to this session'
         }))
     }
+
+    ws.on('close', () => {
+        // do nothing since player is not connected to session
+    })
 }
 
 function onGameplayCommand(ws, msg) {
