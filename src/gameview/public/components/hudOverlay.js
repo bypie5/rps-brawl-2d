@@ -31,8 +31,17 @@ class HudOverlay extends Component {
             <button class="exit-match-button" onclick="backToMainMenu()">
               Back to Main Menu
             </button>
-          ` : ''}
+          ` : ''}          
         </div>
+        ${this.props.gameMode === 'endless' ? `
+          <div class="kill-streak-scoreboard">
+            <div class="unselectable-text">
+              Highest Kill Streaks
+            </div>
+            ${this._killStreakScoreboard()}
+            <hr>
+          </div>
+        `: ''}
       </div>
     `
 
@@ -48,11 +57,40 @@ class HudOverlay extends Component {
 
     return {
       ...super.getStyleMap(),
-      'hud-overlay': 'position: absolute; top: 0; left: 0; width: 100%;',
+      'hud-overlay': 'position: absolute; top: 0; left: 0; width: 100%; height: 100%;',
       'player-info': 'display: flex; justify-content: center; align-items: center; flex-direction: column; width: 100%;',
       'player-name': `position: absolute; top: ${uiTop}px; left: ${uiLeft}px; transform:translateX(-50%); ${isVisible ? '' : 'display: none'};`,
-      'exit-match-button': 'margin-top: 10px; z-index: 2000;'
+      'exit-match-button': 'margin-top: 10px; z-index: 2000;',
+      'kill-streak-scoreboard': 'position: absolute; bottom: 0; right: 0; margin-right: 10px; margin-bottom: 10px;'
     }
+  }
+
+  _killStreakScoreboard() {
+    const highestKillStreakByPlayerId = this.props.killStreaks
+
+    // top 3 highest kill streaks
+    const top3 = Object.keys(highestKillStreakByPlayerId)
+      .map(playerId => {
+        return {
+          playerId,
+          killStreak: highestKillStreakByPlayerId[playerId]
+        }
+      }).sort((a, b) => {
+        return b.killStreak - a.killStreak
+      }).slice(0, 3)
+
+    return `
+      <div class="kill-streak-scoreboard-entries">
+        ${top3.map((entry, index) => {
+          return `<div class="kill-streak-scoreboard-entry">
+            <div class="unselectable-text">
+              ${index + 1}. ${this.props.playerId === entry.playerId ? '(You)' : ''} ${entry.playerId} (${entry.killStreak})
+            </div>
+          </div>
+          `
+        }).join('')}
+      </div>
+    `
   }
 }
 

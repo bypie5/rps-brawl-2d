@@ -329,6 +329,15 @@ class GameRender {
             return
         }
 
+        // find score board entity if it exists
+        let scoreBoardEntity = null
+        for (const [entityId, entityComponents] of Object.entries(entitiesInScene)) {
+            if (entityComponents.KillStreakScoreBoard) {
+                scoreBoardEntity = entityComponents
+                break
+            }
+        }
+
         let threeJsId = null
         if (entityComponents.Barrier && entityComponents.Transform && entityComponents.HitBox) {
             const spriteId = Number(entityComponents.Barrier.spriteId)
@@ -365,6 +374,7 @@ class GameRender {
                     kills: entityComponents.Avatar.stateData.kills,
                     activePowerUp: entityComponents.Avatar.stateData.activePowerUp,
                     isSpectating: this.spectatorMode,
+                    killStreaks: scoreBoardEntity ? scoreBoardEntity.KillStreakScoreBoard.highestKillStreakByPlayerId : null,
                 })
 
                 this.uiElements.intercomTextUi = window.gameUiManager.addComponentToScene('intercomText', {
@@ -443,6 +453,15 @@ class GameRender {
             return
         }
 
+        // find score board entity if it exists
+        let scoreBoardEntity = null
+        for (const [entityId, entityComponents] of Object.entries(entitiesInScene)) {
+            if (entityComponents.KillStreakScoreBoard) {
+                scoreBoardEntity = entityComponents
+                break
+            }
+        }
+
         // real three.js entities are updated below
         if (entityComponents.Transform) {
             // translate to the new position
@@ -500,7 +519,8 @@ class GameRender {
                     left: vector.x + window.innerWidth / 2,
                     top: (vector.y + window.innerHeight / 2) - 55,
                     isVisible: entityComponents.Avatar.state === 'alive'
-                }
+                },
+                killStreaks: scoreBoardEntity ? scoreBoardEntity.KillStreakScoreBoard.highestKillStreakByPlayerId : null,
             })
 
             window.gameUiManager.updateComponent(this.uiElements.intercomTextUi, {
