@@ -254,6 +254,8 @@ class PathFindingPursuit extends CpuAgent {
 
           const epsilon = context.latestGameState.gridWidth * 0.1
           this._moveToTarget(myX, myY, targetX, targetY, epsilon)
+        } else {
+          context.target = null // we're at the target, so clear it
         }
       }
 
@@ -318,8 +320,8 @@ class PathFindingPursuit extends CpuAgent {
     matchTarget.addChild(isMatchingRpsStateOfTarget)
     matchTarget.addChild(matchRpsStateOfTarget)
 
-    root.addChild(matchTarget)
     root.addChild(targetPrioritySelector)
+    root.addChild(matchTarget)
 
     tree.setRoot(root)
 

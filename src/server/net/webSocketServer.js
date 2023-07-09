@@ -15,7 +15,7 @@ class WebSocketServer {
         this.server = null
         this.connections = new Map() // Map<ws.id, ws>
         this.heartbeatInterval = null
-        this.intervalBetweenHeartbeats = 5000
+        this.intervalBetweenHeartbeats = 25000
     }
 
     start () {

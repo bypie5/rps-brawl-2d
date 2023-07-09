@@ -46,6 +46,7 @@ const sessionStates = {
 
 const sessionEvents = {
     PLAYER_DISCONNECTED: 'PLAYER_DISCONNECTED',
+    KICKED_PLAYER: 'KICKED_PLAYER',
 }
 
 class UserIsAlreadyHostError extends Error {
@@ -126,8 +127,10 @@ class Session extends EventEmitter {
         this.map = null
 
         this.wsConnections = new Map() // Map<username, ws>
+        this.timeLastMessageReceieved = new Map() // Map<username, time>
         this.commandQueue = [] // { ws, msg, type }
         this.applyCommandsCallback = null
+        this.inactiveTimeoutMs = 1000 * 60 * 2.5 // 2.5 minutes
 
         this.gameContext = {
             currentTick: 0,
@@ -192,15 +195,32 @@ class Session extends EventEmitter {
         if (!this.playerEntities.has(username)) {
             this._addPlayerEntityToSession(username)
         }
+
+        console.log(`Player ${username} joined session ${this.id}`)
+        this.timeLastMessageReceieved.set(username, Date.now())
     }
 
-    playerDisconnected (username) {
+    playerDisconnected (username, reason) {
         this.connectedPlayers.delete(username)
+
+        if (this.wsConnections.has(username)) {
+            // send message to client to inform them they were disconnected
+            this.wsConnections.get(username).send(JSON.stringify({
+                type: msgTypes.serverToClient.DISCONNECTED.type,
+                message: reason
+            }))
+        }
+
         this.wsConnections.delete(username)
 
         console.log(`Player ${username} left session ${this.id}`)
 
         this.emit(sessionEvents.PLAYER_DISCONNECTED, username)
+    }
+
+    kickPlayer (username) {
+        this.timeLastMessageReceieved.delete(username)
+        this.emit(sessionEvents.KICKED_PLAYER, username, this.id)
     }
 
     doesPlayerHaveWsConnection (username) {
@@ -213,6 +233,9 @@ class Session extends EventEmitter {
         }
 
         this.commandQueue.push({ ws, msg, type })
+
+        // log the time we last received a message from this player
+        this.timeLastMessageReceieved.set(ws.id, Date.now())
     }
 
     addAgent (agentId, agent) {
@@ -448,6 +471,8 @@ class Session extends EventEmitter {
         // broadcast game state
         this.broadcast(this._buildMsgToBroadcast(), this._buildFullMsg())
 
+        this._findInactivePlayers()
+
         let deltaTime = Date.now() - tickRenderStart
         if (deltaTime > this.frameRate) {
             console.warn(`Game loop took ${deltaTime}ms to execute in session: ${this.id}`)
@@ -507,6 +532,15 @@ class Session extends EventEmitter {
 
     _validateConfig (config) {
         return v.validate(config, sessionConfigSchema)
+    }
+
+    _findInactivePlayers () {
+        this.timeLastMessageReceieved.forEach((time, username) => {
+            // kick human player if they have been inactive for too long
+            if (Date.now() - time > this.inactiveTimeoutMs && !this.agents.has(username)) {
+                this.kickPlayer(username)
+            }
+        })
     }
 }
 
@@ -616,13 +650,13 @@ class SessionManager extends Service {
         return sessionId
     }
 
-    disconnectPlayerFromSession (username, sessionId) {
+    disconnectPlayerFromSession (username, sessionId, reason = 'You have been disconnected') {
         const session = this.activeSessions.get(sessionId)
         if (!session) {
             throw new SessionNotFoundError('Session does not exist')
         }
 
-        session.playerDisconnected(username)
+        session.playerDisconnected(username, reason)
         this.playerToSession.delete(username)
     }
 
@@ -850,6 +884,11 @@ class SessionManager extends Service {
     _registerSessionEventHandlers (session) {
         session.on(sessionEvents.PLAYER_DISCONNECTED, (username, sessionId) => {
             // this.disconnectPlayerFromSession(username, sessionId)
+        })
+
+        session.on(sessionEvents.KICKED_PLAYER, (username, sessionId) => {
+            this.disconnectPlayerFromSession(username, sessionId, 'Kicked for inactivity')
+            console.log(`Kicked player ${username} from session ${sessionId}`)
         })
     }
 }

@@ -72,7 +72,7 @@ const defaultSessionContext = {
     },
     ws: null,
     lastPingSeen: null,
-    intervalBetweenHeartbeats: 5000,
+    intervalBetweenHeartbeats: 25000,
     isWsConnectionAnonymous: true,
     isWsConnectedToSession: false,
     pageContextInjector: null,
@@ -287,6 +287,7 @@ async function _onMessage (event) {
             break
         case "DISCONNECTED":
             console.log('Disconnected from session')
+            alert(msg.message)
             await _loadHtmlContent(pages.findMatch)
             restartRenderer()
             break
@@ -830,15 +831,24 @@ function backToMainMenu () {
     sessionContext.sessionInfo.renderer.stop()
     sessionContext.sessionInfo = deepCopy(defaultSessionContext.sessionInfo)
 
-    sessionContext.ws.send(JSON.stringify({
-        type: 'DISCONNECT_FROM_SESSION',
-        sessionId: sessionContext.sessionId
-    }))
+    disconnectFromSession()
 
     sessionContext.sessionId = null
 }
 
 window.backToMainMenu = backToMainMenu
+
+function disconnectFromSession () {
+    sessionContext.ws.send(JSON.stringify({
+        type: 'DISCONNECT_FROM_SESSION',
+        sessionId: sessionContext.sessionId
+    }))
+}
+
+// event handlers to disconnect player from session when they close the tab
+window.addEventListener('beforeunload', disconnectFromSession)
+window.addEventListener('unload', disconnectFromSession)
+window.addEventListener('pagehide', disconnectFromSession)
 
 async function createPrivateMatch (event) {
     event.preventDefault()

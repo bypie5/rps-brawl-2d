@@ -95,19 +95,19 @@ const handlers = {
             }
 
             const speedMultiplier = Avatar.stateData.activePowerUp === 'speed' ? Avatar.speed * 2 : Avatar.speed
-            let sm = 10
+            let sm = 7.5
             switch (speedMultiplier) {
                 case 0:
                     sm = 0
                     break
                 case 1:
-                    sm = 10
+                    sm = 7.5
                     break
                 case 2:
-                    sm = 15
+                    sm = 10
                     break
                 default:
-                    sm = 10
+                    sm = 7.5
                     break
             }
 

@@ -35,7 +35,7 @@ function buildPlayerEntity (playerId, x, y) {
                 lives: 4,
                 rockPaperScissors: randomRockPaperScissors(),
                 ticksSinceStartedRespawning: -1,
-                stateSwitchCooldownMaxTicks: 30,
+                stateSwitchCooldownMaxTicks: 50,
                 stateSwitchCooldownTicks: 0,
                 firstSpawn: true,
                 collisionsWithOtherPlayers: [], // entity ids
