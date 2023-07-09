@@ -200,14 +200,15 @@ class Session extends EventEmitter {
         this.timeLastMessageReceieved.set(username, Date.now())
     }
 
-    playerDisconnected (username, reason) {
+    playerDisconnected (username, reason, userInitiated) {
         this.connectedPlayers.delete(username)
 
         if (this.wsConnections.has(username)) {
             // send message to client to inform them they were disconnected
             this.wsConnections.get(username).send(JSON.stringify({
                 type: msgTypes.serverToClient.DISCONNECTED.type,
-                message: reason
+                message: reason,
+                wasUserInitiated: userInitiated
             }))
         }
 
@@ -650,13 +651,13 @@ class SessionManager extends Service {
         return sessionId
     }
 
-    disconnectPlayerFromSession (username, sessionId, reason = 'You have been disconnected') {
+    disconnectPlayerFromSession (username, sessionId, reason = 'You have been disconnected', userInitiated = true) {
         const session = this.activeSessions.get(sessionId)
         if (!session) {
             throw new SessionNotFoundError('Session does not exist')
         }
 
-        session.playerDisconnected(username, reason)
+        session.playerDisconnected(username, reason, userInitiated)
         this.playerToSession.delete(username)
     }
 
@@ -887,7 +888,7 @@ class SessionManager extends Service {
         })
 
         session.on(sessionEvents.KICKED_PLAYER, (username, sessionId) => {
-            this.disconnectPlayerFromSession(username, sessionId, 'Kicked for inactivity')
+            this.disconnectPlayerFromSession(username, sessionId, 'Kicked for inactivity', false)
             console.log(`Kicked player ${username} from session ${sessionId}`)
         })
     }

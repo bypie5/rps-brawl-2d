@@ -164,6 +164,7 @@ const msgTypes = {
                 properties: {
                     type: { type: 'string' },
                     message: { type: 'string' },
+                    wasUserInitiated: { type: 'boolean' },
                 }
             }
         }

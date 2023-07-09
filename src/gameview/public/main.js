@@ -287,7 +287,11 @@ async function _onMessage (event) {
             break
         case "DISCONNECTED":
             console.log('Disconnected from session')
-            alert(msg.message)
+            if (!msg.wasUserInitiated) {
+                // display reason for disconnect if it wasn't user-initiated
+                // since the player may not know why they were disconnected
+                alert(msg.message)
+            }
             await _loadHtmlContent(pages.findMatch)
             restartRenderer()
             break

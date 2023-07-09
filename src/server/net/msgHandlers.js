@@ -56,10 +56,6 @@ function disconnectFromSession (ws, msg) {
 
     if (session.isPlayerConnected(ws.id)) {
         sessionManager.disconnectPlayerFromSession(ws.id, msg.sessionId)
-        ws.send(JSON.stringify({
-            type: msgTypes.serverToClient.DISCONNECTED.type,
-            message: 'You are not connected to this session'
-        }))
     }
 
     ws.on('close', () => {
