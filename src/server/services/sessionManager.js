@@ -884,9 +884,12 @@ class SessionManager extends Service {
             }
         }
 
-        if (allSessionAreFull) {
+        if (allSessionAreFull && this.publicSessionIds.size < this.maxNumberOfPublicSessions) {
             // we need to create a new session
             this.createPublicSession()
+        } else if (this.publicSessionIds.size === this.maxNumberOfPublicSessions) {
+            console.log('Max number of public sessions reached!')
+            throw new Error('Max number of public sessions reached')
         }
     }
 

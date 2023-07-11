@@ -109,4 +109,23 @@ describe('Session Manager Service test', () => {
     // check that the session was deleted
     chai.expect(sessionManager.getNumberOfPublicSessions()).to.equal(1)
   })
+
+  it('When max number of sessions is reached, a new session is not created', () => {
+    chai.expect(sessionManager.getNumberOfPublicSessions()).to.equal(1)
+
+    for (let j = 0; j < sessionManager.maxNumberOfPublicSessions - 1; j++) {
+      for (let i = 0; i < sessionManager.maxPlayersPerPublicSession; i++) {
+        sessionManager.joinPublicSession('test' + i)
+      }
+    }
+
+    // check that the number of sessions is max
+    chai.expect(sessionManager.getNumberOfPublicSessions()).to.equal(sessionManager.maxNumberOfPublicSessions)
+
+    // join one more player, bug throws an error
+    chai.expect(() => sessionManager.joinPublicSession('test' + sessionManager.maxNumberOfPublicSessions * sessionManager.maxPlayersPerPublicSession)).to.throw()
+
+    // check that the number of sessions is still max
+    chai.expect(sessionManager.getNumberOfPublicSessions()).to.equal(sessionManager.maxNumberOfPublicSessions)
+  })
 })
