@@ -546,7 +546,7 @@ class Session extends EventEmitter {
 }
 
 class SessionManager extends Service {
-    constructor (dbPool) {
+    constructor (dbPool, autoCreateFirstPublicSession = false) {
         super(dbPool)
 
         this.privateSessionHosts = new Map() // Map<hostId, sessionId>
@@ -564,9 +564,11 @@ class SessionManager extends Service {
         this.maxNumberOfBotsPerSession = 7
 
         // initialize first public session
-        setTimeout(() => {
-            this.createPublicSession()
-        }, 1000)
+        if (!autoCreateFirstPublicSession) {
+            setTimeout(() => {
+                this.createPublicSession()
+            }, 1000)
+        }
     }
 
     registerMessageHandlers(messageHandlers) {
@@ -636,17 +638,17 @@ class SessionManager extends Service {
     }
 
     joinPublicSession (username) {
-        const sessionId = this._getRandomPublicSessionId()
+        const sessionId = this._getRandomJoinablePublicSessionId()
         const session = this.activeSessions.get(sessionId)
         if (!session) {
             throw new SessionNotFoundError('Session does not exist')
         }
 
-        // TODO: handle case where session is full
-
         this._managePublicBotToHumanRatioForSession(sessionId, 1)
 
         this._connectPlayerToSession(username, sessionId)
+
+        this._manageNumberOfPublicSessions()
 
         return sessionId
     }
@@ -659,6 +661,8 @@ class SessionManager extends Service {
 
         session.playerDisconnected(username, reason, userInitiated)
         this.playerToSession.delete(username)
+
+        this._manageNumberOfPublicSessions()
     }
 
     inviteAgentToSession (sessionId) {
@@ -732,8 +736,7 @@ class SessionManager extends Service {
             throw new SessionNotFoundError('Session does not exist')
         }
 
-        session.endGameSession()
-        this.activeSessions.delete(id)
+        this.stopSession(id)
 
         if (session.isPrivate) {
             this.privateSessionHosts.delete(session.host)
@@ -741,6 +744,28 @@ class SessionManager extends Service {
         }
 
         console.log(`Session ${id} ended`)
+    }
+
+    stopPublicSession (id) {
+        const session = this.activeSessions.get(id)
+        if (!session) {
+            throw new SessionNotFoundError('Session does not exist')
+        }
+
+        this.stopSession(id)
+
+        this.publicSessionIds.delete(id)
+        console.log(`Session ${id} ended`)
+    }
+
+    stopSession (id) {
+        const session = this.activeSessions.get(id)
+        if (!session) {
+            throw new SessionNotFoundError('Session does not exist')
+        }
+
+        session.endGameSession()
+        this.activeSessions.delete(id)
     }
 
     getNumberOfPublicSessions () {
@@ -842,6 +867,29 @@ class SessionManager extends Service {
         }
     }
 
+    _manageNumberOfPublicSessions () {
+        let allSessionAreFull = true
+        for (const sessionId of this.publicSessionIds) {
+            if (!this._isSessionFullOfHumans(sessionId)) {
+                allSessionAreFull = false
+            } else {
+                console.log(`Session ${sessionId} is full`)
+            }
+
+            if (
+              this._isSessionEmptyOfHumans(sessionId)
+              && this.publicSessionIds.size !== 1
+            ) {
+                this.stopPublicSession(sessionId)
+            }
+        }
+
+        if (allSessionAreFull) {
+            // we need to create a new session
+            this.createPublicSession()
+        }
+    }
+
     _fillSessionWithBots (sessionId, botsNeeded) {
         try {
             for (let i = 0; i < botsNeeded; i++) {
@@ -878,8 +926,23 @@ class SessionManager extends Service {
         }
     }
 
-    _getRandomPublicSessionId () {
-        return Array.from(this.publicSessionIds)[Math.floor(Math.random() * this.publicSessionIds.size)]
+    /**
+     * Gets a public session id that has space for at least one more human player
+     *
+     * @returns {string} a random public session id
+     * @private
+     */
+    _getRandomJoinablePublicSessionId () {
+        const joinablePublicSessionIds = Array.from(this.publicSessionIds).filter(sessionId => {
+            // has space for at least one more human player
+            return !this._isSessionFullOfHumans(sessionId)
+        })
+
+        if (joinablePublicSessionIds.length === 0) {
+            throw new Error('No joinable public sessions')
+        }
+
+        return joinablePublicSessionIds[Math.floor(Math.random() * joinablePublicSessionIds.length)]
     }
 
     _registerSessionEventHandlers (session) {
@@ -891,6 +954,16 @@ class SessionManager extends Service {
             this.disconnectPlayerFromSession(username, sessionId, 'Kicked for inactivity', false)
             console.log(`Kicked player ${username} from session ${sessionId}`)
         })
+    }
+
+    _isSessionFullOfHumans (sessionId) {
+        const session = this.activeSessions.get(sessionId)
+        return session.numberOfHumanPlayers() === this.maxPlayersPerPublicSession
+    }
+
+    _isSessionEmptyOfHumans (sessionId) {
+        const session = this.activeSessions.get(sessionId)
+        return session.numberOfHumanPlayers() === 0
     }
 }
 

@@ -5,7 +5,9 @@ describe('Session Manager Service test', () => {
   let sessionManager
 
   beforeEach(() => {
-    sessionManager = new SessionManager()
+    sessionManager = new SessionManager(null)
+
+    sessionManager.createPublicSession()
   })
 
   it('With no human players, there should only be one session with MAX number of bots', () => {
@@ -56,5 +58,55 @@ describe('Session Manager Service test', () => {
     // one bot should be replaced with a human player
     chai.expect(session.numberOfHumanPlayers()).to.equal(minNumberOfHumansToStartReplacingBots)
     chai.expect(session.numberOfAgents()).to.equal(sessionManager.maxNumberOfBotsPerSession - 1)
+  })
+
+  it('When max + 1 number of human players join a public session, a new public session is created', () => {
+    chai.expect(sessionManager.getNumberOfPublicSessions()).to.equal(1)
+
+    const sessionId = sessionManager.publicSessionIds.values().next().value
+    const session = sessionManager.activeSessions.get(sessionId)
+
+    for (let i = 0; i < sessionManager.maxPlayersPerPublicSession; i++) {
+      sessionManager.joinPublicSession('test' + i)
+    }
+
+    // check that the number of bots is zero and the number of human players is max
+    chai.expect(session.numberOfHumanPlayers()).to.equal(sessionManager.maxPlayersPerPublicSession)
+    chai.expect(session.numberOfAgents()).to.equal(0)
+
+    // join one more player
+    sessionManager.joinPublicSession('test' + sessionManager.maxPlayersPerPublicSession)
+
+    // check that a new session was created
+    chai.expect(sessionManager.getNumberOfPublicSessions()).to.equal(2)
+  })
+
+  it('When all human players leave a public session, the session is deleted', () => {
+    chai.expect(sessionManager.getNumberOfPublicSessions()).to.equal(1)
+
+    const sessionId = sessionManager.publicSessionIds.values().next().value
+    const session = sessionManager.activeSessions.get(sessionId)
+
+    for (let i = 0; i < sessionManager.maxPlayersPerPublicSession; i++) {
+      sessionManager.joinPublicSession('test' + i)
+    }
+
+    // check that the number of bots is zero and the number of human players is max
+    chai.expect(session.numberOfHumanPlayers()).to.equal(sessionManager.maxPlayersPerPublicSession)
+    chai.expect(session.numberOfAgents()).to.equal(0)
+
+    // join one more player
+    sessionManager.joinPublicSession('test' + sessionManager.maxPlayersPerPublicSession)
+
+    // check that a new session was created
+    chai.expect(sessionManager.getNumberOfPublicSessions()).to.equal(2)
+
+    // make all players leave first session
+    for (let i = 0; i < sessionManager.maxPlayersPerPublicSession; i++) {
+      sessionManager.disconnectPlayerFromSession('test' + i, sessionId)
+    }
+
+    // check that the session was deleted
+    chai.expect(sessionManager.getNumberOfPublicSessions()).to.equal(1)
   })
 })
