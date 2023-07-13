@@ -394,19 +394,7 @@ async function _onGameroomLobbyLoaded () {
     const poll = setInterval(async () => {
         // poll for session info
         const sessionId = sessionContext.sessionId
-        const res = await fetch(`/api/game-session/session-info?sessionId=${sessionId}`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${sessionContext.authToken}`,
-            }
-        })
-    
-        const { host, config, connectedPlayers, state } = await res.json()
-        sessionContext.sessionInfo.host = host
-        sessionContext.sessionInfo.config = config
-        sessionContext.sessionInfo.connectedPlayers = connectedPlayers
-        sessionContext.sessionInfo.state = state
+        await loadSessionInfo(sessionId)
         await _redrawPage(pages.gameroomLobby)
 
         if (sessionContext.sessionInfo.state === 'IN_PROGRESS') {
@@ -414,6 +402,22 @@ async function _onGameroomLobbyLoaded () {
             await _loadHtmlContent(pages.gameroom)
         }
     }, 2500)
+}
+
+async function loadSessionInfo (sessionId) {
+    const res = await fetch(`/api/game-session/session-info?sessionId=${sessionId}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${sessionContext.authToken}`,
+        }
+    })
+
+    const { host, config, connectedPlayers, state } = await res.json()
+    sessionContext.sessionInfo.host = host
+    sessionContext.sessionInfo.config = config
+    sessionContext.sessionInfo.connectedPlayers = connectedPlayers
+    sessionContext.sessionInfo.state = state
 }
 
 async function _onGameroomLoaded () {
@@ -912,7 +916,10 @@ async function joinPublicSession () {
         })
 
         const { sessionId } = await res.json()
-        _getSessionInfo(sessionId)
+
+        sessionContext.sessionId = sessionId
+        await loadSessionInfo(sessionId)
+        await _loadHtmlContent(pages.gameroom)
     } catch (err) {
         console.error(err)
         alert('Failed to join match')
