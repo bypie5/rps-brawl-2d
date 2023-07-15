@@ -122,7 +122,7 @@ class Session extends EventEmitter {
 
         this.currState = sessionStates.INITIALIZING
         this.connectedPlayers = new Set() // Set<username>
-        this.playerEntities = new Map() // Map<username, entity>
+        this.playerEntities = new Map() // Map<username, entityId>
         this.agents = new Map() // Map<agentId, agent>
         this.map = null
 
@@ -213,10 +213,11 @@ class Session extends EventEmitter {
         }
 
         this.wsConnections.delete(username)
+        this._removePlayerEntityFromSession(username)
 
         console.log(`Player ${username} left session ${this.id}`)
 
-        this.emit(sessionEvents.PLAYER_DISCONNECTED, username)
+        this.emit(sessionEvents.PLAYER_DISCONNECTED, username, this.id)
     }
 
     kickPlayer (username) {
@@ -252,6 +253,7 @@ class Session extends EventEmitter {
     removeAgent (agentId) {
         this.agents.delete(agentId)
         this.connectedPlayers.delete(agentId)
+        this._removePlayerEntityFromSession(agentId)
     }
 
     isPlayerConnected (username) {
@@ -443,8 +445,15 @@ class Session extends EventEmitter {
 
     _addPlayerEntityToSession (username) {
         const playerEntity = buildPlayerEntity(username, 0, 0)
-        this.instantiateEntity(playerEntity)
-        this.playerEntities.set(username, playerEntity)
+        const entityId = this.instantiateEntity(playerEntity)
+        this.playerEntities.set(username, entityId)
+    }
+
+    _removePlayerEntityFromSession (username) {
+        const entityId = this.playerEntities.get(username)
+        this.removeEntity(entityId)
+        this.playerEntities.delete(username)
+        this.timeLastMessageReceieved.delete(username)
     }
 
     _coreGameLoop () {
@@ -684,6 +693,10 @@ class SessionManager extends Service {
 
         session.addAgent(agent.getBotId(), agent)
 
+        if (session.isInProgress()) {
+            agent.setMatchStarted(true)
+        }
+
         return agent.getBotId()
     }
 
@@ -860,7 +873,7 @@ class SessionManager extends Service {
         })()
         if (botsNeeded > session.numberOfAgents()) {
             // we need to add more bots to this session
-            this._fillSessionWithBots(sessionId, botsNeeded)
+            this._fillSessionWithBots(sessionId, botsNeeded - session.numberOfAgents())
         } else if (botsNeeded < session.numberOfAgents()) {
             const botsToRemove = session.numberOfAgents() - botsNeeded
             this._removeBotFromSession(sessionId, botsToRemove)
@@ -950,7 +963,9 @@ class SessionManager extends Service {
 
     _registerSessionEventHandlers (session) {
         session.on(sessionEvents.PLAYER_DISCONNECTED, (username, sessionId) => {
-            // this.disconnectPlayerFromSession(username, sessionId)
+            if (this.publicSessionIds.has(sessionId)) {
+                this._managePublicBotToHumanRatioForSession(sessionId, 0)
+            }
         })
 
         session.on(sessionEvents.KICKED_PLAYER, (username, sessionId) => {

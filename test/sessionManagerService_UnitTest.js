@@ -106,6 +106,10 @@ describe('Session Manager Service test', () => {
       sessionManager.disconnectPlayerFromSession('test' + i, sessionId)
     }
 
+    // only MAX number of bots should be left
+    chai.expect(session.numberOfHumanPlayers()).to.equal(0)
+    chai.expect(session.numberOfAgents()).to.equal(sessionManager.maxNumberOfBotsPerSession)
+
     // check that the session was deleted
     chai.expect(sessionManager.getNumberOfPublicSessions()).to.equal(1)
   })

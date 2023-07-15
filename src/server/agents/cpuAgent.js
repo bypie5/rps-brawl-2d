@@ -24,6 +24,10 @@ class CpuAgent {
     this.behaviorTree = behaviorTree
   }
 
+  setMatchStarted(matchStarted) {
+    this.matchStarted = matchStarted
+  }
+
   async tick(msg) {
     switch (msg.type) {
       case msgTypes.serverToClient.MATCH_STARTED.type:
