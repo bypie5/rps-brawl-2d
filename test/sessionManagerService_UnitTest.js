@@ -101,14 +101,17 @@ describe('Session Manager Service test', () => {
     // check that a new session was created
     chai.expect(sessionManager.getNumberOfPublicSessions()).to.equal(2)
 
-    // make all players leave first session
-    for (let i = 0; i < sessionManager.maxPlayersPerPublicSession; i++) {
+    // make all but one player leave first session
+    for (let i = 0; i < sessionManager.maxPlayersPerPublicSession - 1; i++) {
       sessionManager.disconnectPlayerFromSession('test' + i, sessionId)
     }
 
-    // only MAX number of bots should be left
-    chai.expect(session.numberOfHumanPlayers()).to.equal(0)
+    // number of human players should be 1 and number of bots should be max
+    chai.expect(session.numberOfHumanPlayers()).to.equal(1)
     chai.expect(session.numberOfAgents()).to.equal(sessionManager.maxNumberOfBotsPerSession)
+
+    // make last player leave
+    sessionManager.disconnectPlayerFromSession('test' + (sessionManager.maxPlayersPerPublicSession - 1), sessionId)
 
     // check that the session was deleted
     chai.expect(sessionManager.getNumberOfPublicSessions()).to.equal(1)
@@ -131,5 +134,34 @@ describe('Session Manager Service test', () => {
 
     // check that the number of sessions is still max
     chai.expect(sessionManager.getNumberOfPublicSessions()).to.equal(sessionManager.maxNumberOfPublicSessions)
+  })
+
+  it('When public session is stopped, connected players and bots are disconnected', () => {
+    const sessionId = sessionManager.publicSessionIds.values().next().value
+
+    // copy maps to use as reference to check if players and bots were disconnected
+    const players = new Map(sessionManager.playerToSession)
+    const bots = new Map(sessionManager.agentsToSession)
+
+    // number of public sessions should be 1
+    chai.expect(sessionManager.getNumberOfPublicSessions()).to.equal(1)
+
+    sessionManager.stopPublicSession(sessionId)
+
+    // check that all players and bots were disconnected
+    players.forEach((session, player) => {
+      chai.expect(sessionManager.playerToSession.get(player)).to.be.undefined
+    })
+
+    bots.forEach((session, bot) => {
+      chai.expect(sessionManager.agentsToSession.get(bot)).to.be.undefined
+    })
+
+    chai.expect(sessionManager.getNumberOfPublicSessions()).to.equal(1)
+
+    const newSessionId = sessionManager.publicSessionIds.values().next().value
+
+    // check that a new session was created
+    chai.expect(newSessionId).to.not.equal(sessionId)
   })
 })

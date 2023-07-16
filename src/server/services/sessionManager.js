@@ -18,7 +18,8 @@ const {
     powerups,
     tieBreaker,
     spawn,
-    score
+    score,
+    timeLimit
 } = require('../ecs/systems')
 const { loadNavGrid } = require('../levels/navGrid')
 const {
@@ -47,6 +48,7 @@ const sessionStates = {
 const sessionEvents = {
     PLAYER_DISCONNECTED: 'PLAYER_DISCONNECTED',
     KICKED_PLAYER: 'KICKED_PLAYER',
+    SESSION_TIME_LIMIT_REACHED: 'SESSION_TIME_LIMIT_REACHED',
 }
 
 class UserIsAlreadyHostError extends Error {
@@ -173,6 +175,11 @@ class Session extends EventEmitter {
             spawn: {
             },
             score: {
+            },
+            timeLimit: {
+                publicMatchTimeLimitMs: 60 * 15 * 1000, // 15 minutes
+                matchStartedAt: 0,
+                timeSinceMatchStartMs: 0,
             }
         }
     }
@@ -343,6 +350,11 @@ class Session extends EventEmitter {
     endGameSession () {
         clearInterval(this.gameLoopInterval)
         this.gameLoopInterval = null
+        this.currState = sessionStates.FINISHED
+    }
+
+    sessionTimeout () {
+        this.emit(sessionEvents.SESSION_TIME_LIMIT_REACHED, this.id)
     }
 
     isInProgress () {
@@ -473,6 +485,7 @@ class Session extends EventEmitter {
         tieBreaker(this.gameContext, this, this.systemContexts.tieBreaker)
         spawn(this.gameContext, this, this.systemContexts.spawn)
         score(this.gameContext, this, this.systemContexts.spawn)
+        timeLimit(this.gameContext, this, this.systemContexts.timeLimit)
 
         // increment tick
         this.gameContext.currentTick += 1
@@ -589,7 +602,8 @@ class SessionManager extends Service {
             maxPlayers: this.maxPlayersPerPublicSession,
             map: "map1",
             agentType: supportedAgents.pathFindingPursuit,
-            gameMode: 'endless'
+            gameMode: 'endless',
+            isPublic: true
         }
         const id = uuidv4()
         const session = new Session(id, null, false, config)
@@ -714,6 +728,7 @@ class SessionManager extends Service {
         session.removeAgent(agentId)
         this.agents.delete(agentId)
         this.agentsToSession.delete(agentId)
+        this.playerToSession.delete(agentId)
     }
 
     removeRandomAgentFromSession (sessionId) {
@@ -769,6 +784,10 @@ class SessionManager extends Service {
 
         this.publicSessionIds.delete(id)
         console.log(`Session ${id} ended`)
+
+        this._manageNumberOfPublicSessions((id) => {
+            this._managePublicBotToHumanRatioForSession(id)
+        })
     }
 
     stopSession (id) {
@@ -778,6 +797,7 @@ class SessionManager extends Service {
         }
 
         session.endGameSession()
+        this._removeAllAgentsAndPlayersFromSession(id, 'Game is over!')
         this.activeSessions.delete(id)
     }
 
@@ -880,7 +900,7 @@ class SessionManager extends Service {
         }
     }
 
-    _manageNumberOfPublicSessions () {
+    _manageNumberOfPublicSessions (onSessionCreated) {
         let allSessionAreFull = true
         for (const sessionId of this.publicSessionIds) {
             if (!this._isSessionFullOfHumans(sessionId)) {
@@ -897,9 +917,14 @@ class SessionManager extends Service {
             }
         }
 
-        if (allSessionAreFull && this.publicSessionIds.size < this.maxNumberOfPublicSessions) {
-            // we need to create a new session
-            this.createPublicSession()
+        if (
+          (allSessionAreFull && this.publicSessionIds.size < this.maxNumberOfPublicSessions) // if all sessions are full, create a new one
+          || this.publicSessionIds.size === 0 // if there are no public sessions, create one
+        ) {
+            const id = this.createPublicSession()
+            if (onSessionCreated) {
+                onSessionCreated(id)
+            }
         } else if (this.publicSessionIds.size === this.maxNumberOfPublicSessions) {
             console.log('Max number of public sessions reached!')
             throw new Error('Max number of public sessions reached')
@@ -972,6 +997,15 @@ class SessionManager extends Service {
             this.disconnectPlayerFromSession(username, sessionId, 'Kicked for inactivity', false)
             console.log(`Kicked player ${username} from session ${sessionId}`)
         })
+
+        session.on(sessionEvents.SESSION_TIME_LIMIT_REACHED, (sessionId) => {
+            console.log(`Session ${sessionId} time limit reached`)
+            if (this.publicSessionIds.has(sessionId)) {
+                this.stopPublicSession(sessionId)
+            } else {
+                this.stopSession(sessionId)
+            }
+        })
     }
 
     _isSessionFullOfHumans (sessionId) {
@@ -982,6 +1016,24 @@ class SessionManager extends Service {
     _isSessionEmptyOfHumans (sessionId) {
         const session = this.activeSessions.get(sessionId)
         return session.numberOfHumanPlayers() === 0
+    }
+
+    _removeAllAgentsAndPlayersFromSession (sessionId, reason) {
+        const session = this.activeSessions.get(sessionId)
+        if (!session) {
+            throw new SessionNotFoundError('Session does not exist')
+        }
+
+        const allPlayerUsernames = session.connectedPlayers
+        for (const username of allPlayerUsernames) {
+            if (this.agentsToSession.has(username)) {
+                // this player is an agent
+                this.removeAgentFromSession(username, sessionId)
+            } else {
+                // this player is a human
+                this.disconnectPlayerFromSession(username, sessionId, reason, false)
+            }
+        }
     }
 }
 

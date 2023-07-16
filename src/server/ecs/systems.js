@@ -591,11 +591,29 @@ function score (gameContext, session, systemContext) {
     }
 }
 
+function _publicMatchTimeLimit (gameContext, session, systemContext) {
+    if (systemContext.timeSinceMatchStartMs >= systemContext.publicMatchTimeLimitMs) {
+        session.sessionTimeout()
+    }
+}
+
+function timeLimit (gameContext, session, systemContext) {
+    if (systemContext.matchStartedAt === 0) {
+        systemContext.matchStartedAt = Date.now()
+    }
+    systemContext.timeSinceMatchStartMs = Date.now() - systemContext.matchStartedAt
+
+    if (session.config.isPublic) {
+        _publicMatchTimeLimit(gameContext, session, systemContext)
+    }
+}
+
 module.exports = {
     physics,
     rps,
     powerups,
     tieBreaker,
     spawn,
-    score
+    score,
+    timeLimit
 }
