@@ -347,6 +347,13 @@ class GameRender {
             }
         }
 
+        let numConnectedPlayers = 0
+        for (const [entityId, entityComponents] of Object.entries(entitiesInScene)) {
+            if (entityComponents.Avatar) {
+                numConnectedPlayers++
+            }
+        }
+
         let threeJsId = null
         if (entityComponents.Barrier && entityComponents.Transform && entityComponents.HitBox) {
             const spriteId = Number(entityComponents.Barrier.spriteId)
@@ -385,6 +392,7 @@ class GameRender {
                     isSpectating: this.spectatorMode,
                     killStreaks: scoreBoardEntity ? scoreBoardEntity.KillStreakScoreBoard.highestKillStreakByPlayerId : null,
                     msRemaining: roundTimerEntity ? roundTimerEntity.RoundTimer.msRemaining : null,
+                    numConnectedPlayers: numConnectedPlayers,
                 })
 
                 this.uiElements.intercomTextUi = window.gameUiManager.addComponentToScene('intercomText', {
@@ -481,6 +489,13 @@ class GameRender {
             }
         }
 
+        let numConnectedPlayers = 0
+        for (const [entityId, entityComponents] of Object.entries(entitiesInScene)) {
+            if (entityComponents.Avatar) {
+                numConnectedPlayers++
+            }
+        }
+
         // real three.js entities are updated below
         if (entityComponents.Transform) {
             // translate to the new position
@@ -541,6 +556,7 @@ class GameRender {
                 },
                 killStreaks: scoreBoardEntity ? scoreBoardEntity.KillStreakScoreBoard.highestKillStreakByPlayerId : null,
                 msRemaining: roundTimerEntity ? roundTimerEntity.RoundTimer.msRemaining : null,
+                numConnectedPlayers: numConnectedPlayers
             })
 
             window.gameUiManager.updateComponent(this.uiElements.intercomTextUi, {

@@ -14,6 +14,10 @@ class HudOverlay extends Component {
             ${this.props.msRemaining ? this._roundTimer() : ''}
           </div>
           <div class="unselectable-text">
+            ${this.props.numConnectedPlayers ? this._numberOfConnectedPlayers() : ''}
+          </div>
+          <br>
+          <div class="unselectable-text">
             Player: ${this.props.playerId}
           </div>
           ${this.props.gameMode === 'elimination' ?
@@ -43,6 +47,9 @@ class HudOverlay extends Component {
             </div>
             ${this._killStreakScoreboard()}
             <hr>
+            <div class="unselectable-text">
+              Your Highest Kill Streak: ${this._myHighestKillStreak()}
+            </div>
           </div>
         `: ''}
       </div>
@@ -94,6 +101,17 @@ class HudOverlay extends Component {
         }).join('')}
       </div>
     `
+  }
+
+  _myHighestKillStreak() {
+    const highestKillStreakByPlayerId = this.props.killStreaks
+    const myHighestKillStreak = highestKillStreakByPlayerId[this.props.playerId]
+
+    return myHighestKillStreak ? myHighestKillStreak : 0
+  }
+
+  _numberOfConnectedPlayers() {
+    return `Players in Match: ${this.props.numConnectedPlayers}`
   }
 
   _roundTimer() {
