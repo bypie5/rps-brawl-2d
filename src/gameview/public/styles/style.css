@@ -42,10 +42,32 @@
     flex-direction: column;
 }
 
+#open-beta-desc {
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+#open-beta-header {
+    margin-bottom: 0px;
+}
+
+.open-beta-description {
+    width: 35%;
+    text-align: left;
+    text-indent: 20px;
+    margin-bottom: 0px;
+}
+
 #login-container {
     top: 0;
     left: 0;
-    margin-top: 50px;
+    margin-top: 25px;
     width: 100%;
     height: 100%;
     display: flex;
@@ -59,6 +81,24 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
+}
+
+#how-to-play {
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+.game-desc {
+    width: 50%;
+    text-align: left;
+    text-indent: 20px;
+    margin-bottom: 0px;
 }
 
 #join-endless-match {
@@ -82,6 +122,11 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
+}
+
+#login-guest-call-to-action {
+    margin-bottom: 7px;
+    font-size: 1.5em;
 }
 
 #guest-button {

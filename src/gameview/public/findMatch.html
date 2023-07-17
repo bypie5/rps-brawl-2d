@@ -3,7 +3,7 @@
     <head>
         <meta charset="utf-8">
         <link rel="icon" type="image/png" href="./favicon.png" />
-        <title>Rock, Paper, Scissors: Brawl 2D</title>
+        <title>Rock, Paper, Scissors: Brawl 2D - Open Beta</title>
         <style>
             body { margin: 0 }
         </style>
@@ -12,65 +12,38 @@
     </head>
     <body onload="onRouteLoad()">
         <div id="find-match-header">
-            <h1>Rock, Paper, Scissors: Brawl 2D - Prototype</h1>
+            <h1>Rock, Paper, Scissors: Brawl 2D - Open Beta</h1>
             <p id="find-match-welcome-msg">Welcome, {{username}}.</p>
         </div>
         <hr/>
         <div id="join-endless-match-container">
             <div id="join-endless-match">
-                <h2 class="subtitle">Join Endless Match</h2>
+                <h2 class="subtitle">Join a Public Match</h2>
+                <p>Try to get the highest kill streak before time runs out!</p>
                 <button
                     id="join-endless-match-button"
                     onclick="joinPublicSession()"
                 >
-                    Join Endless Match
+                    Join Public Match
                 </button>
             </div>
         </div>
         <hr/>
-        <div id="private-match-controls">
-            <div id="create-private-match-container">
-                <div id="create-private-match">
-                    <h2 class="subtitle">Create Private Match</h2>
-                    <p>
-                        You will receive a code that can be used to allow other to join.
-                    </p>
-                    <label for="bot-type-select">Select Bot Type (Applies to all Invited Bots): </label>
-                    <select name="bot-type-select" id="bot-type-select" data-cy="bot-select-type">
-                        {{bottypeoptions}}
-                    </select>
-                    <button
-                        id="create-match-button"
-                        onclick="createPrivateMatch(event)"
-                        data-cy="create-match-button"
-                    >
-                        Host a Match
-                    </button>
-                </div>
-            </div>
-            <div id="find-match-container">
-                <div id="join-private-match">
-                    <h2 class="subtitle">Join a Private Match</h2>
-                    <p>Please enter a match code to join the match.</p>
-                    <div id="join-match-inputs">
-                        <label for="private-match-id-input">Match ID:</label>
-                        <input
-                            type="text"
-                            id="private-match-id-input"
-                            name="private-match-id"
-                            maxlength="6"
-                            size="8"
-                            onkeydown="return /[A-Z]/i.test(event.key)"
-                        >
-                        <button
-                            id="join-match-button"
-                            onclick="joinPrivateMatch(event)"
-                        >
-                            Join
-                        </button>
-                    </div>
-                </div>
-            </div>
+        <div id="how-to-play">
+            <h2 class="subtitle">How to Play</h2>
+            <p class="game-desc">
+                Rock, Paper, Scissors: Brawl 2D is a 2D multiplayer game that is a combination of
+                Rock, Paper, Scissors and tag. The game is played in a 2D arena where players can
+                move around and attack other players. Players can choose between three different
+                attacks: rock, paper, and scissors. Rock beats scissors, scissors beats paper, and
+                paper beats rock.
+            </p>
+            <p class="game-desc">
+                You move your character around with the WASD keys. You use Q and E to toggle between
+                rock, paper, and scissors. You attack other players by touching them with your chosen
+                character state. Collect powerups to gain an advantage over your opponents. The game
+                ends when time runs out. The player with the highest kill streak wins.
+            </p>
         </div>
     </body>
 </html>

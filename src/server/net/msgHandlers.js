@@ -69,7 +69,18 @@ function onGameplayCommand(ws, msg) {
 
 function onUpgradeAnonymousWsConnection(ws, msg) {
     const authToken = msg.authToken
-    const claims = authentication.getJwtClaims(authToken)
+
+    let claims
+    try {
+        claims = authentication.getJwtClaims(authToken)
+    } catch (err) {
+        ws.send(JSON.stringify({
+            type: msgTypes.serverToClient.ERROR.type,
+            errorCode: 'INVALID_AUTH_TOKEN',
+            message: 'Invalid auth token'
+        }))
+        return
+    }
 
     const oldId = ws.id
     ws.id = claims.username

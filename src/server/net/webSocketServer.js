@@ -45,7 +45,18 @@ class WebSocketServer {
             ws.id = uuidv4()
         } else {
             const authToken = req.headers['authorization'].split(' ')[1]
-            const claims = authentication.getJwtClaims(authToken)
+
+            let claims
+            try {
+                claims = authentication.getJwtClaims(authToken)
+            } catch (err) {
+                ws.send(JSON.stringify({
+                    type: msgTypes.serverToClient.ERROR.type,
+                    errorCode: 'INVALID_AUTH_TOKEN',
+                    message: 'Invalid auth token'
+                }))
+                return
+            }
             const username = claims.username
 
             ws.id = username

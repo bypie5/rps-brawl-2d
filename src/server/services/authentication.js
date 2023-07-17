@@ -53,7 +53,7 @@ class Authentication extends Service {
         }
         return jwt.sign(payload, secret, {
             algorithm: 'HS256',
-            expiresIn: '30m',
+            expiresIn: '2h',
             issuer: 'rockpaperscissorsbrawl2d.com',
             audience: 'rockpaperscissorsbrawl2d.com',
             subject: 'anonymous'

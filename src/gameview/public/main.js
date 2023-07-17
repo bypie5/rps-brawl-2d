@@ -243,6 +243,13 @@ async function _onMessage (event) {
             break
         case "ERROR":
             console.log('Received error message: ' + msg.message)
+
+            if (msg.errorCode === 'INVALID_AUTH_TOKEN') {
+                alert('Your session has expired, please login again')
+                sessionContext.forceWsClose = true
+                sessionContext.ws.close()
+                await _loadHtmlContent(pages.login)
+            }
             break
         case "GAMESTATE_UPDATE":
             if (!msg.gameContext) {
@@ -654,17 +661,6 @@ function _compileTemplates (doc, pageName) {
                             return getSessionContext().username
                         }
                         return tag
-                    },
-                    'create-private-match': (tag) => {
-                        if (tag === '{{bottypeoptions}}') {
-                            let options = ''
-                            for (const botType of getSessionContext().sessionInfo.supportedAgentTypes) {
-                                options += `<option value="${botType}">${botType}</option>`
-                            }
-
-                            return options
-                        }
-                        return tag.replace('{{', '').replace('}}', '')
                     }
                 }
             )
