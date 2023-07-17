@@ -294,6 +294,8 @@ async function _onMessage (event) {
             }
             await _loadHtmlContent(pages.findMatch)
             restartRenderer()
+            sessionContext.sessionInfo = deepCopy(defaultSessionContext.sessionInfo)
+            sessionContext.sessionId = null
             break
         default:
             console.log('Unknown message type: ' + msg.type)
@@ -517,9 +519,8 @@ function _pruneEntitiesInScene () {
 function _detectAndHandleGameEvents (prevGameContext, currGameContext) {
     if (
       sessionContext.sessionInfo.playersAvatarId
-      && (!prevGameContext
-        || (prevGameContext.entities[sessionContext.sessionInfo.playersAvatarId]
-        && prevGameContext.entities[sessionContext.sessionInfo.playersAvatarId].Avatar.state === 'alive'))
+      && (prevGameContext.entities[sessionContext.sessionInfo.playersAvatarId]
+        && prevGameContext.entities[sessionContext.sessionInfo.playersAvatarId].Avatar.state === 'alive')
       && (currGameContext.entities[sessionContext.sessionInfo.playersAvatarId]
         && currGameContext.entities[sessionContext.sessionInfo.playersAvatarId].Avatar.state === 'respawning'
         && !currGameContext.entities[sessionContext.sessionInfo.playersAvatarId].Avatar.stateData.firstSpawn)
@@ -918,6 +919,7 @@ async function joinPublicSession () {
         const { sessionId } = await res.json()
 
         sessionContext.sessionId = sessionId
+        _connectWsToSession(sessionId)
         await loadSessionInfo(sessionId)
         await _loadHtmlContent(pages.gameroom)
     } catch (err) {
