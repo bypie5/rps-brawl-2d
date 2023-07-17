@@ -12,6 +12,7 @@ const {
     buildTieBreakerManagerEntity,
     buildKillStreakScoreKeeper,
     buildPowerUpEntity,
+    buildRoundTimer
 } = require('./entities')
 
 function deltaTimeSeconds (gameContext) {
@@ -541,20 +542,13 @@ function _eliminationScore (gameContext, session, systemContext) {
 
 function _endlessScore (gameContext, session, systemContext) {
     // create scorekeeper entity if it doesn't exist
-    let scoreKeeperId = null
-    for (const [id, entity] of Object.entries(gameContext.entities)) {
-        if (entity.KillStreakScoreBoard) {
-            scoreKeeperId = id
-        }
-    }
-
-    if (!scoreKeeperId) {
+    if (!systemContext.scoreKeeperId) {
         const entity = buildKillStreakScoreKeeper()
-        scoreKeeperId = session.instantiateEntity(entity)
+        systemContext.scoreKeeperId = session.instantiateEntity(entity)
     }
 
     // update scorekeeper entity
-    const scoreBoard = gameContext.entities[scoreKeeperId].KillStreakScoreBoard
+    const scoreBoard = gameContext.entities[systemContext.scoreKeeperId].KillStreakScoreBoard
 
     // 1. get current kill streak for all connected players
     const currentKillStreaks = new Map()
@@ -594,6 +588,21 @@ function score (gameContext, session, systemContext) {
 function _publicMatchTimeLimit (gameContext, session, systemContext) {
     if (systemContext.timeSinceMatchStartMs >= systemContext.publicMatchTimeLimitMs) {
         session.sessionTimeout()
+    }
+
+    // create timer entity if it doesn't exist
+    if (!systemContext.timerId) {
+        const entity = buildRoundTimer(systemContext.publicMatchTimeLimitMs)
+        systemContext.timerId = session.instantiateEntity(entity)
+    }
+
+    // update timer entity
+    const timer = gameContext.entities[systemContext.timerId].RoundTimer
+    const timeRemaining = systemContext.publicMatchTimeLimitMs - systemContext.timeSinceMatchStartMs
+    if (timeRemaining <= 0) {
+        timer.msRemaining = 0
+    } else {
+        timer.msRemaining = timeRemaining
     }
 }
 

@@ -11,6 +11,9 @@ class HudOverlay extends Component {
       <div class="hud-overlay" data-cy="player-hud-overlay">
         <div class="player-info">
           <div class="unselectable-text">
+            ${this.props.msRemaining ? this._roundTimer() : ''}
+          </div>
+          <div class="unselectable-text">
             Player: ${this.props.playerId}
           </div>
           ${this.props.gameMode === 'elimination' ?
@@ -91,6 +94,18 @@ class HudOverlay extends Component {
         }).join('')}
       </div>
     `
+  }
+
+  _roundTimer() {
+    const msRemaining = this.props.msRemaining
+
+    // format time to MM:SS
+    const minutes = Math.floor(msRemaining / 60000)
+    const seconds = Math.floor((msRemaining % 60000) / 1000)
+
+    const formattedTime = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`
+
+    return `Time Remaining: ${formattedTime}`
   }
 }
 

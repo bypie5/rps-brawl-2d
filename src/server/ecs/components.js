@@ -174,6 +174,19 @@ const components = {
                 }
             }
         }
+    },
+    RoundTimer: {
+        name: 'RoundTimer',
+        schema: {
+            id: '/RoundTimer',
+            type: 'object',
+            properties: {
+                msRemaining: {
+                    type: 'number',
+                    required: true,
+                }
+            }
+        }
     }
 }
 

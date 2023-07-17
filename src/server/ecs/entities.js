@@ -201,6 +201,20 @@ function buildKillStreakScoreKeeper () {
     return entity
 }
 
+function buildRoundTimer (maxRoundTimeMs) {
+    const entity = {
+        [components.RoundTimer.name]: {
+            msRemaining: maxRoundTimeMs
+        }
+    }
+
+    if (!validateEntity(entity)) {
+        return
+    }
+
+    return entity
+}
+
 module.exports = {
     buildPlayerEntity,
     buildBarrierEntity,
@@ -208,5 +222,6 @@ module.exports = {
     buildSpawnPointEntity,
     buildTieBreakerManagerEntity,
     buildPowerUpEntity,
-    buildKillStreakScoreKeeper
+    buildKillStreakScoreKeeper,
+    buildRoundTimer
 }

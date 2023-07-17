@@ -338,6 +338,15 @@ class GameRender {
             }
         }
 
+        // find round timer if it exists
+        let roundTimerEntity = null
+        for (const [entityId, entityComponents] of Object.entries(entitiesInScene)) {
+            if (entityComponents.RoundTimer) {
+                roundTimerEntity = entityComponents
+                break
+            }
+        }
+
         let threeJsId = null
         if (entityComponents.Barrier && entityComponents.Transform && entityComponents.HitBox) {
             const spriteId = Number(entityComponents.Barrier.spriteId)
@@ -375,6 +384,7 @@ class GameRender {
                     activePowerUp: entityComponents.Avatar.stateData.activePowerUp,
                     isSpectating: this.spectatorMode,
                     killStreaks: scoreBoardEntity ? scoreBoardEntity.KillStreakScoreBoard.highestKillStreakByPlayerId : null,
+                    msRemaining: roundTimerEntity ? roundTimerEntity.RoundTimer.msRemaining : null,
                 })
 
                 this.uiElements.intercomTextUi = window.gameUiManager.addComponentToScene('intercomText', {
@@ -462,6 +472,15 @@ class GameRender {
             }
         }
 
+        // find round timer entity if it exists
+        let roundTimerEntity = null
+        for (const [entityId, entityComponents] of Object.entries(entitiesInScene)) {
+            if (entityComponents.RoundTimer) {
+                roundTimerEntity = entityComponents
+                break
+            }
+        }
+
         // real three.js entities are updated below
         if (entityComponents.Transform) {
             // translate to the new position
@@ -521,6 +540,7 @@ class GameRender {
                     isVisible: entityComponents.Avatar.state === 'alive'
                 },
                 killStreaks: scoreBoardEntity ? scoreBoardEntity.KillStreakScoreBoard.highestKillStreakByPlayerId : null,
+                msRemaining: roundTimerEntity ? roundTimerEntity.RoundTimer.msRemaining : null,
             })
 
             window.gameUiManager.updateComponent(this.uiElements.intercomTextUi, {
