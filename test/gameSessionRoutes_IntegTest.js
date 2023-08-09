@@ -9,7 +9,8 @@ const msgTypes = require('../src/common/rps2dProtocol')
 chai.use(chaiHttp)
 
 async function login (username, password) {
-    const res = await chai.request(server)
+    // login endpoint is disabled for duration of open beta
+    /*const res = await chai.request(server)
         .post('/api/user/login')
         .set('content-type', 'application/json')
         .send({
@@ -17,7 +18,9 @@ async function login (username, password) {
             password
         })
 
-    return res.body.authToken
+    return res.body.authToken*/
+
+    return services.authentication.generateTemporaryAccessToken(username)
 }
 
 describe('Testing Game Session Routes', () => {
