@@ -6,7 +6,9 @@ const { v4: uuidv4 } = require('uuid')
 const services = require('../services/services')
 
 router.post('/register', async (req, res) => {
-    const { username, email, password } = req.body
+    // disabled for duration of open beta
+    res.status(401).send('Registration disabled')
+    /*const { username, email, password } = req.body
     if (!username || !email || !password) {
         res.status(400).send('Missing username, email or password')
         return
@@ -21,16 +23,18 @@ router.post('/register', async (req, res) => {
         } else {
             res.status(500).send('Internal server error')
         }
-    }
+    }*/
 })
 
 router.post('/login', passport.authenticate('local'), (req, res) => {
-    const { username } = req.user
+    // disabled for duration of open beta
+    res.status(401).send('Login disabled')
+    /*const { username } = req.user
     console.log(`User ${username} logged in`)
     const jwtToken = services.authentication.generateToken(username)
     res.status(200).send({
         authToken: jwtToken
-    })
+    })*/
 })
 
 /**
