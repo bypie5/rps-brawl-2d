@@ -29,17 +29,16 @@ describe('Feedback Service test', () => {
     }
   })
 
-  it('Should throw error is user attempts to submit dangerous characters', async () => {
+  it('Should escape content if user attempts to submit dangerous characters', async () => {
     const mockFeedback = {
       type: 'bug',
-      message: 'test <script>alert("test")</script>'
+      message: 'test <script>alert("bad")</script>'
     }
 
-    try {
-      await services.feedback.submitFeedback(mockFeedback)
-    } catch (err) {
-      chai.expect(err.name).to.equal('InvalidFeedbackError')
-    }
+    const id = await services.feedback.submitFeedback(mockFeedback)
+    const feedback = await services.feedback.getFeedbackById(id)
+
+    chai.expect(feedback.message_content).to.equal('test &lt;script&gt;alert(&quot;bad&quot;)&lt;&#x2F;script&gt;')
   })
 
   it('Should save feedback to the database', async () => {
@@ -49,7 +48,6 @@ describe('Feedback Service test', () => {
     }
 
     const id = await services.feedback.submitFeedback(mockFeedback)
-
     const feedback = await services.feedback.getFeedbackById(id)
 
     chai.expect(feedback.feedback_type_id).to.equal(1)

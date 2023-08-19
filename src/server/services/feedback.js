@@ -57,12 +57,13 @@ class Feedback extends Service {
   async _saveFeedback (feedback) {
     const feedbackTypeId = await this._getFeedbackTypeId(feedback.type)
 
+    const id = uuidv4()
     const [rows, fields] = await this.dbPool.execute(
       `INSERT INTO feedback (id, feedback_type_id, message_content) VALUES (?, ?, ?)`,
-      [uuidv4(), feedbackTypeId, feedback.message]
+      [id, feedbackTypeId, feedback.message]
     )
 
-    return rows.insertId
+    return id
   }
 
   _checkFeedback (feedback) {
