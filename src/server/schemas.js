@@ -49,9 +49,29 @@ const sessionConfigSchema = {
     }
 }
 
+const userFeedbackSchema = {
+    id: '/UserFeedback',
+    type: 'object',
+    properties: {
+        type: {
+            type: 'string',
+            required: true,
+            enum: ['bug', 'comment', 'suggestion']
+        },
+        message: {
+            type: 'string',
+            required: true,
+            minLength: 1,
+            maxLength: 1000
+        }
+    }
+}
+
 v.addSchema(sessionConfigSchema, '/SessionConfig')
+v.addSchema(userFeedbackSchema, '/UserFeedback')
 
 module.exports = {
     v,
-    sessionConfigSchema
+    sessionConfigSchema,
+    userFeedbackSchema
 }

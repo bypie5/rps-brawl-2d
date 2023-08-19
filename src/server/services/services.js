@@ -10,12 +10,14 @@ const pool = mysql.createPool({
 const SessionManager = require('./sessionManager')
 const UserManager = require('./userManager')
 const Authentication = require('./authentication')
+const Feedback = require('./feedback')
 
 function initServices (dbPool) {
     return {
         sessionManager: new SessionManager(dbPool),
         userManager: new UserManager(dbPool),
-        authentication: new Authentication(dbPool)
+        authentication: new Authentication(dbPool),
+        feedback: new Feedback(dbPool)
     }
 }
 const services = initServices(pool)
