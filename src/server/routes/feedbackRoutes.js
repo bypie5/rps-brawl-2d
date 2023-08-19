@@ -9,6 +9,7 @@ router.post('/submit', async (req, res) => {
   try {
     await services.feedback.submitFeedback(feedback)
     res.status(200).send('Feedback submitted')
+    console.log(`Feedback submitted: ${feedback.type}`)
   } catch (err) {
     if (err.name === 'InvalidFeedbackError') {
       res.status(400).send('Invalid feedback')

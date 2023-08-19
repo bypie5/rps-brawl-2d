@@ -32,5 +32,6 @@ INSERT INTO `feedback_types_enum` (`feedback_type`) VALUES ('bug'), ('comment'),
 CREATE TABLE IF NOT EXISTS `feedback` (
     `id` VARCHAR(36) NOT NULL, -- UUID v4 in string format
     `feedback_type_id` INTEGER NOT NULL REFERENCES `feedback_types_enum`(`id`),
-    `message_content` TEXT NOT NULL
+    `message_content` TEXT NOT NULL,
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

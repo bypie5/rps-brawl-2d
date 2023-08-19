@@ -843,6 +843,49 @@ function backToMainMenu () {
 
 window.backToMainMenu = backToMainMenu
 
+function showFeedbackDialog() {
+    const dialog = document.getElementById("feedback-dialog")
+    dialog.showModal()
+}
+
+window.showFeedbackDialog = showFeedbackDialog
+
+async function submitFeedback(event) {
+    event.preventDefault()
+
+    const feedback = document.getElementById("feedback-text").value
+    const type = document.getElementById("feedback-type").value
+
+    const res = await fetch(`/api/feedback/submit`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            feedback: {
+                type,
+                message: feedback
+            }
+        })
+    })
+
+    if (res.status === 200) {
+        alert('Thank you for your feedback!')
+        hideFeedbackDialog()
+    } else {
+        alert('Failed to submit feedback')
+    }
+}
+
+function hideFeedbackDialog(event) {
+    const dialog = document.getElementById("feedback-dialog")
+    dialog.close()
+
+    document.getElementById("feedback-text").value = ""
+    const select = document.getElementById("feedback-type")
+    select.selectedIndex = 0
+}
+
 function disconnectFromSession () {
     sessionContext.ws.send(JSON.stringify({
         type: 'DISCONNECT_FROM_SESSION',
