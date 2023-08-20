@@ -28,6 +28,7 @@ services:
       - "3306:3306"
     volumes:
       - ./db:/docker-entrypoint-initdb.d
+      - ../data:/var/lib/mysql
   reverse-proxy:
     build: ./reverseProxy
     container_name: reverse-proxy
