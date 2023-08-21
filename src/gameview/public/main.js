@@ -887,6 +887,10 @@ function hideFeedbackDialog(event) {
 }
 
 function disconnectFromSession () {
+    if (!sessionContext.sessionId) {
+        return
+    }
+
     sessionContext.ws.send(JSON.stringify({
         type: 'DISCONNECT_FROM_SESSION',
         sessionId: sessionContext.sessionId

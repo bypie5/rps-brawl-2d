@@ -219,7 +219,7 @@ class Session extends EventEmitter {
             }))
         }
 
-        this.wsConnections.delete(username)
+        this.onWsDisconnection(username)
         this._removePlayerEntityFromSession(username)
 
         console.log(`Player ${username} left session ${this.id}`)

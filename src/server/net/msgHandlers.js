@@ -58,9 +58,11 @@ function disconnectFromSession (ws, msg) {
         sessionManager.disconnectPlayerFromSession(ws.id, msg.sessionId)
     }
 
-    ws.on('close', () => {
-        // do nothing since player is not connected to session
-    })
+    // remove the close listener, so we take no action when the ws closes
+    // since disconnectPlayerFromSession already takes care of that
+    ws.removeEventListener('close', () => {
+        session.onWsDisconnection(ws.id)
+    }, false)
 }
 
 function onGameplayCommand(ws, msg) {
