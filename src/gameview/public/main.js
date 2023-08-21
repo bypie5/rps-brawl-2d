@@ -833,10 +833,10 @@ async function continueAsGuest () {
 window.continueAsGuest = continueAsGuest
 
 function backToMainMenu () {
+    disconnectFromSession()
+
     sessionContext.sessionInfo.renderer.stop()
     sessionContext.sessionInfo = deepCopy(defaultSessionContext.sessionInfo)
-
-    disconnectFromSession()
 
     sessionContext.sessionId = null
 }

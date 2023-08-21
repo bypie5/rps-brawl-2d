@@ -106,7 +106,7 @@ function handleMessage (ws, message) {
 
     const validationResult = v.validate(msg, msgType.schema)
     if (!validationResult.valid) {
-        console.log('Invalid message: ' + validationResult.errors)
+        console.log(`Invalid message (type: ${msg.type}): ${validationResult.errors}`)
         return
     }
 
