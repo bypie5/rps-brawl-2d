@@ -66,6 +66,24 @@ const gameplayCommands = {
                 }
             }
         }
+    },
+    stateChange: {
+        type: commandTypes.STATE_CHANGE,
+        schema: {
+            id: '/StateChangeGameplayCommand',
+            properties: {
+                entityId: {
+                    type: 'string',
+                    required: true
+                },
+                state: {
+                    type: 'string',
+                    required: true,
+                    enum: ['rock', 'paper', 'scissors']
+                }
+            }
+        }
+
     }
 }
 
@@ -213,6 +231,29 @@ const handlers = {
 
             const newState = shiftRps(Avatar.stateData.rockPaperScissors, directionEnum.RIGHT)
             Avatar.stateData.rockPaperScissors = newState
+            Avatar.stateData.stateSwitchCooldownTicks = Avatar.stateData.stateSwitchCooldownMaxTicks
+        }
+    },
+    [gameplayCommands.stateChange.type]: (sender, payload) => {
+        const session = services.sessionManager.findSessionByUser(sender)
+        if (session) {
+            const { entityId, state } = payload
+            const { Avatar } = session.getEntity(entityId)
+            if (!Avatar) {
+                return
+            }
+
+            if (Avatar.state === 'dead'
+              || Avatar.state === 'respawning'
+              || Avatar.state === 'spectating') {
+                return
+            }
+
+            if (Avatar.stateData.stateSwitchCooldownTicks > 0) {
+                return
+            }
+
+            Avatar.stateData.rockPaperScissors = state
             Avatar.stateData.stateSwitchCooldownTicks = Avatar.stateData.stateSwitchCooldownMaxTicks
         }
     }
