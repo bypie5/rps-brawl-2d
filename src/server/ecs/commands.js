@@ -108,6 +108,10 @@ const handlers = {
                 return
             }
 
+            if (Avatar.playerId !== sender) {
+                return // prevent modifying other players
+            }
+
             if (Avatar.state !== 'alive' || !HitBox.physicsEnabled) {
                 return
             }
@@ -161,9 +165,13 @@ const handlers = {
         const session = services.sessionManager.findSessionByUser(sender)
         if (session) {
             const { entityId, direction } = payload
-            const { Transform } = session.getEntity(entityId)
-            if (!Transform) {
+            const { Transform, Avatar } = session.getEntity(entityId)
+            if (!Transform || !Avatar) {
                 return
+            }
+
+            if (Avatar.playerId !== sender) {
+                return // prevent modifying other players
             }
 
             switch (direction) {
@@ -193,6 +201,10 @@ const handlers = {
                 return
             }
 
+            if (Avatar.playerId !== sender) {
+                return // prevent modifying other players
+            }
+
             if (
                 Avatar.state === 'dead'
                 || Avatar.state === 'respawning'
@@ -219,6 +231,10 @@ const handlers = {
                 return
             }
 
+            if (Avatar.playerId !== sender) {
+                return // prevent modifying other players
+            }
+
             if (Avatar.state === 'dead'
                 || Avatar.state === 'respawning'
                 || Avatar.state === 'spectating') {
@@ -241,6 +257,10 @@ const handlers = {
             const { Avatar } = session.getEntity(entityId)
             if (!Avatar) {
                 return
+            }
+
+            if (Avatar.playerId !== sender) {
+                return // prevent modifying other players
             }
 
             if (Avatar.state === 'dead'
