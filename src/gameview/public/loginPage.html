@@ -3,7 +3,7 @@
     <head>
         <meta charset="utf-8">
         <link rel="icon" type="image/png" href="./favicon.png" />
-        <title>Rock, Paper, Scissors: Brawl 2D - Login</title>
+        <title>Rock, Paper, Scissors: Brawl - Open Beta</title>
         <style>
             body { margin: 0 }
         </style>
@@ -12,24 +12,20 @@
     </head>
     <body onload="onRouteLoad()">
         <div id="login-header">
-            <h1>Rock, Paper, Scissors: Brawl 2D - Login</h1>
-            <h2>Please sign into your account.</h2>
+            <h1>Rock, Paper, Scissors: Brawl - Open Beta</h1>
+        </div>
+        <div id="open-beta-desc">
+            <h2 id="open-beta-header">Welcome to the Open Beta!</h2>
+            <p class="open-beta-description">
+                This is a prototype of Rock, Paper, Scissors: Brawl. The game is still in development.
+                <b>Please join on a desktop computer.</b>
+            </p>
         </div>
         <div id="login-container">
+            <div id="login-guest-call-to-action">Ready to play?</div>
             <button id="guest-button" onclick="continueAsGuest(event)">
                 Continue as Guest
             </button>
-            <form id="login-form" action="#" onsubmit="login(event)">
-                <div id="login-input-field">
-                    <label for="username">Username:</label>
-                    <input type="text" id="username" name="username" data-cy="username-input">
-                </div>
-                <div id="login-input-field">
-                    <label for="password">Password:</label>
-                    <input type="password" id="password" name="password" data-cy="password-input">
-                </div>
-                <input type="submit" value="Login" data-cy="login-button">
-            </form>
         </div>
     </body>
 </html>

@@ -18,10 +18,13 @@ describe('Testing User Routes', () => {
                 password: 'test'
             })
 
-        chai.expect(res).to.have.status(200)
-        chai.expect(res.body).to.be.a('object')
-        chai.expect(res.body).to.have.property('authToken')
+        // TODO: restore login function test after open beta
+        // TODO: restore mock login function in gameSessionRoutes_IntegTest.js and playerControls_IntegTest.js
+        chai.expect(res).to.have.status(401)
+        // chai.expect(res).to.have.status(200)
+        // chai.expect(res.body).to.be.a('object')
+        // chai.expect(res.body).to.have.property('authToken')
 
-        services.authentication.validUserCredentials.restore()
+        // services.authentication.validUserCredentials.restore()
     })
 })

@@ -400,7 +400,6 @@ class GameRender {
                 })
 
                 this.uiElements.stateChangeIndicatorsUi = window.gameUiManager.addComponentToScene('stateChangeIndicators', {
-                    playerRpsState: entityComponents.Avatar.stateData.rockPaperScissors,
                     isOnCoolDown: entityComponents.Avatar.stateData.stateSwitchCooldownTicks > 0,
                 })
 
@@ -564,8 +563,7 @@ class GameRender {
             })
 
             window.gameUiManager.updateComponent(this.uiElements.stateChangeIndicatorsUi, {
-                playerRpsState: entityComponents.Avatar.stateData.rockPaperScissors,
-                isOnCoolDown: entityComponents.Avatar.stateData.stateSwitchCooldownTicks > 0,
+                isOnCoolDown: entityComponents.Avatar.stateData.stateSwitchCooldownTicks > 0
             })
         }
 

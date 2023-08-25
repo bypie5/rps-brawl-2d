@@ -194,26 +194,15 @@ function _stopMoveCommand (entityId, direction) {
     }))
 }
 
-function _shiftRpsState (entityId, direction) {
-    if (direction === 'LEFT') {
-        sessionContext.ws.send(JSON.stringify({
-            type: "GAMEPLAY_COMMAND",
-            gameplayCommandType: "STATE_SHIFT_LEFT",
-            payload: {
-                entityId,
-            }
-        }))
-    }
-
-    if (direction === 'RIGHT') {
-        sessionContext.ws.send(JSON.stringify({
-            type: "GAMEPLAY_COMMAND",
-            gameplayCommandType: "STATE_SHIFT_RIGHT",
-            payload: {
-                entityId,
-            }
-        }))
-    }
+function _changeRpsState (entityId, state) {
+    sessionContext.ws.send(JSON.stringify({
+        type: "GAMEPLAY_COMMAND",
+        gameplayCommandType: "STATE_CHANGE",
+        payload: {
+            entityId,
+            state
+        }
+    }))
 }
 
 async function _onMessage (event) {
@@ -243,6 +232,13 @@ async function _onMessage (event) {
             break
         case "ERROR":
             console.log('Received error message: ' + msg.message)
+
+            if (msg.errorCode === 'INVALID_AUTH_TOKEN') {
+                alert('Your session has expired, please login again')
+                sessionContext.forceWsClose = true
+                sessionContext.ws.close()
+                await _loadHtmlContent(pages.login)
+            }
             break
         case "GAMESTATE_UPDATE":
             if (!msg.gameContext) {
@@ -429,46 +425,50 @@ async function _onGameroomLoaded () {
 
         // add event listeners for player input
         document.addEventListener('keydown', (event) => {
-            if (event.key === 'w') {
+            if (event.key === 'w' || event.key === 'W') {
                 _sendMoveCommand(sessionContext.sessionInfo.playersAvatarId, 'up')
             }
             
-            if (event.key === 'a') {
+            if (event.key === 'a' || event.key === 'A') {
                 _sendMoveCommand(sessionContext.sessionInfo.playersAvatarId, 'left')
             }
             
-            if (event.key === 's') {
+            if (event.key === 's' || event.key === 'S') {
                 _sendMoveCommand(sessionContext.sessionInfo.playersAvatarId, 'down')
             }
             
-            if (event.key === 'd') {
+            if (event.key === 'd' || event.key === 'D') {
                 _sendMoveCommand(sessionContext.sessionInfo.playersAvatarId, 'right')
             }
         })
 
         document.addEventListener('keyup', (event) => {
-            if (event.key === 'w') {
+            if (event.key === 'w' || event.key === 'W') {
                 _stopMoveCommand(sessionContext.sessionInfo.playersAvatarId, 'up')
             }
             
-            if (event.key === 'a') {
+            if (event.key === 'a' || event.key === 'A') {
                 _stopMoveCommand(sessionContext.sessionInfo.playersAvatarId, 'left')
             }
             
-            if (event.key === 's') {
+            if (event.key === 's' || event.key === 'S') {
                 _stopMoveCommand(sessionContext.sessionInfo.playersAvatarId, 'down')
             }
             
-            if (event.key === 'd') {
+            if (event.key === 'd' || event.key === 'D') {
                 _stopMoveCommand(sessionContext.sessionInfo.playersAvatarId, 'right')
             }
 
-            if (event.key === 'q') {
-                _shiftRpsState(sessionContext.sessionInfo.playersAvatarId, 'LEFT')
+            if (event.key === 'j' || event.key === 'J') {
+                _changeRpsState(sessionContext.sessionInfo.playersAvatarId, 'rock')
             }
 
-            if (event.key === 'e') {
-                _shiftRpsState(sessionContext.sessionInfo.playersAvatarId, 'RIGHT')
+            if (event.key === 'k' || event.key === 'K') {
+                _changeRpsState(sessionContext.sessionInfo.playersAvatarId, 'paper')
+            }
+
+            if (event.key === 'l' || event.key === 'L') {
+                _changeRpsState(sessionContext.sessionInfo.playersAvatarId, 'scissors')
             }
         })
     } catch (e) {
@@ -654,17 +654,6 @@ function _compileTemplates (doc, pageName) {
                             return getSessionContext().username
                         }
                         return tag
-                    },
-                    'create-private-match': (tag) => {
-                        if (tag === '{{bottypeoptions}}') {
-                            let options = ''
-                            for (const botType of getSessionContext().sessionInfo.supportedAgentTypes) {
-                                options += `<option value="${botType}">${botType}</option>`
-                            }
-
-                            return options
-                        }
-                        return tag.replace('{{', '').replace('}}', '')
                     }
                 }
             )
@@ -837,17 +826,64 @@ async function continueAsGuest () {
 window.continueAsGuest = continueAsGuest
 
 function backToMainMenu () {
+    disconnectFromSession()
+
     sessionContext.sessionInfo.renderer.stop()
     sessionContext.sessionInfo = deepCopy(defaultSessionContext.sessionInfo)
-
-    disconnectFromSession()
 
     sessionContext.sessionId = null
 }
 
 window.backToMainMenu = backToMainMenu
 
+function showFeedbackDialog() {
+    const dialog = document.getElementById("feedback-dialog")
+    dialog.showModal()
+}
+
+window.showFeedbackDialog = showFeedbackDialog
+
+async function submitFeedback(event) {
+    event.preventDefault()
+
+    const feedback = document.getElementById("feedback-text").value
+    const type = document.getElementById("feedback-type").value
+
+    const res = await fetch(`/api/feedback/submit`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            feedback: {
+                type,
+                message: feedback
+            }
+        })
+    })
+
+    if (res.status === 200) {
+        alert('Thank you for your feedback!')
+        hideFeedbackDialog()
+    } else {
+        alert('Failed to submit feedback')
+    }
+}
+
+function hideFeedbackDialog(event) {
+    const dialog = document.getElementById("feedback-dialog")
+    dialog.close()
+
+    document.getElementById("feedback-text").value = ""
+    const select = document.getElementById("feedback-type")
+    select.selectedIndex = 0
+}
+
 function disconnectFromSession () {
+    if (!sessionContext.sessionId) {
+        return
+    }
+
     sessionContext.ws.send(JSON.stringify({
         type: 'DISCONNECT_FROM_SESSION',
         sessionId: sessionContext.sessionId

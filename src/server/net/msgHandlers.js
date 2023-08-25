@@ -58,9 +58,11 @@ function disconnectFromSession (ws, msg) {
         sessionManager.disconnectPlayerFromSession(ws.id, msg.sessionId)
     }
 
-    ws.on('close', () => {
-        // do nothing since player is not connected to session
-    })
+    // remove the close listener, so we take no action when the ws closes
+    // since disconnectPlayerFromSession already takes care of that
+    ws.removeEventListener('close', () => {
+        session.onWsDisconnection(ws.id)
+    }, false)
 }
 
 function onGameplayCommand(ws, msg) {
@@ -69,7 +71,18 @@ function onGameplayCommand(ws, msg) {
 
 function onUpgradeAnonymousWsConnection(ws, msg) {
     const authToken = msg.authToken
-    const claims = authentication.getJwtClaims(authToken)
+
+    let claims
+    try {
+        claims = authentication.getJwtClaims(authToken)
+    } catch (err) {
+        ws.send(JSON.stringify({
+            type: msgTypes.serverToClient.ERROR.type,
+            errorCode: 'INVALID_AUTH_TOKEN',
+            message: 'Invalid auth token'
+        }))
+        return
+    }
 
     const oldId = ws.id
     ws.id = claims.username
@@ -95,7 +108,7 @@ function handleMessage (ws, message) {
 
     const validationResult = v.validate(msg, msgType.schema)
     if (!validationResult.valid) {
-        console.log('Invalid message: ' + validationResult.errors)
+        console.log(`Invalid message (type: ${msg.type}): ${validationResult.errors}`)
         return
     }
 

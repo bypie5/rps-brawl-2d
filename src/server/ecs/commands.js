@@ -66,6 +66,24 @@ const gameplayCommands = {
                 }
             }
         }
+    },
+    stateChange: {
+        type: commandTypes.STATE_CHANGE,
+        schema: {
+            id: '/StateChangeGameplayCommand',
+            properties: {
+                entityId: {
+                    type: 'string',
+                    required: true
+                },
+                state: {
+                    type: 'string',
+                    required: true,
+                    enum: ['rock', 'paper', 'scissors']
+                }
+            }
+        }
+
     }
 }
 
@@ -88,6 +106,10 @@ const handlers = {
             const { Transform, Avatar, HitBox } = session.getEntity(entityId)
             if (!Transform || !Avatar || !HitBox) {
                 return
+            }
+
+            if (Avatar.playerId !== sender) {
+                return // prevent modifying other players
             }
 
             if (Avatar.state !== 'alive' || !HitBox.physicsEnabled) {
@@ -143,9 +165,13 @@ const handlers = {
         const session = services.sessionManager.findSessionByUser(sender)
         if (session) {
             const { entityId, direction } = payload
-            const { Transform } = session.getEntity(entityId)
-            if (!Transform) {
+            const { Transform, Avatar } = session.getEntity(entityId)
+            if (!Transform || !Avatar) {
                 return
+            }
+
+            if (Avatar.playerId !== sender) {
+                return // prevent modifying other players
             }
 
             switch (direction) {
@@ -175,6 +201,10 @@ const handlers = {
                 return
             }
 
+            if (Avatar.playerId !== sender) {
+                return // prevent modifying other players
+            }
+
             if (
                 Avatar.state === 'dead'
                 || Avatar.state === 'respawning'
@@ -201,6 +231,10 @@ const handlers = {
                 return
             }
 
+            if (Avatar.playerId !== sender) {
+                return // prevent modifying other players
+            }
+
             if (Avatar.state === 'dead'
                 || Avatar.state === 'respawning'
                 || Avatar.state === 'spectating') {
@@ -213,6 +247,38 @@ const handlers = {
 
             const newState = shiftRps(Avatar.stateData.rockPaperScissors, directionEnum.RIGHT)
             Avatar.stateData.rockPaperScissors = newState
+            Avatar.stateData.stateSwitchCooldownTicks = Avatar.stateData.stateSwitchCooldownMaxTicks
+        }
+    },
+    [gameplayCommands.stateChange.type]: (sender, payload) => {
+        const session = services.sessionManager.findSessionByUser(sender)
+        if (session) {
+            const { entityId, state } = payload
+            const { Avatar } = session.getEntity(entityId)
+            if (!Avatar) {
+                return
+            }
+
+            if (Avatar.playerId !== sender) {
+                return // prevent modifying other players
+            }
+
+            if (Avatar.state === 'dead'
+              || Avatar.state === 'respawning'
+              || Avatar.state === 'spectating') {
+                return
+            }
+
+            if (Avatar.stateData.stateSwitchCooldownTicks > 0) {
+                return
+            }
+
+            // change state only if not already in that state
+            if (Avatar.stateData.rockPaperScissors === state) {
+                return
+            }
+
+            Avatar.stateData.rockPaperScissors = state
             Avatar.stateData.stateSwitchCooldownTicks = Avatar.stateData.stateSwitchCooldownMaxTicks
         }
     }

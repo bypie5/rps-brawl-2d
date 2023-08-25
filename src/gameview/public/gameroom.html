@@ -12,13 +12,32 @@
     </head>
     <body onload="onRouteLoad()">
         <div id="gameroom-header">
-            <h1>Rock, Paper, Scissors: Brawl 2D - Prototype</h1>
+            <h1>Rock, Paper, Scissors: Brawl - Prototype</h1>
             <p id="gameroom-header-subtext">Scroll down to see full game screen.</p>
             <button id="leave-match-button" onclick="backToMainMenu()">Leave Game</button>
+            <button id="feedback-button" onclick="showFeedbackDialog()">Give Us Feedback</button>
         </div>
         <div id="game-container">
             <canvas id="game-canvas"></canvas>
             <div id="game-ui"></div>
         </div>
+        <dialog id="feedback-dialog">
+            <h2>Feedback</h2>
+            <form id="feedback-form" onsubmit="submitFeedback(event)" method="dialog">
+                <p>
+                    <label>Type of feedback:</label>
+                    <select id="feedback-type">
+                        <option value="bug">Bug</option>
+                        <option value="suggestion">Suggestion</option>
+                        <option value="comment">Other</option>
+                    </select>
+                </p>
+                <textarea id="feedback-text" rows="5" cols="50" maxlength="1000"></textarea>
+                <div>
+                    <button id="feedback-submit-button" type="submit" form="feedback-form">Submit</button>
+                    <button id="feedback-cancel-button" onclick="hideFeedbackDialog()" type="reset">Cancel</button>
+                </div>
+            </form>
+        </dialog>
     </body>
 </html>
