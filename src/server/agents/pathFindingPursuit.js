@@ -137,7 +137,7 @@ class PathFindingPursuit extends CpuAgent {
       const myX = myAvatar.Transform.xPos
       const myY = myAvatar.Transform.yPos
 
-      const epsilon = context.latestGameState.gridWidth * 0.1
+      const epsilon = context.latestGameState.gridWidth * 0.09
       this._moveToTarget(myX, myY, targetX, targetY, epsilon)
     }, 'move-towards-player')
 
@@ -213,7 +213,7 @@ class PathFindingPursuit extends CpuAgent {
       const myX = myAvatar.Transform.xPos
       const myY = myAvatar.Transform.yPos
 
-      const epsilon = context.latestGameState.gridWidth * 0.1
+      const epsilon = context.latestGameState.gridWidth * 0.09
       this._moveToTarget(myX, myY, targetX, targetY, epsilon)
     }, 'move-towards-player')
 

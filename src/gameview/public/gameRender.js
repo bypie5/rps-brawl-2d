@@ -104,7 +104,7 @@ function _buildPlayerEntity (components) {
 
     const spriteMaterial = _getRpsSpriteMaterial(Avatar.stateData.rockPaperScissors)
     const sprite = new THREE.Sprite(spriteMaterial)
-    sprite.scale.set(HitBox.width, HitBox.width, 1)
+    sprite.scale.set(HitBox.width, HitBox.height, 1)
 
     sprite.position.x = Transform.xPos
     sprite.position.y = Transform.yPos
@@ -113,6 +113,7 @@ function _buildPlayerEntity (components) {
     const shieldPowerUpSpriteTile = new THREE.TextureLoader().load('assets/shield_powerup.png')
     const shieldPowerUpSpriteMaterial = new THREE.SpriteMaterial({ map: shieldPowerUpSpriteTile })
     const shieldPowerUpSprite = new THREE.Sprite(shieldPowerUpSpriteMaterial)
+    shieldPowerUpSprite.scale.set(HitBox.width * 0.6, HitBox.height * 1.1, 1)
     shieldPowerUpSprite.name = 'shield'
     sprite.add(shieldPowerUpSprite)
 
@@ -121,6 +122,7 @@ function _buildPlayerEntity (components) {
     const speedPowerUpSpriteTile = new THREE.TextureLoader().load('assets/speed_powerup.png')
     const speedPowerUpSpriteMaterial = new THREE.SpriteMaterial({ map: speedPowerUpSpriteTile })
     const speedPowerUpSprite = new THREE.Sprite(speedPowerUpSpriteMaterial)
+    speedPowerUpSprite.scale.set(HitBox.width * 0.6, HitBox.height * 1.1, 1)
     speedPowerUpSprite.name = 'speed'
     sprite.add(speedPowerUpSprite)
 

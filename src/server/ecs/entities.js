@@ -45,8 +45,8 @@ function buildPlayerEntity (playerId, x, y) {
             }
         },
         [components.HitBox.name]: {
-            width: 3,
-            height: 2.2,
+            width: 2.25,
+            height: 1.5,
             physicsEnabled: true
         }
     }
