@@ -1,6 +1,7 @@
 const ws = require('ws')
 const { v4: uuidv4 } = require('uuid')
 
+const logger = require('../util/logger')
 const handleMessage = require('./msgHandlers')
 const msgTypes = require('../../common/rps2dProtocol')
 const services = require('../services/services')
@@ -41,7 +42,7 @@ class WebSocketServer {
         ws.onIdChange = this._onWsIdChanged
         ws.server = this
         if (!req.headers['authorization']) {
-            console.log('Anonymous connection opened')
+            logger.info('Anonymous connection opened')
             ws.id = uuidv4()
         } else {
             const authToken = req.headers['authorization'].split(' ')[1]
@@ -74,7 +75,7 @@ class WebSocketServer {
     }
 
     _onWsIdChanged (newId, oldId) {
-        console.log(`WebSocket id changed from ${oldId} to ${newId}`)
+        logger.info(`WebSocket id changed from ${oldId} to ${newId}`)
         const ws = this.server.connections.get(oldId)
         this.server.connections.delete(oldId)
         this.server.connections.set(newId, ws)
@@ -86,7 +87,7 @@ class WebSocketServer {
               ws.lastPingSent &&
               ((Date.now() - ws.lastPongSeen > this.intervalBetweenHeartbeats + 125) || !ws.lastPongSeen)
             ) {
-                console.log(`Closing connection to ${ws.id} due to heartbeat timeout`)
+                logger.info(`Closing connection to ${ws.id} due to heartbeat timeout`)
                 ws.close()
             } else {
                 ws.send(JSON.stringify({

@@ -1,6 +1,8 @@
 const fs = require('fs')
 const crypto = require('crypto')
 
+const logger = require('../util/logger')
+
 function getNavGridFromFilePath (filePath) {
     return filePath.replace('.json', '_navGrid.json')
 }
@@ -166,7 +168,7 @@ function generateNavGridFile (distanceMap, navigableTileKeys, filePath, checksum
     const navGridFilePath = getNavGridFromFilePath(filePath)
     fs.writeFileSync(navGridFilePath, navGridStr)
 
-    console.log(`Generated nav grid for ${filePath}`)
+    logger.info(`Generated nav grid for ${filePath}`)
 }
 
 function getNavGrid (filePath) {

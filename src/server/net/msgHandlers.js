@@ -6,6 +6,8 @@ const { sessionManager, authentication } = services
 
 const { enqueueCommand } = require('../ecs/commands')
 
+const logger = require('../util/logger')
+
 function onConnectToSession(ws, msg) {
     const session = sessionManager.findSessionById(msg.sessionId)
     if (!session) {
@@ -87,7 +89,7 @@ function onUpgradeAnonymousWsConnection(ws, msg) {
     const oldId = ws.id
     ws.id = claims.username
     if (oldId) {
-        console.log(`Upgraded anonymous connection (id ${oldId}) for user ${claims.username}`)
+        logger.info(`Upgraded anonymous connection (id ${oldId}) for user ${claims.username}`)
     }
 
     ws.onIdChange(ws.id, oldId)
@@ -102,13 +104,13 @@ function handleMessage (ws, message) {
     const msgType = msgTypes.clientToServer[msg.type]
 
     if (msgType === undefined) {
-        console.log('Unknown message type: ' + msg.type)
+        logger.warn(`Unknown message type: ${msg.type}`)
         return
     }
 
     const validationResult = v.validate(msg, msgType.schema)
     if (!validationResult.valid) {
-        console.log(`Invalid message (type: ${msg.type}): ${validationResult.errors}`)
+        logger.warn(`Invalid message (type: ${msg.type}): ${validationResult.errors}`)
         return
     }
 
@@ -145,7 +147,7 @@ function handleMessage (ws, message) {
             disconnectFromSession(ws, msg)
             break
         default:
-            console.log('Unknown message type: ' + msg.type)
+            logger.warn(`Unknown message type: ${msg.type}`)
             break
     }
 }

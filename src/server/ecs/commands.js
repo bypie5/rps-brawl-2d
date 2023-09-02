@@ -3,6 +3,7 @@ const { v } = require('../schemas')
 const { directionEnum, shiftRps } = require('./util')
 
 const services = require('../services/services')
+const logger = require('../util/logger')
 
 const gameplayCommands = {
     move: {
@@ -291,7 +292,7 @@ function handleGameplayCommand(ws, msg, type) {
         const handlerType = commandTypeToHandlerType[type]
         const validationResult = v.validate(msg, gameplayCommands[handlerType].schema)
         if (!validationResult.valid) {
-            console.log('Invalid message: ' + validationResult.errors)
+            logger.error('Invalid message: ' + validationResult.errors)
             return
         }
 

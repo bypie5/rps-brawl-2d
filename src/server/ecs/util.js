@@ -1,5 +1,7 @@
 const util = require('node:util')
 
+const logger = require('../util/logger')
+
 const directionEnum = {
     LEFT: 'LEFT',
     RIGHT: 'RIGHT',
@@ -445,7 +447,7 @@ function midMatchTieBreakerFSM (tieBreakerEntity, gameContext, onTournamentFinis
             onTournamentFinished(winner)
             break
         default:
-            console.log('unknown state', state)
+            logger.error('unknown state ' + state)
             break
     }
 }

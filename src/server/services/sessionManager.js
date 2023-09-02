@@ -5,6 +5,8 @@ const { v4: uuidv4 } = require('uuid')
 const { v, sessionConfigSchema } = require('../schemas')
 const pako = require('pako')
 
+const logger = require('../util/logger')
+
 const msgTypes = require('../../common/rps2dProtocol')
 const {
     buildPlayerEntity,
@@ -203,7 +205,7 @@ class Session extends EventEmitter {
             this._addPlayerEntityToSession(username)
         }
 
-        console.log(`Player ${username} joined session ${this.id}`)
+        logger.info(`Player ${username} joined session ${this.id}`)
         this.timeLastMessageReceieved.set(username, Date.now())
     }
 
@@ -222,7 +224,7 @@ class Session extends EventEmitter {
         this.onWsDisconnection(username)
         this._removePlayerEntityFromSession(username)
 
-        console.log(`Player ${username} left session ${this.id}`)
+        logger.info(`Player ${username} left session ${this.id}`)
 
         this.emit(sessionEvents.PLAYER_DISCONNECTED, username, this.id)
     }
@@ -295,12 +297,12 @@ class Session extends EventEmitter {
 
     onWsConnection (ws) {
         this.wsConnections.set(ws.id, ws)
-        console.log(`Player ${ws.id} WebSocket connected to session: ${this.id}`)
+        logger.info(`Player ${ws.id} WebSocket connected to session: ${this.id}`)
     }
 
     onWsDisconnection (id) {
         this.wsConnections.delete(id)
-        console.log(`Player ${id} WebSocket disconnected from session: ${this.id}`)
+        logger.info(`Player ${id} WebSocket disconnected from session: ${this.id}`)
     }
 
     broadcast (msg, fullMsg) {
@@ -399,7 +401,7 @@ class Session extends EventEmitter {
 
         this.config[key] = value
 
-        console.log(`Added attribute to session config: ${key} = ${value}`)
+        logger.info(`Added attribute to session config: ${key} = ${value}`)
     }
 
     getEntity (id) {
@@ -423,7 +425,7 @@ class Session extends EventEmitter {
 
         this.map = map
 
-        console.log(`Generating starting conditions for map: ${mapId}`)
+        logger.info(`Generating starting conditions for map: ${mapId}`)
 
         const mapGridWith = map.getGridWidth()
         map.findBarrierTiles((x, y, spriteId) => {
@@ -498,7 +500,7 @@ class Session extends EventEmitter {
 
         let deltaTime = Date.now() - tickRenderStart
         if (deltaTime > this.frameRate) {
-            console.warn(`Game loop took ${deltaTime}ms to execute in session: ${this.id}`)
+            logger.warn(`Game loop took ${deltaTime}ms to execute in session: ${this.id}`)
         }
     }
 
@@ -771,7 +773,7 @@ class SessionManager extends Service {
             this.sessionIdToFriendlyName.delete(session.id)
         }
 
-        console.log(`Session ${id} ended`)
+        logger.info(`Session ${id} ended`)
     }
 
     stopPublicSession (id) {
@@ -783,7 +785,7 @@ class SessionManager extends Service {
         this.stopSession(id)
 
         this.publicSessionIds.delete(id)
-        console.log(`Session ${id} ended`)
+        logger.info(`Session ${id} ended`)
 
         this._manageNumberOfPublicSessions((id) => {
             this._managePublicBotToHumanRatioForSession(id)
@@ -906,7 +908,7 @@ class SessionManager extends Service {
             if (!this._isSessionFullOfHumans(sessionId)) {
                 allSessionAreFull = false
             } else {
-                console.log(`Session ${sessionId} is full`)
+                logger.info(`Session ${sessionId} is full`)
             }
 
             if (
@@ -926,7 +928,7 @@ class SessionManager extends Service {
                 onSessionCreated(id)
             }
         } else if (this.publicSessionIds.size === this.maxNumberOfPublicSessions) {
-            console.log('Max number of public sessions reached!')
+            logger.info('Max number of public sessions reached!')
             throw new Error('Max number of public sessions reached')
         }
     }
@@ -939,10 +941,10 @@ class SessionManager extends Service {
         } catch (e) {
             if (e instanceof FailedToAddAgentError) {
                 // we failed to invite an agent to the session. This is fine, we will try again later
-                console.log('Failed to invite agent to session')
+                logger.warn('Failed to invite agent to session')
             } else if (e instanceof SessionNotFoundError) {
                 // the session we were trying to add an agent to no longer exists. This is fine, we will try again later
-                console.log('Session no longer exists')
+                logger.warn('Session no longer exists')
             } else {
                 throw e
             }
@@ -957,10 +959,10 @@ class SessionManager extends Service {
         } catch (e) {
             if (e instanceof FailedToRemoveAgentError) {
                 // we failed to remove an agent from the session. This is fine, we will try again later
-                console.log('Failed to remove agent from session')
+                logger.warn('Failed to remove agent from session')
             } else if (e instanceof SessionNotFoundError) {
                 // the session we were trying to remove an agent from no longer exists. This is fine, we will try again later
-                console.log('Session no longer exists')
+                logger.warn('Session no longer exists')
             } else {
                 throw e
             }
@@ -995,11 +997,11 @@ class SessionManager extends Service {
 
         session.on(sessionEvents.KICKED_PLAYER, (username, sessionId) => {
             this.disconnectPlayerFromSession(username, sessionId, 'Kicked for inactivity', false)
-            console.log(`Kicked player ${username} from session ${sessionId}`)
+            logger.info(`Kicked player ${username} from session ${sessionId}`)
         })
 
         session.on(sessionEvents.SESSION_TIME_LIMIT_REACHED, (sessionId) => {
-            console.log(`Session ${sessionId} time limit reached`)
+            logger.info(`Session ${sessionId} time limit reached`)
             if (this.publicSessionIds.has(sessionId)) {
                 this.stopPublicSession(sessionId)
             } else {

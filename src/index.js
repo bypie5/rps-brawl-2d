@@ -7,6 +7,8 @@ const path = require('path')
 
 require('dotenv').config()
 
+const logger = require('./server/util/logger')
+
 const services = require('./server/services/services')
 const registerRoutes = require('./server/routes/routes')
 const WebSocketServer = require('./server/net/webSocketServer')
@@ -20,8 +22,7 @@ function init () {
 try {
     init()
 } catch (err) {
-    console.log(err)
-    console.log('Failed to initialize server')
+    logger.error('Failed to initialize server: ' + e)
 }
 
 const app = express()
@@ -94,12 +95,12 @@ passport.use(new JwtStrategy(jwtOps,
 registerRoutes(app)
 
 app.listen(port, () => {
-    console.log(`Server is running on port ${port}`)
+    logger.info(`Server is running on port ${port}`)
 
     const wss = new WebSocketServer(wsPort, () => {
-        console.log(`WebSocket server is running on port ${wsPort}`)
+        logger.info(`WebSocket server is running on port ${wsPort}`)
     }, () => {
-        console.log('WebSocket server closed')
+        logger.info('WebSocket server closed')
     })
 
     wss.start()

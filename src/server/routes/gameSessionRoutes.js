@@ -1,6 +1,7 @@
 const express = require('express')
 const router = express.Router()
 
+const logger = require('../util/logger')
 const services = require('../services/services')
 const { sessionManager } = services
 
@@ -41,7 +42,7 @@ router.post('/join-private-session', (req, res) => {
     const { username } = req.session.passport.user
 
     const { friendlyName } = req.body
-    console.log(`User ${username} is trying to join session ${friendlyName}`)
+    logger.info(`User ${username} is trying to join session ${friendlyName}`)
 
     if (!friendlyName) {
         res.status(400).send('Missing friendly name')
@@ -93,7 +94,7 @@ router.post('/modify-session-config', (req, res) => {
     const { username } = req.session.passport.user
 
     const { sessionId, attributeKey, attributeValue } = req.body
-    console.log(`User ${username} is trying to modify session ${sessionId} config`)
+    logger.info(`User ${username} is trying to modify session ${sessionId} config`)
     if (!sessionId) {
         res.status(400).send('Missing session id')
         return
@@ -119,7 +120,7 @@ router.post('/modify-session-config', (req, res) => {
             res.status(500).send('Internal server error')
         }
 
-        console.log(err)
+        logger.error(err)
         return
     }
 
@@ -141,7 +142,7 @@ router.post('/invite-agent-to-session', (req, res) => {
     const { username } = req.session.passport.user
 
     const { sessionId } = req.body
-    console.log(`User ${username} is trying to invite an agent to session ${sessionId}`)
+    logger.info(`User ${username} is trying to invite an agent to session ${sessionId}`)
     if (!sessionId) {
         res.status(400).send('Missing session id')
         return
@@ -170,7 +171,7 @@ router.post('/invite-agent-to-session', (req, res) => {
             res.status(500).send('Internal server error')
         }
 
-        console.log(err)
+        logger.error(err)
         return
     }
 

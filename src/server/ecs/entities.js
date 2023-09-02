@@ -1,5 +1,6 @@
 const components = require('./components')
 const { v } = require('../schemas')
+const logger = require('../util/logger')
 
 function randomRockPaperScissors () {
     const rps = ['rock', 'paper', 'scissors']
@@ -10,7 +11,7 @@ function validateEntity (entity) {
     for (const component in components) {
         const validationResult = v.validate(entity[components[component].name], components[component].schema)
         if (!validationResult.valid) {
-            console.log('Invalid component: ' + validationResult.errors)
+            logger.error('Invalid component: ' + validationResult.errors)
             return false
         }
     }

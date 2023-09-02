@@ -1,6 +1,8 @@
 const msgTypes = require('../../common/rps2dProtocol')
 const commandTypes = require('../../common/gameplayCommands')
 
+const logger = require('../util/logger')
+
 class CpuAgent {
   constructor(botId, sessionId, msgHandlers) {
     this.botId = botId
@@ -48,7 +50,7 @@ class CpuAgent {
         }
         break
       default:
-        console.log(`Unhandled message type: ${msg.type}`)
+        logger.warn(`Unhandled message type: ${msg.type}`)
         break
     }
   }

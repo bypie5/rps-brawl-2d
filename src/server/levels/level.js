@@ -1,6 +1,7 @@
 const fs = require('fs')
 
 const { generateNavGrid } = require('./navGrid')
+const logger = require('../util/logger')
 
 const levelInfo = [
     {
@@ -30,9 +31,9 @@ function mapCodeToLevelFilePath (code) {
 
 function preComputeDistances () {
     const now = Date.now()
-    console.log('precomputing distance for levels...')
+    logger.info('precomputing distance for levels...')
     generateNavGrid(levelInfo)
-    console.log(`done precomputing distances in ${Date.now() - now}ms`)
+    logger.info(`done precomputing distances in ${Date.now() - now}ms`)
 }
 
 class LevelDescription {
