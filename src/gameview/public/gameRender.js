@@ -1,5 +1,8 @@
 import * as THREE from 'three'
 
+import { SpriteMixer } from './lib/SpriteMixer.js'
+import { buildHourglassIndicator } from './components/animated/hourglassIndicator.js'
+
 async function _loadTileSheet (scene, url, tileWidth) {
     const canvas = document.createElement('canvas')
     const context = canvas.getContext('2d')
@@ -99,7 +102,7 @@ function _getRpsSpriteMaterial (rpsState) {
     return spriteMaterial
 }
 
-function _buildPlayerEntity (components) {
+function _buildPlayerEntity (components, spriteMixer) {
     const { Avatar, HitBox, Transform } = components
 
     const spriteMaterial = _getRpsSpriteMaterial(Avatar.stateData.rockPaperScissors)
@@ -127,6 +130,19 @@ function _buildPlayerEntity (components) {
     sprite.add(speedPowerUpSprite)
 
     speedPowerUpSprite.visible = false
+
+    // add hourglass indicator
+    const hourglassIndicator = buildHourglassIndicator(spriteMixer)
+    hourglassIndicator.actionSprite.scale.set((HitBox.width * 0.6) * 0.45, (HitBox.height * 1.1) * 0.45, 1)
+    hourglassIndicator.actionSprite.position.x -= HitBox.width * 0.35
+    hourglassIndicator.actionSprite.position.y += HitBox.height * 0.3
+
+    // render group in front of everything else
+    hourglassIndicator.actionSprite.renderOrder = 1
+
+    sprite.add(hourglassIndicator.actionSprite)
+
+    hourglassIndicator.actions().spin.playLoop()
 
     return sprite
 }
@@ -183,9 +199,11 @@ class GameRender {
         const aspectRatio = windowWidth / windowHeight
         const frustumSize = 25
 
+        this.clock = new THREE.Clock()
         this.scene = new THREE.Scene()
         this.camera = new THREE.OrthographicCamera(frustumSize * aspectRatio/-2, frustumSize * aspectRatio/2, frustumSize/2, frustumSize/-2, -100, 1000)
         this.renderer = new THREE.WebGLRenderer({ canvas: canvas })
+        this.spriteMixer = SpriteMixer()
 
         this.camera.position.z = 100
         this.spectatorMode = false
@@ -257,6 +275,9 @@ class GameRender {
             this.renderer.render(this.scene, this.camera)
             window.gameUiManager.update()
 
+            const delta = this.clock.getDelta()
+            this.spriteMixer.update(delta)
+
             let self = this
             requestAnimationFrame(() => {
                 self.render()
@@ -295,6 +316,7 @@ class GameRender {
     start () {
         this.isRendering = true
         this.render()
+        this.clock.start()
     }
 
     stop () {
@@ -378,7 +400,7 @@ class GameRender {
             this.entityIdThreeJsIdMap.set(entityId, powerUp.id)
             threeJsId = powerUp.id
         } else if (entityComponents.Avatar && entityComponents.Transform && entityComponents.HitBox) {
-            const avatar = _buildPlayerEntity(entityComponents)
+            const avatar = _buildPlayerEntity(entityComponents, this.spriteMixer)
             this.scene.add(avatar)
             this.entityIdThreeJsIdMap.set(entityId, avatar.id)
             threeJsId = avatar.id
