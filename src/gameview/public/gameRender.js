@@ -102,7 +102,7 @@ function _getRpsSpriteMaterial (rpsState) {
     return spriteMaterial
 }
 
-function _buildPlayerEntity (components, spriteMixer) {
+function _buildPlayerEntity (components, hourglassIndicator) {
     const { Avatar, HitBox, Transform } = components
 
     const spriteMaterial = _getRpsSpriteMaterial(Avatar.stateData.rockPaperScissors)
@@ -116,7 +116,7 @@ function _buildPlayerEntity (components, spriteMixer) {
     const shieldPowerUpSpriteTile = new THREE.TextureLoader().load('assets/shield_powerup.png')
     const shieldPowerUpSpriteMaterial = new THREE.SpriteMaterial({ map: shieldPowerUpSpriteTile })
     const shieldPowerUpSprite = new THREE.Sprite(shieldPowerUpSpriteMaterial)
-    shieldPowerUpSprite.scale.set(HitBox.width * 0.6, HitBox.height * 1.1, 1)
+    shieldPowerUpSprite.scale.set((HitBox.width * 0.5) * 1.1, (HitBox.height * 1.1) * 1.1, 1)
     shieldPowerUpSprite.name = 'shield'
     sprite.add(shieldPowerUpSprite)
 
@@ -132,17 +132,14 @@ function _buildPlayerEntity (components, spriteMixer) {
     speedPowerUpSprite.visible = false
 
     // add hourglass indicator
-    const hourglassIndicator = buildHourglassIndicator(spriteMixer)
+    hourglassIndicator.actionSprite.name = `hourglass_indicator_${Avatar.playerId}`
     hourglassIndicator.actionSprite.scale.set((HitBox.width * 0.6) * 0.45, (HitBox.height * 1.1) * 0.45, 1)
     hourglassIndicator.actionSprite.position.x -= HitBox.width * 0.35
     hourglassIndicator.actionSprite.position.y += HitBox.height * 0.3
-
-    // render group in front of everything else
     hourglassIndicator.actionSprite.renderOrder = 1
+    hourglassIndicator.actionSprite.visible = false
 
     sprite.add(hourglassIndicator.actionSprite)
-
-    hourglassIndicator.actions().spin.playLoop()
 
     return sprite
 }
@@ -222,6 +219,8 @@ class GameRender {
             intercomTextUi: null,
             stateChangeIndicatorsUi: null,
         }
+
+        this.animatedEntities = new Map() // key: entity name, value: AnimatedComponent
 
         // of type window.IntercomMsg (see intercomText.js for more info)
         this.intercomMsgQueue = []
@@ -400,9 +399,11 @@ class GameRender {
             this.entityIdThreeJsIdMap.set(entityId, powerUp.id)
             threeJsId = powerUp.id
         } else if (entityComponents.Avatar && entityComponents.Transform && entityComponents.HitBox) {
-            const avatar = _buildPlayerEntity(entityComponents, this.spriteMixer)
+            const hourglassIndicator = buildHourglassIndicator(this.spriteMixer)
+            const avatar = _buildPlayerEntity(entityComponents, hourglassIndicator)
             this.scene.add(avatar)
             this.entityIdThreeJsIdMap.set(entityId, avatar.id)
+            this.animatedEntities.set(hourglassIndicator.actionSprite.name, hourglassIndicator)
             threeJsId = avatar.id
 
             if (entityComponents.Avatar && entityComponents.Avatar.playerId === this.username) {
@@ -558,6 +559,33 @@ class GameRender {
                     break
             }
         }
+
+        // show hourglass indicator if player is cooling down from RPS state switch
+        if (
+            entityComponents.Avatar
+            && entityComponents.Avatar.playerId === this.username
+            && entityComponents.Avatar.stateData.stateSwitchCooldownTicks > 0
+            && this.animatedEntities.has(`hourglass_indicator_${entityComponents.Avatar.playerId}`)
+            && this.animatedEntities.get(`hourglass_indicator_${entityComponents.Avatar.playerId}`).actionSprite.visible === false
+        ) {
+            const hourglassIndicator = this.animatedEntities.get(`hourglass_indicator_${entityComponents.Avatar.playerId}`)
+            hourglassIndicator.actionSprite.visible = true
+            hourglassIndicator.actions().spin.playLoop()
+        }
+
+        // hide hourglass indicator if player is not cooling down from RPS state switch
+        if (
+            entityComponents.Avatar
+            && entityComponents.Avatar.playerId === this.username
+            && entityComponents.Avatar.stateData.stateSwitchCooldownTicks === 0
+            && this.animatedEntities.has(`hourglass_indicator_${entityComponents.Avatar.playerId}`)
+            && this.animatedEntities.get(`hourglass_indicator_${entityComponents.Avatar.playerId}`).actionSprite.visible === true
+        ) {
+            const hourglassIndicator = this.animatedEntities.get(`hourglass_indicator_${entityComponents.Avatar.playerId}`)
+            hourglassIndicator.actionSprite.visible = false
+            hourglassIndicator.actions().spin.stop()
+        }
+
 
         if (entityComponents.Avatar
             && entityComponents.Avatar.playerId === this.username

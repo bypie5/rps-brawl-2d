@@ -43,7 +43,7 @@ class StateChangeIndicators extends Component {
       ...super.getStyleMap(),
       'state-change-indicators': 'position: absolute; bottom: 0; left: 0; display: flex; z-index: 1000; margin-bottom: 10px;',
       'indicator': 'position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 0 10px;',
-      'spinner': 'opacity: 0.75; border: 16px solid #f3f3f3; border-top: 16px solid #a3a3a3; border-radius: 50%; width: 50px; height: 50px; animation: spin 0.75s linear infinite; z-index: 1000; -webkit-animation: spin 0.75s linear infinite; position: absolute;',
+      'spinner': 'opacity: 0.75; border: 8px solid #f3f3f3; border-top: 8px solid #a3a3a3; border-radius: 50%; width: 50px; height: 50px; animation: spin 0.75s linear infinite; z-index: 1000; -webkit-animation: spin 0.75s linear infinite; position: absolute;',
       'spinner-invisible': 'display: none;',
       'key': 'width: 100px; height: 100px; margin: 0 10px; position: relative;',
       'cooldown': 'width: 100px; height: 100px; margin: 0 10px; opacity: 0.5; position: relative;'

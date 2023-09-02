@@ -18,17 +18,12 @@ class HourglassIndicator extends AnimatedComponent {
 }
 
 function buildHourglassIndicator(spriteMixer) {
-  const HOURGLASS_SPRITE_SHEET = 'assets/hourglass.png'
-  const HOURGLASS_HORIZONTAL_FRAME = 6
-  const HOURGLASS_VERTICAL_FRAMES = 2
-  const HOURGLASS_FRAME_DURATION = 125
-
   return new HourglassIndicator(
     spriteMixer,
-    HOURGLASS_SPRITE_SHEET,
-    HOURGLASS_HORIZONTAL_FRAME,
-    HOURGLASS_VERTICAL_FRAMES,
-    HOURGLASS_FRAME_DURATION
+    'assets/hourglass.png',
+    6,
+    2,
+    100
   )
 }
 
