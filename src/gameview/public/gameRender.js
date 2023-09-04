@@ -2,6 +2,7 @@ import * as THREE from 'three'
 
 import { SpriteMixer } from './lib/SpriteMixer.js'
 import { buildHourglassIndicator } from './components/animated/hourglassIndicator.js'
+import { nearestToAspectRatio } from './util.js'
 
 async function _loadTileSheet (scene, url, tileWidth) {
     const canvas = document.createElement('canvas')
@@ -191,15 +192,20 @@ class GameRender {
         this.username = username
         this.sessionInfo = sessionInfo
 
-        const windowWidth = window.innerWidth
-        const windowHeight = window.innerHeight
-        const aspectRatio = windowWidth / windowHeight
-        const frustumSize = 25
+        this.aspectRatio = 16 / 9
+        this.frustumSize = 25
+        const nearest = nearestToAspectRatio(this.aspectRatio, window.innerWidth, window.innerHeight)
+        const windowWidth = nearest.width
+        const windowHeight = nearest.height
+
+        const halfHeight = this.frustumSize / 2
+        const halfWidth = this.frustumSize * this.aspectRatio / 2
 
         this.clock = new THREE.Clock()
         this.scene = new THREE.Scene()
-        this.camera = new THREE.OrthographicCamera(frustumSize * aspectRatio/-2, frustumSize * aspectRatio/2, frustumSize/2, frustumSize/-2, -100, 1000)
         this.renderer = new THREE.WebGLRenderer({ canvas: canvas })
+        this.renderer.setSize(windowWidth, windowHeight)
+        this.camera = new THREE.OrthographicCamera(-halfWidth, halfWidth, halfHeight, -halfHeight, -100, 1000)
         this.spriteMixer = SpriteMixer()
 
         this.camera.position.z = 100
@@ -229,6 +235,10 @@ class GameRender {
         // index of sprites in the tilesheet corresponds to the sprite' id - 1 (i.e. sprite id 1 is at index 0)
         _loadTileSheet(this.scene, 'assets/haunted_house.png', 64).then((spriteMaterials) => {
             this.spriteMaterials = spriteMaterials
+        })
+
+        window.addEventListener('resize', () => {
+            this._resizeRenderer()
         })
     }
 
@@ -644,6 +654,23 @@ class GameRender {
         }
 
         this.scene.remove(this.scene.getObjectById(threeJsId))
+    }
+
+    _resizeRenderer () {
+        const nearest = nearestToAspectRatio(this.aspectRatio, window.innerWidth, window.innerHeight)
+        const windowWidth = nearest.width
+        const windowHeight = nearest.height
+
+        const halfHeight = this.frustumSize / 2
+        const halfWidth = this.frustumSize * this.aspectRatio / 2
+
+        this.camera.left = -halfWidth
+        this.camera.right = halfWidth
+        this.camera.top = halfHeight
+        this.camera.bottom = -halfHeight
+
+        this.camera.updateProjectionMatrix()
+        this.renderer.setSize(windowWidth, windowHeight)
     }
 }
 
