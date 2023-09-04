@@ -611,8 +611,6 @@ class GameRender {
                 activePowerUp: entityComponents.Avatar.stateData.activePowerUp,
                 isSpectating: this.spectatorMode,
                 playerInfoStyle: {
-                    left: vector.x + window.innerWidth / 2,
-                    top: (vector.y + window.innerHeight / 2) - 55,
                     isVisible: entityComponents.Avatar.state === 'alive'
                 },
                 killStreaks: scoreBoardEntity ? scoreBoardEntity.KillStreakScoreBoard.highestKillStreakByPlayerId : null,

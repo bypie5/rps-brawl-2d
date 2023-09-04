@@ -60,16 +60,13 @@ class HudOverlay extends Component {
 
   getStyleMap() {
     const { playerInfoStyle } = this.props
-
-    const uiTop = playerInfoStyle ? playerInfoStyle.top : '0'
-    const uiLeft = playerInfoStyle ? playerInfoStyle.left : '0'
     const isVisible = playerInfoStyle ? playerInfoStyle.isVisible : false
 
     return {
       ...super.getStyleMap(),
       'hud-overlay': 'position: absolute; top: 0; left: 0; width: 100%; height: 100%;',
       'player-info': 'display: flex; justify-content: center; align-items: center; flex-direction: column; width: 100%;',
-      'player-name': `position: absolute; top: ${uiTop}px; left: ${uiLeft}px; transform:translateX(-50%); ${isVisible ? '' : 'display: none'};`,
+      'player-name': `position: absolute; top: 50%; transform: translate(0, -55px); ${isVisible ? '' : 'display: none'};`,
       'exit-match-button': 'margin-top: 10px; z-index: 2000;',
       'kill-streak-scoreboard': 'position: absolute; bottom: 0; right: 0; margin-right: 10px; margin-bottom: 10px;'
     }
