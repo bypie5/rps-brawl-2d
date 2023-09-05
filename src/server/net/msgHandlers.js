@@ -1,3 +1,5 @@
+const validator = require('validator')
+
 const msgTypes = require('../../common/rps2dProtocol')
 const { v } = require('../../server/schemas')
 
@@ -99,10 +101,27 @@ function onUpgradeAnonymousWsConnection(ws, msg) {
     }))
 }
 
-function handleMessage (ws, message) {
-    const msg = JSON.parse(message)
-    const msgType = msgTypes.clientToServer[msg.type]
+function sanitizeMessage(message, messageType) {
+    const sanitizedMessage = JSON.parse(JSON.stringify(message))
+    for (const property in messageType.schema.properties) {
+        if (messageType.schema.properties[property].type === 'string' && sanitizedMessage[property]) {
+            sanitizedMessage[property] = validator.escape(sanitizedMessage[property])
+        }
+    }
 
+    return sanitizedMessage
+}
+
+function handleMessage (ws, message) {
+    let msg
+    try {
+      msg = JSON.parse(message)
+    } catch (err) {
+      logger.warn(`Failed to parse message: ${message} - ${err}`)
+      return
+    }
+
+    const msgType = msgTypes.clientToServer[msg.type]
     if (msgType === undefined) {
         logger.warn(`Unknown message type: ${msg.type}`)
         return
@@ -111,6 +130,13 @@ function handleMessage (ws, message) {
     const validationResult = v.validate(msg, msgType.schema)
     if (!validationResult.valid) {
         logger.warn(`Invalid message (type: ${msg.type}): ${validationResult.errors}`)
+        return
+    }
+
+    try {
+        msg = sanitizeMessage(msg, msgType)
+    } catch (err) {
+        logger.warn(`Failed to sanitize message: ${message} - ${err}`)
         return
     }
 
