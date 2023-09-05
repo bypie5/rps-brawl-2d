@@ -1,4 +1,5 @@
 const EventEmitter = require('node:events')
+const validator = require('validator')
 
 const Service = require('./service')
 const { v4: uuidv4 } = require('uuid')
@@ -122,7 +123,7 @@ class Session extends EventEmitter {
             throw new InvalidSessionConfigError('Invalid session config')
         }
 
-        this.config = config
+        this.config = this._sanitizeConfig(config)
 
         this.currState = sessionStates.INITIALIZING
         this.connectedPlayers = new Set() // Set<username>
@@ -557,6 +558,17 @@ class Session extends EventEmitter {
 
     _validateConfig (config) {
         return v.validate(config, sessionConfigSchema)
+    }
+
+    _sanitizeConfig (config) {
+        const sanitizedConfig = JSON.parse(JSON.stringify(config))
+        for (const property in sessionConfigSchema.properties) {
+            if (sessionConfigSchema.properties[property].type === 'string' && sanitizedConfig[property]) {
+                sanitizedConfig[property] = validator.escape(sanitizedConfig[property])
+            }
+        }
+
+        return sanitizedConfig
     }
 
     _findInactivePlayers () {

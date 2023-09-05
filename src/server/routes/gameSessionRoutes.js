@@ -1,3 +1,4 @@
+const validator = require('validator')
 const express = require('express')
 const router = express.Router()
 
@@ -11,7 +12,7 @@ router.post('/create-private-session', (req, res) => {
     const { username } = req.session.passport.user
 
     try {
-        const { config } = req.body
+        const { config } = req.body // sanitized by Session constructor
         if (!config) {
             res.status(400).send('Missing session config')
             return
@@ -41,13 +42,14 @@ router.post('/create-private-session', (req, res) => {
 router.post('/join-private-session', (req, res) => {
     const { username } = req.session.passport.user
 
-    const { friendlyName } = req.body
-    logger.info(`User ${username} is trying to join session ${friendlyName}`)
-
-    if (!friendlyName) {
+    const rawFriendlyName = req.body.friendlyName
+    if (!rawFriendlyName) {
         res.status(400).send('Missing friendly name')
         return
     }
+
+    const friendlyName = validator.escape(rawFriendlyName)
+    logger.info(`User ${username} is trying to join session ${friendlyName}`)
 
     try {
         const id = sessionManager.joinPrivateSession(username, friendlyName)
@@ -93,11 +95,23 @@ router.post('/join-public-session', (req, res) => {
 router.post('/modify-session-config', (req, res) => {
     const { username } = req.session.passport.user
 
-    const { sessionId, attributeKey, attributeValue } = req.body
-    logger.info(`User ${username} is trying to modify session ${sessionId} config`)
-    if (!sessionId) {
+    const rawSessionId = req.body.sessionId
+    const rawAttributeKey = req.body.attributeKey
+    const rawAttributeValue = req.body.attributeValue
+    if (!rawSessionId) {
         res.status(400).send('Missing session id')
         return
+    }
+
+    const sessionId = validator.escape(rawSessionId)
+    logger.info(`User ${username} is trying to modify session ${sessionId} config`)
+
+    const attributeKey = validator.escape(rawAttributeKey)
+    let attributeValue = null
+    if (typeof rawAttributeValue === 'string') {
+        attributeValue = validator.escape(rawAttributeValue)
+    } else {
+        attributeValue = rawAttributeValue
     }
 
     const session = sessionManager.findSessionById(sessionId)
@@ -141,12 +155,14 @@ router.get('/supported-agents', (req, res) => {
 router.post('/invite-agent-to-session', (req, res) => {
     const { username } = req.session.passport.user
 
-    const { sessionId } = req.body
-    logger.info(`User ${username} is trying to invite an agent to session ${sessionId}`)
-    if (!sessionId) {
+    const rawSessionId = req.body.sessionId
+    if (!rawSessionId) {
         res.status(400).send('Missing session id')
         return
     }
+
+    const sessionId = validator.escape(rawSessionId)
+    logger.info(`User ${username} is trying to invite an agent to session ${sessionId}`)
 
     const session = sessionManager.findSessionById(sessionId)
     if (!session) {
@@ -183,13 +199,14 @@ router.post('/invite-agent-to-session', (req, res) => {
 
 router.post('/start-session', (req, res) => {
     const { username } = req.session.passport.user
-    const { sessionId } = req.query
+    const rawSessionId = req.query.sessionId
 
-    if (!sessionId) {
+    if (!rawSessionId) {
         res.status(400).send('Missing session id')
         return
     }
 
+    const sessionId = validator.escape(rawSessionId)
     const session = sessionManager.findSessionById(sessionId)
     if (!session) {
         res.status(404).send('Session does not exist')
@@ -212,12 +229,13 @@ router.post('/start-session', (req, res) => {
 })
 
 router.get('/session-info', (req, res) => {
-    const { sessionId } = req.query
-    if (!sessionId) {
+    const rawSessionId = req.query.sessionId
+    if (!rawSessionId) {
         res.status(400).send('Missing session id')
         return
     }
 
+    const sessionId = validator.escape(rawSessionId)
     const session = sessionManager.findSessionById(sessionId)
     if (!session) {
         res.status(404).send('Session does not exist')
