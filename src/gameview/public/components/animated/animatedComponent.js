@@ -1,4 +1,4 @@
-import * as THREE from 'three'
+const THREE = window.THREE
 
 class AnimatedComponent {
   constructor (spriteMixer, spriteSheet, horizontalFrame, verticalFrames, frameDuration) {

@@ -4,6 +4,7 @@ const LocalStrategy = require('passport-local').Strategy
 const JwtStrategy = require("passport-jwt").Strategy
 const ExtractJwt = require("passport-jwt").ExtractJwt
 const path = require('path')
+const { networkInterfaces } = require('os')
 
 require('dotenv').config()
 
@@ -95,7 +96,8 @@ passport.use(new JwtStrategy(jwtOps,
 registerRoutes(app)
 
 app.listen(port, () => {
-    logger.info(`Server is running on port ${port}`)
+    logger.info(`On localhost: http://localhost:${port}/`)
+    logger.info(`On LAN: http://${networkInterfaces()['en0'][1].address}:${port}/`)
 
     const wss = new WebSocketServer(wsPort, () => {
         logger.info(`WebSocket server is running on port ${wsPort}`)

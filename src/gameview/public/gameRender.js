@@ -1,4 +1,4 @@
-import * as THREE from 'three'
+const THREE = window.THREE
 
 import { SpriteMixer } from './lib/SpriteMixer.js'
 import { buildHourglassIndicator } from './components/animated/hourglassIndicator.js'

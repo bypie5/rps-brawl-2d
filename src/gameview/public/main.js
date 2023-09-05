@@ -289,7 +289,7 @@ async function _onMessage (event) {
                 alert(msg.message)
             }
             await _loadHtmlContent(pages.findMatch)
-            restartRenderer()
+            window.restartRenderer()
             sessionContext.sessionInfo = deepCopy(defaultSessionContext.sessionInfo)
             sessionContext.sessionId = null
             break
@@ -420,7 +420,7 @@ async function loadSessionInfo (sessionId) {
 
 async function _onGameroomLoaded () {
     try {
-        const renderer = await startRenderer(sessionContext.sessionInfo.config, sessionContext.username, sessionContext.sessionInfo)
+        const renderer = await window.startRenderer(sessionContext.sessionInfo.config, sessionContext.username, sessionContext.sessionInfo)
         sessionContext.sessionInfo.renderer = renderer
 
         // add event listeners for player input
