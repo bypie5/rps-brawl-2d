@@ -17,6 +17,16 @@ class WebSocketServer {
         this.connections = new Map() // Map<ws.id, ws>
         this.heartbeatInterval = null
         this.intervalBetweenHeartbeats = 25000
+
+        this.shouldRateLimit = true
+
+        this.maxCommandCountPerInterval = 10
+        this.rateLimitInterval = 1000
+        this.rateLimitMap = new Map() // Map<ws.id, {lastReset: number, commandCount: number}>
+    }
+
+    disableRateLimit () {
+        this.shouldRateLimit = false
     }
 
     start () {
@@ -71,6 +81,13 @@ class WebSocketServer {
     }
 
     onMessage (ws, message) {
+        try {
+            this._rateLimit(ws)
+        } catch (err) {
+            logger.warn(`Rate limit exceeded for ${ws.id}`)
+            return
+        }
+
         handleMessage(ws, message)
     }
 
@@ -97,6 +114,27 @@ class WebSocketServer {
                 ws.lastPingSent = Date.now()
             }
         })
+    }
+
+    _rateLimit(ws) {
+        if (!this.shouldRateLimit) {
+            return
+        }
+
+        const now = Date.now()
+        let rateLimitInfo = this.rateLimitMap.get(ws.id) || {lastReset: now, commandCount: 0}
+
+        // reset rate limit info if it's been too long since the last reset
+        if (now - rateLimitInfo.lastReset > this.rateLimitInterval) {
+            rateLimitInfo = {lastReset: now, commandCount: 0}
+        }
+
+        if (rateLimitInfo.commandCount >= this.maxCommandCountPerInterval) {
+            throw new Error('Rate limit exceeded')
+        }
+
+        rateLimitInfo.commandCount++
+        this.rateLimitMap.set(ws.id, rateLimitInfo)
     }
 }
 

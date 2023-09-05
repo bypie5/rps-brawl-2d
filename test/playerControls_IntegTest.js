@@ -4,7 +4,7 @@ const sinon = require('sinon')
 const WebSocket = require('ws')
 const pako = require('pako')
 
-const { server, services } = require('../src/index')
+const { server, services, disableRateLimit } = require('../src/index')
 const msgTypes = require('../src/common/rps2dProtocol')
 const commandTypes = require('../src/common/gameplayCommands')
 const { directionEnum, shiftRps } = require('../src/server/ecs/util')
@@ -31,6 +31,8 @@ describe('Testing situations around gameplay commands', () => {
     beforeEach(async () => {
         services.sessionManager.clearSessions()
         sinon.stub(services.authentication, 'validUserCredentials').returns(true)
+
+        disableRateLimit()
     })
 
     afterEach(() => {
@@ -102,6 +104,7 @@ describe('Testing situations around gameplay commands', () => {
 
                     chai.expect(res4).to.have.status(200)
                 }
+
 
                 if (msgTypes.serverToClient.GAMESTATE_UPDATE.type === msg.type) {
                     const gameContext = msg.gameContext

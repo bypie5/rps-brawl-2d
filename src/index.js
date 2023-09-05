@@ -95,20 +95,25 @@ passport.use(new JwtStrategy(jwtOps,
 
 registerRoutes(app)
 
+const wss = new WebSocketServer(wsPort, () => {
+    logger.info(`WebSocket server is running on port ${wsPort}`)
+}, () => {
+    logger.info('WebSocket server closed')
+})
+
+function disableRateLimit () {
+    wss.disableRateLimit()
+}
+
 app.listen(port, () => {
     logger.info(`On localhost: http://localhost:${port}/`)
     logger.info(`On LAN: http://${networkInterfaces()['en0'][1].address}:${port}/`)
-
-    const wss = new WebSocketServer(wsPort, () => {
-        logger.info(`WebSocket server is running on port ${wsPort}`)
-    }, () => {
-        logger.info('WebSocket server closed')
-    })
 
     wss.start()
 })
 
 module.exports = {
     server: app,
-    services: services
+    services: services,
+    disableRateLimit: disableRateLimit
 }
