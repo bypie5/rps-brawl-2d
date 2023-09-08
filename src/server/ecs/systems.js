@@ -1,15 +1,12 @@
 const {
     rpsCompare,
     replaceCollisionsWithOtherPlayersSet,
-    resolveClusterMembers,
     createTieBreakerBracket,
     midMatchTieBreakerFSM,
-    findEntityCenterOfCluster,
     randomRange
 } = require('./util')
 
 const {
-    buildTieBreakerManagerEntity,
     buildKillStreakScoreKeeper,
     buildPowerUpEntity,
     buildRoundTimer
@@ -342,42 +339,6 @@ function rps (gameContext, session, systemContext) {
                 Math.floor(Math.random() * entity.Avatar.stateData.collisionsWithOtherPlayers.length)
             ]
             doRegularRpsMatch(entity, gameContext.entities[otherPlayerId])
-
-            // const membersInCluster = resolveClusterMembers(entity, id, gameContext)
-            // if (membersInCluster.length == 2) {
-            //     // 2 players in cluster (regular collision)
-            //     const player1 = gameContext.entities[membersInCluster[0]]
-            //     const player2 = gameContext.entities[membersInCluster[1]]
-            //     doRegularRpsMatch(player1, player2)
-            // } else if (membersInCluster.length > 2) {
-                // cluster collision - must resolve ambiguity
-
-                // does a tie breaker match already exist?
-                /*for (const id of membersInCluster) {
-                    const entity = gameContext.entities[id]
-                    if (entity.Avatar.state === 'breakingtie') {
-                        // tie breaker match already exists
-                        return
-                    }
-                }
-
-                // 1. disable physics for all players in cluster
-                for (const id of membersInCluster) {
-                    gameContext.entities[id].Avatar.state = 'breakingtie'
-                    gameContext.entities[id].Transform.xVel = 0
-                    gameContext.entities[id].Transform.yVel = 0
-                    gameContext.entities[id].HitBox.physicsEnabled = false
-                }
-
-                // 2. create tie breaker match manager
-                console.log('tie breaker match' + membersInCluster)
-                const { closestEntityId } = findEntityCenterOfCluster(membersInCluster, gameContext)
-                const { xPos, yPos } = gameContext.entities[closestEntityId].Transform
-                const tieBreakerMatchManager = buildTieBreakerManagerEntity(membersInCluster, gameContext.currentTick, xPos, yPos)
-                session.instantiateEntity(tieBreakerMatchManager)
-
-                createdRpsMatches.add(tieBreakerMatchManager)*/
-            //}
         }
 
         if (entity.Avatar 
