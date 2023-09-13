@@ -3,7 +3,9 @@ const {
     replaceCollisionsWithOtherPlayersSet,
     createTieBreakerBracket,
     midMatchTieBreakerFSM,
-    randomRange
+    randomRange,
+    getGaussianRandom,
+    getRandomRpsStateNotCurrent
 } = require('./util')
 
 const {
@@ -159,6 +161,22 @@ function getEntitiesByLogicalKey (entities, gridWidth) {
     }
 
     return entitiesByLogicalKey
+}
+
+function autoSwitchStateForPlayers (gameContext) {
+    for (const [id, entity] of Object.entries(gameContext.entities)) {
+        if (!entity.Avatar || entity.Avatar.state !== 'alive') {
+            continue
+        }
+
+        const { stateData } = entity.Avatar
+        const switchTime = Math.max(getGaussianRandom(33 * 7.5, 33 * 2), 33 * 3)
+        if (stateData.ticksSinceLastStateSwitch >= switchTime) {
+            entity.Avatar.stateData.rockPaperScissors = getRandomRpsStateNotCurrent(stateData.rockPaperScissors)
+            entity.Avatar.stateData.stateSwitchCooldownTicks = stateData.stateSwitchCooldownMaxTicks
+            entity.Avatar.stateData.autoStateSwitched = true
+        }
+    }
 }
 
 function physics (gameContext, session, systemContext) {
@@ -329,10 +347,12 @@ function powerups (gameContext, session, systemContext) {
 }
 
 function rps (gameContext, session, systemContext) {
-    const createdRpsMatches = new Set()
     for (const [id, entity] of Object.entries(gameContext.entities)) {
-        if (entity.Avatar
-            && entity.Avatar.state === 'alive'
+        if (!entity.Avatar) {
+            continue
+        }
+
+        if (entity.Avatar.state === 'alive'
             && entity.Avatar.stateData.collisionsWithOtherPlayers.length > 0) {
             // pick a random player to challenge
             const otherPlayerId = entity.Avatar.stateData.collisionsWithOtherPlayers[
@@ -341,11 +361,25 @@ function rps (gameContext, session, systemContext) {
             doRegularRpsMatch(entity, gameContext.entities[otherPlayerId])
         }
 
-        if (entity.Avatar 
-            && entity.Avatar.stateData.stateSwitchCooldownTicks > 0) {
+        // reset ticks since last state switch if player just switched states
+        // or if player is respawning
+        if (entity.Avatar.stateData.stateSwitchCooldownTicks === entity.Avatar.stateData.stateSwitchCooldownMaxTicks
+            || entity.Avatar.state === 'respawning') {
+            entity.Avatar.stateData.ticksSinceLastStateSwitch = 0
+        }
+
+        if (entity.Avatar.stateData.stateSwitchCooldownTicks > 0) {
             entity.Avatar.stateData.stateSwitchCooldownTicks--
         }
+
+        // keep track of ticks since last state switch
+        if (entity.Avatar.stateData.stateSwitchCooldownTicks === 0) {
+            entity.Avatar.stateData.autoStateSwitched = false
+            entity.Avatar.stateData.ticksSinceLastStateSwitch++
+        }
     }
+
+    autoSwitchStateForPlayers(gameContext)
 }
 
 function tieBreaker (gameContext, session, systemContext) {

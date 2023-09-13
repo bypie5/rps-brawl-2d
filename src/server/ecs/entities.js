@@ -43,6 +43,8 @@ function buildPlayerEntity (playerId, x, y) {
                 activePowerUp: null,
                 ticksWithActivePowerUp: 0,
                 kills: 0,
+                ticksSinceLastStateSwitch: 0,
+                autoStateSwitched: false,
             }
         },
         [components.HitBox.name]: {

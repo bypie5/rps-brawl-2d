@@ -485,6 +485,28 @@ function buildEntityProxy (id, onModified) {
     return handler
 }
 
+function _boxMullerRandom() {
+    let u = 0, v = 0;
+    while(u === 0) u = Math.random(); // Convert [0, 1) to (0, 1)
+    while(v === 0) v = Math.random();
+    return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+}
+
+function getGaussianRandom (mean, stdDev) {
+    return mean + _boxMullerRandom() * stdDev
+}
+
+function getRandomRpsStateNotCurrent (currRpsState) {
+    const rps = ['rock', 'paper', 'scissors']
+    const randomIndex = Math.floor(Math.random() * rps.length)
+    const randomRpsState = rps[randomIndex]
+    if (randomRpsState === currRpsState) {
+        return getRandomRpsStateNotCurrent(currRpsState)
+    }
+
+    return randomRpsState
+}
+
 module.exports = {
     directionEnum,
     rpsCompare,
@@ -496,5 +518,7 @@ module.exports = {
     _advanceWinnersToNextRound,
     createTieBreakerBracket,
     randomRange,
-    buildEntityProxy
+    buildEntityProxy,
+    getGaussianRandom,
+    getRandomRpsStateNotCurrent
 }

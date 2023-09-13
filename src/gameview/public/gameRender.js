@@ -142,6 +142,18 @@ function _buildPlayerEntity (components, hourglassIndicator) {
 
     sprite.add(hourglassIndicator.actionSprite)
 
+    // "SWAPPED" indicator sprite
+    const swappedIndicatorSpriteTexture = new THREE.TextureLoader().load('assets/swapped_sprite.png')
+    swappedIndicatorSpriteTexture.magFilter = THREE.NearestFilter
+    const swappedIndicatorSpriteMaterial = new THREE.SpriteMaterial({ map: swappedIndicatorSpriteTexture })
+    const swappedIndicatorSprite = new THREE.Sprite(swappedIndicatorSpriteMaterial)
+    swappedIndicatorSprite.scale.set(1.5, 1.6, 1)
+    swappedIndicatorSprite.name = 'swapped'
+
+    swappedIndicatorSprite.visible = false
+
+    sprite.add(swappedIndicatorSprite)
+
     return sprite
 }
 
@@ -596,6 +608,15 @@ class GameRender {
             hourglassIndicator.actions().spin.stop()
         }
 
+        // show swapped indicator if player was auto swapped
+        if (entityComponents.Avatar && entityComponents.Avatar.stateData.autoStateSwitched) {
+            entity.getObjectByName('swapped').visible = true
+        }
+
+        // hide swapped indicator if player was not auto swapped
+        if (entityComponents.Avatar && !entityComponents.Avatar.stateData.autoStateSwitched) {
+            entity.getObjectByName('swapped').visible = false
+        }
 
         if (entityComponents.Avatar
             && entityComponents.Avatar.playerId === this.username
