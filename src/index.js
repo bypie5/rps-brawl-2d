@@ -107,7 +107,9 @@ function disableRateLimit () {
 
 app.listen(port, () => {
     logger.info(`On localhost: http://localhost:${port}/`)
-    logger.info(`On LAN: http://${networkInterfaces()['en0'][1].address}:${port}/`)
+    if (networkInterfaces()['en0']) {
+        logger.info(`On LAN: http://${networkInterfaces()['en0'][1].address}:${port}/`)
+    }
 
     wss.start()
 })
