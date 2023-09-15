@@ -1,5 +1,3 @@
-const THREE = window.THREE
-
 // Author: Felix Mariotto
 
 // Based on Lee Stemkoski's work who coded the core texture offsetting part :
@@ -225,13 +223,13 @@ function SpriteMixer() {
   */
   function ActionSprite( texture, tilesHoriz, tilesVert ) {
 
-    texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+    texture.wrapS = texture.wrapT = window.THREE.RepeatWrapping;
     texture.repeat.set( 1/tilesHoriz, 1/tilesVert );
 
-    let spriteMaterial = new THREE.SpriteMaterial({
+    let spriteMaterial = new window.THREE.SpriteMaterial({
       map:texture, color:0xffffff});
 
-    let actionSprite = new THREE.Sprite(spriteMaterial);
+    let actionSprite = new window.THREE.Sprite(spriteMaterial);
     actionSprite.isIndexedSprite = true ;
 
     actionSprite.tilesHoriz = tilesHoriz ;

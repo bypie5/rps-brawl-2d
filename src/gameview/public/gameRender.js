@@ -1,8 +1,14 @@
-const THREE = window.THREE
-
 import { SpriteMixer } from './lib/SpriteMixer.js'
 import { buildHourglassIndicator } from './components/animated/hourglassIndicator.js'
 import { nearestToAspectRatio } from './util.js'
+
+function _buildAssetUrl (assetName) {
+    if (window.isExternalClient) {
+        return `${window.resourcePath}/${assetName}`
+    } else {
+        return assetName
+    }
+}
 
 async function _loadTileSheet (scene, url, tileWidth) {
     const canvas = document.createElement('canvas')
@@ -10,6 +16,7 @@ async function _loadTileSheet (scene, url, tileWidth) {
 
     const tilesheet = new Image()
     tilesheet.src = url
+    tilesheet.setAttribute('crossOrigin', 'anonymous')
 
     // split the tilesheet into individual tiles and return them as an array of image urls
     const tiles = new Promise((resolve, reject) => {
@@ -59,10 +66,10 @@ async function _loadTileSheet (scene, url, tileWidth) {
     const imageDataUrls = await tiles
     for (let i = 0; i < imageDataUrls.length; i++) {
         const url = imageDataUrls[i]
-        const map = new THREE.TextureLoader().load(url)
+        const map = new window.THREE.TextureLoader().load(url)
         map.anisotropy = 16
-        map.magFilter = THREE.NearestFilter
-        const material = new THREE.SpriteMaterial({ map: map })
+        map.magFilter = window.THREE.NearestFilter
+        const material = new window.THREE.SpriteMaterial({ map: map })
 
         spriteMaterials.push(material)
     }
@@ -72,7 +79,7 @@ async function _loadTileSheet (scene, url, tileWidth) {
 
 function _buildSpriteEntity (spriteTile, components) {
     const { HitBox, Transform } = components
-    const sprite = new THREE.Sprite(spriteTile)
+    const sprite = new window.THREE.Sprite(spriteTile)
     sprite.scale.set(HitBox.width, HitBox.height, 1)
 
     sprite.position.x = Transform.xPos
@@ -85,20 +92,20 @@ function _getRpsSpriteMaterial (rpsState) {
     let spriteAvatarUri = null
     switch (rpsState) {
         case 'rock':
-            spriteAvatarUri = 'assets/rock_avatar.png'
+            spriteAvatarUri = _buildAssetUrl('assets/rock_avatar.png')
             break
         case 'paper':
-            spriteAvatarUri = 'assets/paper_avatar.png'
+            spriteAvatarUri = _buildAssetUrl('assets/paper_avatar.png')
             break
         case 'scissors':
-            spriteAvatarUri = 'assets/scissors_avatar.png'
+            spriteAvatarUri = _buildAssetUrl('assets/scissors_avatar.png')
             break
         default:
             throw new Error('Invalid rock paper scissors state')
     }
 
-    const spriteTile = new THREE.TextureLoader().load(spriteAvatarUri)
-    const spriteMaterial = new THREE.SpriteMaterial({ map: spriteTile })
+    const spriteTile = new window.THREE.TextureLoader().load(spriteAvatarUri)
+    const spriteMaterial = new window.THREE.SpriteMaterial({ map: spriteTile })
     spriteMaterial.name = rpsState
     return spriteMaterial
 }
@@ -107,25 +114,27 @@ function _buildPlayerEntity (components, hourglassIndicator) {
     const { Avatar, HitBox, Transform } = components
 
     const spriteMaterial = _getRpsSpriteMaterial(Avatar.stateData.rockPaperScissors)
-    const sprite = new THREE.Sprite(spriteMaterial)
+    const sprite = new window.THREE.Sprite(spriteMaterial)
     sprite.scale.set(HitBox.width, HitBox.height, 1)
 
     sprite.position.x = Transform.xPos
     sprite.position.y = Transform.yPos
 
     // add power up status icons
-    const shieldPowerUpSpriteTile = new THREE.TextureLoader().load('assets/shield_powerup.png')
-    const shieldPowerUpSpriteMaterial = new THREE.SpriteMaterial({ map: shieldPowerUpSpriteTile })
-    const shieldPowerUpSprite = new THREE.Sprite(shieldPowerUpSpriteMaterial)
+    const shieldPowerUpImageUrl = _buildAssetUrl('assets/shield_powerup.png')
+    const shieldPowerUpSpriteTile = new window.THREE.TextureLoader().load(shieldPowerUpImageUrl)
+    const shieldPowerUpSpriteMaterial = new window.THREE.SpriteMaterial({ map: shieldPowerUpSpriteTile })
+    const shieldPowerUpSprite = new window.THREE.Sprite(shieldPowerUpSpriteMaterial)
     shieldPowerUpSprite.scale.set((HitBox.width * 0.5) * 1.1, (HitBox.height * 1.1) * 1.1, 1)
     shieldPowerUpSprite.name = 'shield'
     sprite.add(shieldPowerUpSprite)
 
     shieldPowerUpSprite.visible = false
 
-    const speedPowerUpSpriteTile = new THREE.TextureLoader().load('assets/speed_powerup.png')
-    const speedPowerUpSpriteMaterial = new THREE.SpriteMaterial({ map: speedPowerUpSpriteTile })
-    const speedPowerUpSprite = new THREE.Sprite(speedPowerUpSpriteMaterial)
+    const speedPowerUpSpriteTileUrl = _buildAssetUrl('assets/speed_powerup.png')
+    const speedPowerUpSpriteTile = new window.THREE.TextureLoader().load(speedPowerUpSpriteTileUrl)
+    const speedPowerUpSpriteMaterial = new window.THREE.SpriteMaterial({ map: speedPowerUpSpriteTile })
+    const speedPowerUpSprite = new window.THREE.Sprite(speedPowerUpSpriteMaterial)
     speedPowerUpSprite.scale.set(HitBox.width * 0.6, HitBox.height * 1.1, 1)
     speedPowerUpSprite.name = 'speed'
     sprite.add(speedPowerUpSprite)
@@ -143,10 +152,11 @@ function _buildPlayerEntity (components, hourglassIndicator) {
     sprite.add(hourglassIndicator.actionSprite)
 
     // "SWAPPED" indicator sprite
-    const swappedIndicatorSpriteTexture = new THREE.TextureLoader().load('assets/swapped_sprite.png')
-    swappedIndicatorSpriteTexture.magFilter = THREE.NearestFilter
-    const swappedIndicatorSpriteMaterial = new THREE.SpriteMaterial({ map: swappedIndicatorSpriteTexture })
-    const swappedIndicatorSprite = new THREE.Sprite(swappedIndicatorSpriteMaterial)
+    const swappedIndicatorSpriteTextureUrl = _buildAssetUrl('assets/swapped_sprite.png')
+    const swappedIndicatorSpriteTexture = new window.THREE.TextureLoader().load(swappedIndicatorSpriteTextureUrl)
+    swappedIndicatorSpriteTexture.magFilter = window.THREE.NearestFilter
+    const swappedIndicatorSpriteMaterial = new window.THREE.SpriteMaterial({ map: swappedIndicatorSpriteTexture })
+    const swappedIndicatorSprite = new window.THREE.Sprite(swappedIndicatorSpriteMaterial)
     swappedIndicatorSprite.scale.set(1.5, 1.6, 1)
     swappedIndicatorSprite.name = 'swapped'
 
@@ -163,17 +173,17 @@ function _buildPowerUpEntity (components) {
     let spriteTile
     switch (PowerUp.type) {
         case 'shield':
-            spriteTile = new THREE.TextureLoader().load('assets/shield_powerup.png')
+            spriteTile = new window.THREE.TextureLoader().load(_buildAssetUrl('assets/shield_powerup.png'))
             break
         case 'speed':
-            spriteTile = new THREE.TextureLoader().load('assets/speed_powerup.png')
+            spriteTile = new window.THREE.TextureLoader().load(_buildAssetUrl('assets/speed_powerup.png'))
             break
         default:
             throw new Error('Invalid power up type')
 
     }
-    const spriteMaterial = new THREE.SpriteMaterial({ map: spriteTile })
-    const sprite = new THREE.Sprite(spriteMaterial)
+    const spriteMaterial = new window.THREE.SpriteMaterial({ map: spriteTile })
+    const sprite = new window.THREE.Sprite(spriteMaterial)
     sprite.scale.set(HitBox.width, HitBox.height, 1)
 
     sprite.position.x = Transform.xPos
@@ -213,11 +223,11 @@ class GameRender {
         const halfHeight = this.frustumSize / 2
         const halfWidth = this.frustumSize * this.aspectRatio / 2
 
-        this.clock = new THREE.Clock()
-        this.scene = new THREE.Scene()
-        this.renderer = new THREE.WebGLRenderer({ canvas: canvas })
+        this.clock = new window.THREE.Clock()
+        this.scene = new window.THREE.Scene()
+        this.renderer = new window.THREE.WebGLRenderer({ canvas: canvas })
         this.renderer.setSize(windowWidth, windowHeight)
-        this.camera = new THREE.OrthographicCamera(-halfWidth, halfWidth, halfHeight, -halfHeight, -100, 1000)
+        this.camera = new window.THREE.OrthographicCamera(-halfWidth, halfWidth, halfHeight, -halfHeight, -100, 1000)
         this.spriteMixer = SpriteMixer()
 
         this.camera.position.z = 100
@@ -245,7 +255,8 @@ class GameRender {
         this.beganDisplayingIntercomMsgAt = -1
 
         // index of sprites in the tilesheet corresponds to the sprite' id - 1 (i.e. sprite id 1 is at index 0)
-        _loadTileSheet(this.scene, 'assets/haunted_house.png', 64).then((spriteMaterials) => {
+        const spriteSheetUrl = _buildAssetUrl('assets/haunted_house.png')
+        _loadTileSheet(this.scene, spriteSheetUrl, 64).then((spriteMaterials) => {
             this.spriteMaterials = spriteMaterials
         })
 

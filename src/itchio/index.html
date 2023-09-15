@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Rock, Paper, Scissors: Brawl</title>
+    <style>
+        body { margin: 0 }
+    </style>
+    <link rel="stylesheet" href="https://rockpaperscissorsbrawl.com/styles/style.css">
+    <script src="https://cdn.jsdelivr.net/pako/1.0.3/pako.min.js"></script>
+    <script type="text/javascript" src="https://rockpaperscissorsbrawl.com/md5.js"></script>
+    <script type="text/javascript" src="https://rockpaperscissorsbrawl.com/main.js"></script>
+    <script type="module" src="https://rockpaperscissorsbrawl.com/gameRender.js"></script>
+    <script type="module" src="https://rockpaperscissorsbrawl.com/gameUI.js"></script>
+
+    <script type="module">
+      import * as THREE from 'https://unpkg.com/three@0.142.0/build/three.module.js'
+      window.THREE = THREE
+
+      window.isExternalClient = true
+      window.resourcePath = 'https://rockpaperscissorsbrawl.com'
+    </script>
+</head>
+<body onload="onRouteLoad()">
+</body>
+</html>

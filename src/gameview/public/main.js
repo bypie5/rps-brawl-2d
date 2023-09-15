@@ -68,7 +68,13 @@ const defaultSessionContext = {
         threeJsIdToEntityId: new Map(), // Map<threeJsId, entityId>
         renderer: null, // GameRenderer
         playersAvatarId: null,
-        supportedAgentTypes: []
+        supportedAgentTypes: [],
+        currentControlState: {
+            up: false,
+            down: false,
+            left: false,
+            right: false,
+        }
     },
     ws: null,
     lastPingSeen: null,
@@ -104,6 +110,15 @@ const pages = {
     findMatch: 'findMatch.html',
     gameroomLobby: 'gameroomLobby.html',
     gameroom: 'gameroom.html',
+}
+
+function _buildApiEndpoint (baseEndpoint) {
+    const isExternalClient = window.isExternalClient
+    if (isExternalClient) {
+        return `${window.resourcePath}${baseEndpoint}`
+    } else {
+        return baseEndpoint
+    }
 }
 
 async function _upgradeWsConnection (retriesLeft = 3) {
@@ -172,37 +187,41 @@ function _connectWsToSession (sessionId) {
     sessionContext.ws.send(JSON.stringify(payload))
 }
 
-function _sendMoveCommand (entityId, direction) {
+function _sendGameplayCommand (command) {
     sessionContext.ws.send(JSON.stringify({
         type: "GAMEPLAY_COMMAND",
+        ...command
+    }))
+}
+
+function _sendMoveCommand (entityId, direction) {
+    _sendGameplayCommand({
         gameplayCommandType: "MOVE",
         payload: {
             entityId,
             direction
         }
-    }))
+    })
 }
 
 function _stopMoveCommand (entityId, direction) {
-    sessionContext.ws.send(JSON.stringify({
-        type: "GAMEPLAY_COMMAND",
+    _sendGameplayCommand({
         gameplayCommandType: "STOP",
         payload: {
             entityId,
             direction
         }
-    }))
+    })
 }
 
 function _changeRpsState (entityId, state) {
-    sessionContext.ws.send(JSON.stringify({
-        type: "GAMEPLAY_COMMAND",
+    _sendGameplayCommand({
         gameplayCommandType: "STATE_CHANGE",
         payload: {
             entityId,
             state
         }
-    }))
+    })
 }
 
 async function _onMessage (event) {
@@ -360,7 +379,8 @@ function _onLoginLoaded () {
 
 async function _onFindMatchLoaded () {
     // get supported agent types
-    const res = await fetch(`/api/game-session/supported-agents`, {
+    const url = _buildApiEndpoint('/api/game-session/supported-agents')
+    const res = await fetch(url, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
@@ -403,7 +423,8 @@ async function _onGameroomLobbyLoaded () {
 }
 
 async function loadSessionInfo (sessionId) {
-    const res = await fetch(`/api/game-session/session-info?sessionId=${sessionId}`, {
+    const url = _buildApiEndpoint(`/api/game-session/session-info?sessionId=${sessionId}`)
+    const res = await fetch(url, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
@@ -425,37 +446,45 @@ async function _onGameroomLoaded () {
 
         // add event listeners for player input
         document.addEventListener('keydown', (event) => {
-            if (event.key === 'w' || event.key === 'W') {
+            if ((event.key === 'w' || event.key === 'W') && !sessionContext.sessionInfo.currentControlState.up) {
+                sessionContext.sessionInfo.currentControlState.up = true
                 _sendMoveCommand(sessionContext.sessionInfo.playersAvatarId, 'up')
             }
             
-            if (event.key === 'a' || event.key === 'A') {
+            if ((event.key === 'a' || event.key === 'A') && !sessionContext.sessionInfo.currentControlState.left) {
+                sessionContext.sessionInfo.currentControlState.left = true
                 _sendMoveCommand(sessionContext.sessionInfo.playersAvatarId, 'left')
             }
             
-            if (event.key === 's' || event.key === 'S') {
+            if ((event.key === 's' || event.key === 'S') && !sessionContext.sessionInfo.currentControlState.down) {
+                sessionContext.sessionInfo.currentControlState.down = true
                 _sendMoveCommand(sessionContext.sessionInfo.playersAvatarId, 'down')
             }
             
-            if (event.key === 'd' || event.key === 'D') {
+            if ((event.key === 'd' || event.key === 'D') && !sessionContext.sessionInfo.currentControlState.right) {
+                sessionContext.sessionInfo.currentControlState.right = true
                 _sendMoveCommand(sessionContext.sessionInfo.playersAvatarId, 'right')
             }
         })
 
         document.addEventListener('keyup', (event) => {
             if (event.key === 'w' || event.key === 'W') {
+                sessionContext.sessionInfo.currentControlState.up = false
                 _stopMoveCommand(sessionContext.sessionInfo.playersAvatarId, 'up')
             }
             
             if (event.key === 'a' || event.key === 'A') {
+                sessionContext.sessionInfo.currentControlState.left = false
                 _stopMoveCommand(sessionContext.sessionInfo.playersAvatarId, 'left')
             }
             
             if (event.key === 's' || event.key === 'S') {
+                sessionContext.sessionInfo.currentControlState.down = false
                 _stopMoveCommand(sessionContext.sessionInfo.playersAvatarId, 'down')
             }
             
             if (event.key === 'd' || event.key === 'D') {
+                sessionContext.sessionInfo.currentControlState.right = false
                 _stopMoveCommand(sessionContext.sessionInfo.playersAvatarId, 'right')
             }
 
@@ -549,54 +578,6 @@ function _detectAndHandleGameEvents (prevGameContext, currGameContext) {
           3000
         ))
     }
-
-/*if (
-      sessionContext.sessionInfo.playersAvatarId
-      && (!prevGameContext
-        || (prevGameContext.entities[sessionContext.sessionInfo.playersAvatarId]
-          && prevGameContext.entities[sessionContext.sessionInfo.playersAvatarId].Avatar.state !== 'breakingtie'))
-      && (currGameContext.entities[sessionContext.sessionInfo.playersAvatarId]
-        && currGameContext.entities[sessionContext.sessionInfo.playersAvatarId].Avatar.state === 'breakingtie')
-    ) {
-        // player won rps showdown
-        sessionContext.sessionInfo.renderer.pushToIntercomMsgQueue(new IntercomMsg(
-          'Rock Paper Scissors Showdown!',
-          'Win the showdown to receive an extra life!',
-          3000
-        ))
-    }
-
-    if (
-      sessionContext.sessionInfo.playersAvatarId
-      && (!prevGameContext
-        || (prevGameContext.entities[sessionContext.sessionInfo.playersAvatarId]
-          && prevGameContext.entities[sessionContext.sessionInfo.playersAvatarId].Avatar.state === 'breakingtie'))
-      && (currGameContext.entities[sessionContext.sessionInfo.playersAvatarId]
-        && currGameContext.entities[sessionContext.sessionInfo.playersAvatarId].Avatar.state === 'respawning')
-    ) {
-       // player lost rps showdown
-        sessionContext.sessionInfo.renderer.pushToIntercomMsgQueue(new IntercomMsg(
-          'You lost the RPS showdown!',
-          'Respawning...',
-          3000
-        ))
-    }
-
-    if (
-      sessionContext.sessionInfo.playersAvatarId
-      && (!prevGameContext
-        || (prevGameContext.entities[sessionContext.sessionInfo.playersAvatarId]
-          && prevGameContext.entities[sessionContext.sessionInfo.playersAvatarId].Avatar.state === 'breakingtie'))
-      && (currGameContext.entities[sessionContext.sessionInfo.playersAvatarId]
-        && currGameContext.entities[sessionContext.sessionInfo.playersAvatarId].Avatar.state === 'alive')
-    ) {
-        // player won rps showdown
-        sessionContext.sessionInfo.renderer.pushToIntercomMsgQueue(new IntercomMsg(
-          'You won the RPS showdown!',
-          'Received an extra life!',
-          3000
-        ))
-    }*/
 }
 
 function _onPageLoaded (pageName) {
@@ -706,7 +687,15 @@ function _compileTemplates (doc, pageName) {
 }
 
 async function _loadHtmlContent (pageName) {
-    const res = await fetch("/" + pageName)
+    const isExternalClient = window.isExternalClient
+    let pageUrl = null
+    if (isExternalClient) {
+        pageUrl = `${window.resourcePath}/${pageName}`
+    } else {
+        pageUrl = "/" + pageName
+    }
+
+    const res = await fetch(pageUrl)
     const html = await res.text()
     const parser = new DOMParser()
     const doc = parser.parseFromString(html, 'text/html')
@@ -715,7 +704,15 @@ async function _loadHtmlContent (pageName) {
 }
 
 async function _redrawPage (pageName) {
-    const res = await fetch(pageName)
+    const isExternalClient = window.isExternalClient
+    let pageUrl = null
+    if (isExternalClient) {
+        pageUrl = `${window.resourcePath}/${pageName}`
+    } else {
+        pageUrl = "/" + pageName
+    }
+
+    const res = await fetch(pageUrl)
     const html = await res.text()
     const parser = new DOMParser()
     const doc = parser.parseFromString(html, 'text/html')
@@ -771,7 +768,8 @@ async function login (e) {
     const username = document.getElementById('username').value
     const password = document.getElementById('password').value
     try {
-        const res = await fetch(`/api/user/login`, {
+        const url = _buildApiEndpoint('/api/user/login')
+        const res = await fetch(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -801,7 +799,8 @@ window.login = login
 
 async function continueAsGuest () {
     try {
-        const res = await fetch(`/api/user/temp-credentials`, {
+        const url = _buildApiEndpoint('/api/user/temp-credentials')
+        const res = await fetch(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -849,7 +848,8 @@ async function submitFeedback(event) {
     const feedback = document.getElementById("feedback-text").value
     const type = document.getElementById("feedback-type").value
 
-    const res = await fetch(`/api/feedback/submit`, {
+    const url = _buildApiEndpoint('/api/feedback/submit')
+    const res = await fetch(url, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -899,7 +899,8 @@ async function createPrivateMatch (event) {
     event.preventDefault()
 
     try {
-        const res = await fetch(`/api/game-session/create-private-session`, {
+        const url = _buildApiEndpoint('/api/game-session/create-private-session')
+        const res = await fetch(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -944,7 +945,8 @@ window.joinPrivateMatch = joinPrivateMatch
 
 async function joinPublicSession () {
     try {
-        const res = await fetch(`/api/game-session/join-public-session`, {
+        const url = _buildApiEndpoint('/api/game-session/join-public-session')
+        const res = await fetch(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -970,7 +972,8 @@ async function startMatch (event) {
     event.preventDefault()
     
     try {
-        const res = await fetch(`/api/game-session/start-session?sessionId=${sessionContext.sessionId}`, {
+        const url = _buildApiEndpoint(`/api/game-session/start-session?sessionId=${sessionContext.sessionId}`)
+        const res = await fetch(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -996,7 +999,8 @@ async function addBot (event) {
     event.preventDefault()
 
     try {
-        const res = await fetch('/api/game-session/invite-agent-to-session', {
+        const url = _buildApiEndpoint(`/api/game-session/invite-agent-to-session`)
+        const res = await fetch(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -1020,7 +1024,8 @@ async function addBot (event) {
 }
 
 async function _joinPrivateSession (friendlyName) {
-    const res = await fetch(`/api/game-session/join-private-session`, {
+    const url = _buildApiEndpoint(`/api/game-session/join-private-session`)
+    const res = await fetch(url, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -1044,7 +1049,8 @@ async function _joinPrivateSession (friendlyName) {
 async function _getSessionInfo (sessionId) {
     sessionContext.sessionId = sessionId
 
-    const res = await fetch(`/api/game-session/session-info?sessionId=${sessionId}`, {
+    const url = _buildApiEndpoint(`/api/game-session/session-info?sessionId=${sessionId}`)
+    const res = await fetch(url, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',

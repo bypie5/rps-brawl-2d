@@ -36,6 +36,14 @@ class Component {
       'dark-red': '#8c0000',
     }
   }
+
+  getAssetPath(assetName) {
+    if (window.isExternalClient) {
+      return `${window.resourcePath}/${assetName}`
+    } else {
+      return assetName
+    }
+  }
 }
 
 export { Component }

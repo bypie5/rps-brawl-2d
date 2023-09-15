@@ -13,15 +13,15 @@ class StateChangeIndicators extends Component {
       <div class="state-change-indicators" data-cy="state-change-indicators">
         <div class="indicator">
             <div class="spinner ${isOnCoolDown ? '' : 'spinner-invisible'}"></div>
-            <image class="key ${isOnCoolDown ? 'cooldown' : ''}" src="/assets/j_key_rock.png"></image>
+            <image class="key ${isOnCoolDown ? 'cooldown' : ''}" src=${this.getAssetPath("/assets/j_key_rock.png")}></image>
         </div>
         <div class="indicator">
             <div class="spinner ${isOnCoolDown ? '' : 'spinner-invisible'}"></div>
-            <image class="key ${isOnCoolDown ? 'cooldown' : ''}" src="/assets/k_key_paper.png"></image>
+            <image class="key ${isOnCoolDown ? 'cooldown' : ''}" src=${this.getAssetPath("/assets/k_key_paper.png")}></image>
         </div>
         <div class="indicator">
             <div class="spinner ${isOnCoolDown ? '' : 'spinner-invisible'}"></div>
-            <image class="key ${isOnCoolDown ? 'cooldown' : ''}" src="/assets/l_key_scissors.png"></image>
+            <image class="key ${isOnCoolDown ? 'cooldown' : ''}" src=${this.getAssetPath("/assets/l_key_scissors.png")}></image>
         </div>
       </div>
       <style>
