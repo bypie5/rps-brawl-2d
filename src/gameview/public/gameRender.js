@@ -528,31 +528,6 @@ class GameRender {
             return
         }
 
-        // find score board entity if it exists
-        let scoreBoardEntity = null
-        for (const [entityId, entityComponents] of Object.entries(entitiesInScene)) {
-            if (entityComponents.KillStreakScoreBoard) {
-                scoreBoardEntity = entityComponents
-                break
-            }
-        }
-
-        // find round timer entity if it exists
-        let roundTimerEntity = null
-        for (const [entityId, entityComponents] of Object.entries(entitiesInScene)) {
-            if (entityComponents.RoundTimer) {
-                roundTimerEntity = entityComponents
-                break
-            }
-        }
-
-        let numConnectedPlayers = 0
-        for (const [entityId, entityComponents] of Object.entries(entitiesInScene)) {
-            if (entityComponents.Avatar) {
-                numConnectedPlayers++
-            }
-        }
-
         // real three.js entities are updated below
         if (entityComponents.Transform) {
             // translate to the new position
@@ -636,19 +611,7 @@ class GameRender {
 
             const vector = entity.position.clone()
             vector.project(this.camera)
-            window.gameUiManager.updateComponent(this.uiElements.playerUi, {
-                lives: entityComponents.Avatar.stateData.lives,
-                gameMode: this.sessionConfig.gameMode,
-                kills: entityComponents.Avatar.stateData.kills,
-                activePowerUp: entityComponents.Avatar.stateData.activePowerUp,
-                isSpectating: this.spectatorMode,
-                playerInfoStyle: {
-                    isVisible: entityComponents.Avatar.state === 'alive'
-                },
-                killStreaks: scoreBoardEntity ? scoreBoardEntity.KillStreakScoreBoard.highestKillStreakByPlayerId : null,
-                msRemaining: roundTimerEntity ? roundTimerEntity.RoundTimer.msRemaining : null,
-                numConnectedPlayers: numConnectedPlayers
-            })
+            this._updateStatsForPlayer(entityComponents, entitiesInScene)
 
             window.gameUiManager.updateComponent(this.uiElements.intercomTextUi, {
                 msgToDisplay: this.peekHeadOfIntercomMsgQueue()
@@ -664,6 +627,41 @@ class GameRender {
           && entityComponents.Avatar.state === 'spectating') {
             this.spectatorMode = true
         }
+    }
+
+    _updateStatsForPlayer (entityComponents, entitiesInScene) {
+        let scoreBoardEntity = null
+        let roundTimerEntity = null
+        let numConnectedPlayers = 0
+        for (const [entityId, entityComponents] of Object.entries(entitiesInScene)) {
+            if (entityComponents.KillStreakScoreBoard) {
+                scoreBoardEntity = entityComponents
+                continue
+            }
+
+            if (entityComponents.RoundTimer) {
+                roundTimerEntity = entityComponents
+                continue
+            }
+
+            if (entityComponents.Avatar) {
+                numConnectedPlayers++
+            }
+        }
+
+        window.gameUiManager.updateComponent(this.uiElements.playerUi, {
+            lives: entityComponents.Avatar.stateData.lives,
+            gameMode: this.sessionConfig.gameMode,
+            kills: entityComponents.Avatar.stateData.kills,
+            activePowerUp: entityComponents.Avatar.stateData.activePowerUp,
+            isSpectating: this.spectatorMode,
+            playerInfoStyle: {
+                isVisible: entityComponents.Avatar.state === 'alive'
+            },
+            killStreaks: scoreBoardEntity ? scoreBoardEntity.KillStreakScoreBoard.highestKillStreakByPlayerId : null,
+            msRemaining: roundTimerEntity ? roundTimerEntity.RoundTimer.msRemaining : null,
+            numConnectedPlayers: numConnectedPlayers
+        })
     }
 
     _removeEntityFromScene (entityId, entityComponents, entitiesInScene) {
