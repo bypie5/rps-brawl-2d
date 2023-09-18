@@ -276,11 +276,13 @@ const handlers = {
 
             // change state only if not already in that state
             if (Avatar.stateData.rockPaperScissors === state) {
+                Avatar.stateData.ticksSinceLastStateSwitch = 0
                 return
             }
 
             Avatar.stateData.rockPaperScissors = state
             Avatar.stateData.stateSwitchCooldownTicks = Avatar.stateData.stateSwitchCooldownMaxTicks
+            Avatar.stateData.ticksSinceLastStateSwitch = 0
         }
     }
 }

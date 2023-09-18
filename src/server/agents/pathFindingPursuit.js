@@ -41,14 +41,15 @@ class PathFindingPursuit extends CpuAgent {
       target: null,
       latestGameState: null,
       path: null,
-      minTicksBetweenRpsShift: 2, // ~60ms if 33 ticks per second
-      maxTicksBetweenRpsShift: 6, // ~180ms if 33 ticks per second
+      minTicksBetweenRpsShift: 20,
+      maxTicksBetweenRpsShift: 45, // ~300 if 33 ticks per second
       ticksUntilNextRpsShift: 0,
       myRpsState: null,
       targetRpsState: null,
       minTicksBetweenChangingRandomTarget: 33,
       maxTicksBetweenChangingRandomTarget: 66,
       ticksUntilNextChangingRandomTarget: 0,
+      ticksUntilNextStateRandomization: 0
     }
 
     const tree = new BehaviorTree(context, () => {
@@ -62,6 +63,40 @@ class PathFindingPursuit extends CpuAgent {
     const root = new Sequence('path-finding-pursuit-root')
 
     const targetPrioritySelector = new Fallback('target-priority-selector')
+
+    const avoidEnemySequence = new Sequence('avoid-enemy-sequence')
+
+    const isEnemyNear = new Condition((context) => {
+      const windowWidth = 6
+      const windowHeight = 6
+
+      const myAvatar = context.latestGameState.entities[this.selfEntityId]
+      const currGridKey = computeGridKey(myAvatar.Transform.xPos, myAvatar.Transform.yPos, context.latestGameState.gridWidth)
+      const playerEntitiesInScene = Object.entries(context.latestGameState.entities)
+        .filter(([id, entity]) => {
+          return !!entity.Avatar
+            && !entity.Avatar.playerId.includes(this.botId)
+            && entity.Avatar.state === 'alive'
+        })
+
+      const perceivedEntities = getEntitiesInBox(
+        playerEntitiesInScene,
+        windowWidth,
+        windowHeight,
+        currGridKey,
+        context.latestGameState.gridWidth
+      )
+
+      const nearestEntity = getNearestEntityByGridKey(
+        perceivedEntities,
+        currGridKey,
+        context.latestGameState.gridWidth
+      )
+
+      return nearestEntity
+        && nearestEntity[0] !== null
+        && rpsCompare(myAvatar.Avatar.stateData.rockPaperScissors, nearestEntity[1].Avatar.stateData.rockPaperScissors) === -1
+    }, null, 'is-enemy-near')
 
     const chasePlayerSequence = new Sequence('chase-player-sequence')
 
@@ -92,7 +127,12 @@ class PathFindingPursuit extends CpuAgent {
         context.latestGameState.gridWidth
       )
 
-      if (nearestEntity && nearestEntity[0] !== null) {
+      if (
+        nearestEntity
+        && nearestEntity[0] !== null
+        && rpsCompare(myAvatar.Avatar.stateData.rockPaperScissors, nearestEntity[1].Avatar.stateData.rockPaperScissors) === 1
+      ) {
+        // set player as target if they are in tied or losing RPS state (i.e. I am rock and they are scissors)
         context.target = nearestEntity[0] // [0] is the entity id
       } else {
         return false
@@ -137,7 +177,7 @@ class PathFindingPursuit extends CpuAgent {
       const myX = myAvatar.Transform.xPos
       const myY = myAvatar.Transform.yPos
 
-      const epsilon = context.latestGameState.gridWidth * 0.09
+      const epsilon = context.latestGameState.gridWidth * 0.08
       this._moveToTarget(myX, myY, targetX, targetY, epsilon)
     }, null, 'move-towards-player')
 
@@ -213,7 +253,7 @@ class PathFindingPursuit extends CpuAgent {
       const myX = myAvatar.Transform.xPos
       const myY = myAvatar.Transform.yPos
 
-      const epsilon = context.latestGameState.gridWidth * 0.09
+      const epsilon = context.latestGameState.gridWidth * 0.08
       this._moveToTarget(myX, myY, targetX, targetY, epsilon)
     }, null, 'move-towards-power-up')
 
@@ -252,10 +292,11 @@ class PathFindingPursuit extends CpuAgent {
           const myX = myAvatar.Transform.xPos
           const myY = myAvatar.Transform.yPos
 
-          const epsilon = context.latestGameState.gridWidth * 0.1
+          const epsilon = context.latestGameState.gridWidth * 0.08
           this._moveToTarget(myX, myY, targetX, targetY, epsilon)
         } else {
           context.target = null // we're at the target, so clear it
+          context.ticksUntilNextChangingRandomTarget = 0 // reset the ticks until next changing random target
         }
       }
 
@@ -303,6 +344,27 @@ class PathFindingPursuit extends CpuAgent {
       }
     }, null, 'match-rps-state-of-target')
 
+    const randomizeRpsState = new Action(async (context) => {
+      if (context.ticksUntilNextStateRandomization > 0) {
+        context.ticksUntilNextStateRandomization--
+        return
+      }
+
+      context.ticksUntilNextStateRandomization = Math.floor(Math.random() * (context.maxTicksBetweenRpsShift - context.minTicksBetweenRpsShift + 1)) + context.minTicksBetweenRpsShift
+
+      // 30% chance to shift left, 30% chance to shift right, 40% chance to stay the same
+      const rand = Math.random()
+      if (rand < 0.3) {
+        this.stateShiftLeft()
+      } else if (rand < 0.6) {
+        this.stateShiftRight()
+      }
+    }, null, 'randomize-rps-state')
+
+    avoidEnemySequence.addChild(isEnemyNear)
+    avoidEnemySequence.addChild(randomizeRpsState)
+    avoidEnemySequence.addChild(pickRandomLocationAction)
+
     chasePlayerSequence.addChild(isPlayerNear)
     chasePlayerSequence.addChild(canFindPathToPlayer)
     chasePlayerSequence.addChild(moveTowardsPlayer)
@@ -313,9 +375,10 @@ class PathFindingPursuit extends CpuAgent {
 
     moveToRandomLocation.addChild(pickRandomLocationAction)
 
-    targetPrioritySelector.addChild(chasePlayerSequence) // highest priority is to chase player
-    targetPrioritySelector.addChild(moveTowardsPowerUp) // second priority is to move towards power up
-    targetPrioritySelector.addChild(moveToRandomLocation) // third priority is to move to a random location
+    targetPrioritySelector.addChild(avoidEnemySequence) // highest priority is to avoid enemy
+    targetPrioritySelector.addChild(chasePlayerSequence) // second-highest priority is to chase player
+    targetPrioritySelector.addChild(moveTowardsPowerUp) // third-highest priority is to move towards power up
+    targetPrioritySelector.addChild(moveToRandomLocation) // least-highest priority is to move to a random location
 
     matchTarget.addChild(isMatchingRpsStateOfTarget)
     matchTarget.addChild(matchRpsStateOfTarget)
