@@ -72,6 +72,29 @@ class BehaviorTree {
 
     return this.root.tick()
   }
+
+  toGraphvizString () {
+    if (!this.root) {
+      throw new Error('BehaviorTree root is not set')
+    }
+
+    let graphviz = 'digraph G {\n'
+
+    const printAsGraphvizRecursively = (node) => {
+      if (node.children) {
+        node.children.forEach((child) => {
+          graphviz += node.id.replace(/-/g, '_') + "_" + node.constructor.name + ' -> ' + child.id.replace(/-/g, '_') + "_" + child.constructor.name + '\n'
+          printAsGraphvizRecursively(child)
+        })
+      }
+    }
+
+    printAsGraphvizRecursively(this.root)
+
+    graphviz += '}'
+
+    return graphviz
+  }
 }
 
 module.exports = {

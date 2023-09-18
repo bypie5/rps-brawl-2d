@@ -99,7 +99,7 @@ class PathFindingPursuit extends CpuAgent {
       }
 
       return context.target !== null
-    }, 'is-player-near')
+    }, null, 'is-player-near')
 
     const canFindPathToPlayer = new Condition((context) => {
       const terrainTiles = Object.entries(context.latestGameState.entities)
@@ -122,7 +122,7 @@ class PathFindingPursuit extends CpuAgent {
       context.path = path
 
       return path.length > 0
-    }, 'can-find-path-to-player')
+    }, null, 'can-find-path-to-player')
 
     const moveTowardsPlayer = new Action(async (context) => {
       if (!context.path || context.path.length <= 1) {
@@ -139,9 +139,9 @@ class PathFindingPursuit extends CpuAgent {
 
       const epsilon = context.latestGameState.gridWidth * 0.09
       this._moveToTarget(myX, myY, targetX, targetY, epsilon)
-    }, 'move-towards-player')
+    }, null, 'move-towards-player')
 
-    const moveTowardsPowerUp = new Sequence('move-towards-power-up')
+    const moveTowardsPowerUp = new Sequence('move-towards-power-up-sequence')
 
     const isPowerUpNear = new Condition((context) => {
       const windowWidth = 6
@@ -175,7 +175,7 @@ class PathFindingPursuit extends CpuAgent {
       }
 
       return context.target !== null
-    })
+    }, null, 'is-power-up-near')
 
     const canFindPathToPowerUp = new Condition((context) => {
       const terrainTiles = Object.entries(context.latestGameState.entities)
@@ -198,7 +198,7 @@ class PathFindingPursuit extends CpuAgent {
       context.path = path
 
       return path.length > 0
-    })
+    }, null, 'can-find-path-to-power-up')
 
     const moveToPowerUp = new Action(async (context) => {
       if (!context.path || context.path.length <= 1) {
@@ -215,7 +215,7 @@ class PathFindingPursuit extends CpuAgent {
 
       const epsilon = context.latestGameState.gridWidth * 0.09
       this._moveToTarget(myX, myY, targetX, targetY, epsilon)
-    }, 'move-towards-player')
+    }, null, 'move-towards-power-up')
 
     const moveToRandomLocation = new Sequence('move-to-random-location')
 
@@ -267,7 +267,7 @@ class PathFindingPursuit extends CpuAgent {
       } else {
         context.ticksUntilNextChangingRandomTarget--
       }
-    })
+    }, null, 'pick-random-location-action')
 
     const matchTarget = new Fallback('match-target')
 
@@ -292,7 +292,7 @@ class PathFindingPursuit extends CpuAgent {
       context.ticksUntilNextRpsShift = Math.floor(Math.random() * (context.maxTicksBetweenRpsShift - context.minTicksBetweenRpsShift + 1)) + context.minTicksBetweenRpsShift
 
       return rpsCompare(myRpsState, targetRpsState) === 1
-    })
+    }, null, 'is-matching-rps-state-of-target')
 
     const matchRpsStateOfTarget = new Action(async (context) => {
       const comp = rpsCompare(context.myRpsState, context.targetRpsState)
@@ -301,7 +301,7 @@ class PathFindingPursuit extends CpuAgent {
       } else if (comp === -1) {
         this.stateShiftLeft()
       }
-    }, 'match-rps-state-of-target')
+    }, null, 'match-rps-state-of-target')
 
     chasePlayerSequence.addChild(isPlayerNear)
     chasePlayerSequence.addChild(canFindPathToPlayer)
