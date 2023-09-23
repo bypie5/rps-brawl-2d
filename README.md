@@ -2,6 +2,26 @@
 
 This game idea is based on a prototype I had built several years ago. In the prototype, players would face off in a multiplayer arena against other players in a first person rock-paper-scissors match. Basically, the players would control a 3D character that was either a rock, a piece of paper or scissors. The player can switch between each state (rock, paper or scissors) at will. The game is like a modified version of tag, but the player has to touch their opponent while in the “opposite” state of their opponent (i.e a scissor has to tag a piece of paper to score).
 
+![](./docs/assets/ingame_screen.png)
+
+You can try a demo of the game at [https://rockpaperscissorsbrawl.com](https://rockpaperscissorsbrawl.com).
+
+## Getting Started
+
+To install dependencies, run:
+
+```bash
+npm install
+```
+
+To start the development server, run:
+
+```bash
+npm run dev
+```
+
+For deployment, see the document in [`./docs/deployment.md`](./docs/deployment.md).
+
 ## Server-Side
 
 Server-side software will be responsible for registering player accounts, match making, and hosting games. Although each of these services could be implemented as their own project, it might be best to use a monolithic architecture. 
